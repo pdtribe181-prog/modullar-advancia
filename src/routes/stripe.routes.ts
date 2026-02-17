@@ -538,9 +538,10 @@ router.get('/payment-history', authenticateWithProfile, async (req: Authenticate
 
 router.get('/payment-history/:id', authenticateWithProfile, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(req.params.id, {
+    const paymentIntentId = req.params.id as string;
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
       expand: ['latest_charge', 'invoice'],
-    });
+    }) as any;
     
     // Verify ownership
     const customerId = req.userProfile?.stripe_customer_id;
@@ -548,7 +549,7 @@ router.get('/payment-history/:id', authenticateWithProfile, async (req: Authenti
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const charge = paymentIntent.latest_charge as any;
+    const charge = paymentIntent.latest_charge;
     
     res.json({
       id: paymentIntent.id,

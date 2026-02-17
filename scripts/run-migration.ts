@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+// @ts-ignore - pg module types
 import pg from 'pg';
 import dotenv from 'dotenv';
 

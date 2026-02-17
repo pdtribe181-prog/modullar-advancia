@@ -13,7 +13,7 @@ interface UserProfile {
 }
 
 export default function Profile() {
-  const { user } = useAuth();
+  useAuth(); // Ensures user is authenticated
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
