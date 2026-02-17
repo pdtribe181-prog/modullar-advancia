@@ -1,0 +1,57 @@
+{
+  "name": "modullar-advancia",
+  "version": "1.0.0",
+  "description": "Healthcare payment and compliance management platform",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx --watch src/server.ts",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:connection": "tsx test-connection.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "prebuild": "npm run typecheck",
+    "postbuild": "echo Build completed successfully",
+    "clean": "rimraf dist",
+    "build:prod": "npm run clean && npm run build",
+    "docker:build": "docker build -t healthcare-payment-api .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env healthcare-payment-api"
+  },
+  "keywords": [
+    "healthcare",
+    "payments",
+    "supabase",
+    "compliance"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "pg": "^8.18.0",
+    "resend": "^6.9.2",
+    "stripe": "^20.3.1",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.2.3",
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-ui-express": "^4.1.8",
+    "jest": "^30.2.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

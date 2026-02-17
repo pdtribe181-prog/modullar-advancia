@@ -1,0 +1,560 @@
+openapi: 3.0.3
+info:
+  title: Modullar Advancia Healthcare API
+  description: Healthcare payment and compliance management platform
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [patient, provider, admin, staff]
+        phone:
+          type: string
+        is_active:
+          type: boolean
+    Provider:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        specialty:
+          type: string
+        license_number:
+          type: string
+        consultation_fee:
+          type: number
+        rating:
+          type: number
+        bio:
+          type: string
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+        insurance_provider:
+          type: string
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patient_id:
+          type: string
+          format: uuid
+        provider_id:
+          type: string
+          format: uuid
+        appointment_date:
+          type: string
+          format: date
+        appointment_time:
+          type: string
+          format: time
+        status:
+          type: string
+          enum: [scheduled, completed, cancelled, no_show, rescheduled]
+        reason_for_visit:
+          type: string
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        payment_status:
+          type: string
+          enum: [pending, completed, failed, refunded, cancelled]
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_number:
+          type: string
+        total_amount:
+          type: number
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue, cancelled, refunded]
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/signup:
+    post:
+      summary: Register new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, fullName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                fullName:
+                  type: string
+                role:
+                  type: string
+                  enum: [patient, provider]
+                  default: patient
+      responses:
+        '200':
+          description: User registered
+        '400':
+          description: Invalid input
+
+  /auth/signin:
+    post:
+      summary: Sign in user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Sign in successful
+        '401':
+          description: Invalid credentials
+
+  /auth/signout:
+    post:
+      summary: Sign out user
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Signed out
+
+  /profile:
+    get:
+      summary: Get current user profile
+      tags: [Profile]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+    patch:
+      summary: Update current user profile
+      tags: [Profile]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+
+  /providers:
+    get:
+      summary: List all providers
+      tags: [Providers]
+      responses:
+        '200':
+          description: List of providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Provider'
+
+  /providers/{id}:
+    get:
+      summary: Get provider by ID
+      tags: [Providers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Provider'
+        '404':
+          description: Provider not found
+
+  /providers/specialty/{specialty}:
+    get:
+      summary: Find providers by specialty
+      tags: [Providers]
+      parameters:
+        - name: specialty
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Provider'
+
+  /patients:
+    get:
+      summary: List all patients
+      tags: [Patients]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of patients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Patient'
+
+  /appointments:
+    post:
+      summary: Create appointment
+      tags: [Appointments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [patient_id, provider_id, appointment_date, appointment_time]
+              properties:
+                patient_id:
+                  type: string
+                  format: uuid
+                provider_id:
+                  type: string
+                  format: uuid
+                appointment_date:
+                  type: string
+                  format: date
+                appointment_time:
+                  type: string
+                  format: time
+                reason_for_visit:
+                  type: string
+      responses:
+        '201':
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+
+  /appointments/patient/{patientId}:
+    get:
+      summary: Get patient appointments
+      tags: [Appointments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+
+  /appointments/provider/{providerId}:
+    get:
+      summary: Get provider appointments
+      tags: [Appointments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of appointments
+
+  /transactions/patient/{patientId}:
+    get:
+      summary: Get patient transactions
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+
+  /invoices/patient/{patientId}:
+    get:
+      summary: Get patient invoices
+      tags: [Invoices]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invoice'
+
+  /disputes:
+    get:
+      summary: List all disputes
+      tags: [Disputes]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of disputes
+    post:
+      summary: Create dispute
+      tags: [Disputes]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dispute_number, dispute_reason, amount]
+              properties:
+                dispute_number:
+                  type: string
+                transaction_id:
+                  type: string
+                  format: uuid
+                dispute_reason:
+                  type: string
+                  enum: [fraud, duplicate, product_not_received, service_not_provided, other]
+                amount:
+                  type: number
+                customer_description:
+                  type: string
+      responses:
+        '201':
+          description: Dispute created
+
+  /webhooks:
+    get:
+      summary: List user webhooks
+      tags: [Webhooks]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of webhooks
+    post:
+      summary: Create webhook
+      tags: [Webhooks]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url, secret_key]
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                secret_key:
+                  type: string
+                subscribed_events:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Webhook created
+
+  /api-keys:
+    get:
+      summary: List user API keys
+      tags: [API Keys]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of API keys
+    post:
+      summary: Create API key
+      tags: [API Keys]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, key_hash, key_prefix]
+              properties:
+                name:
+                  type: string
+                key_hash:
+                  type: string
+                key_prefix:
+                  type: string
+                environment:
+                  type: string
+                  enum: [sandbox, production]
+      responses:
+        '201':
+          description: API key created
+
+tags:
+  - name: System
+    description: System health and status
+  - name: Authentication
+    description: User authentication
+  - name: Profile
+    description: User profile management
+  - name: Providers
+    description: Healthcare provider operations
+  - name: Patients
+    description: Patient management
+  - name: Appointments
+    description: Appointment scheduling
+  - name: Transactions
+    description: Payment transactions
+  - name: Invoices
+    description: Invoice management
+  - name: Disputes
+    description: Payment disputes
+  - name: Webhooks
+    description: Webhook configuration
+  - name: API Keys
+    description: API key management

@@ -1,0 +1,280 @@
+import { Router, Response } from 'express';
+import { stripeServices, stripe } from '../services/stripe.service.js';
+import { authenticate, authenticateWithProfile, requireRole, AuthenticatedRequest } from '../middleware/auth.middleware.js';
+import { supabase } from '../lib/supabase.js';
+import { onboardingLimiter, apiLimiter } from '../middleware/rateLimit.middleware.js';
+
+const router = Router();
+
+/**
+ * Provider Onboarding Flow
+ * 
+ * 1. POST /connect/onboard - Start onboarding (creates Stripe account, returns onboarding URL)
+ * 2. GET /connect/status - Check onboarding status
+ * 3. POST /connect/refresh - Get new onboarding link if expired
+ * 4. GET /connect/dashboard - Get provider dashboard link
+ * 5. GET /connect/balance - Get provider balance
+ * 6. GET /connect/payouts - Get provider payout history
+ */
+
+// Start provider onboarding
+router.post('/onboard', onboardingLimiter, authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const userProfile = req.userProfile!;
+    
+    // Check if provider already has a Stripe account
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id, stripe_account_id, stripe_onboarding_complete, business_name')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider) {
+      return res.status(404).json({ error: 'Provider profile not found' });
+    }
+
+    let stripeAccountId = provider.stripe_account_id;
+
+    // Create Stripe account if doesn't exist
+    if (!stripeAccountId) {
+      const account = await stripeServices.connect.createExpressAccount({
+        email: req.user!.email || '',
+        providerId: provider.id,
+        businessName: provider.business_name || userProfile.full_name || 'Healthcare Provider',
+        country: 'US',
+      });
+
+      stripeAccountId = account.id;
+
+      // Store Stripe account ID
+      await supabase
+        .from('providers')
+        .update({ stripe_account_id: stripeAccountId })
+        .eq('id', provider.id);
+    }
+
+    // Create onboarding link
+    const accountLink = await stripeServices.connect.createAccountLink(
+      stripeAccountId,
+      `${process.env.FRONTEND_URL}/provider/onboarding/refresh`,
+      `${process.env.FRONTEND_URL}/provider/onboarding/complete`
+    );
+
+    res.json({
+      accountId: stripeAccountId,
+      onboardingUrl: accountLink.url,
+      expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
+    });
+  } catch (error: any) {
+    console.error('Onboarding error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Check onboarding status
+router.get('/status', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id, stripe_account_id, stripe_onboarding_complete, stripe_charges_enabled, stripe_payouts_enabled')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider) {
+      return res.status(404).json({ error: 'Provider profile not found' });
+    }
+
+    if (!provider.stripe_account_id) {
+      return res.json({
+        status: 'not_started',
+        onboardingComplete: false,
+        chargesEnabled: false,
+        payoutsEnabled: false,
+      });
+    }
+
+    // Get latest status from Stripe
+    const account = await stripeServices.connect.getAccount(provider.stripe_account_id);
+
+    // Update local status
+    const statusChanged = 
+      provider.stripe_onboarding_complete !== account.details_submitted ||
+      provider.stripe_charges_enabled !== account.charges_enabled ||
+      provider.stripe_payouts_enabled !== account.payouts_enabled;
+
+    if (statusChanged) {
+      await supabase
+        .from('providers')
+        .update({
+          stripe_onboarding_complete: account.details_submitted,
+          stripe_charges_enabled: account.charges_enabled,
+          stripe_payouts_enabled: account.payouts_enabled,
+        })
+        .eq('id', provider.id);
+    }
+
+    res.json({
+      status: account.details_submitted ? 'complete' : 'pending',
+      onboardingComplete: account.details_submitted,
+      chargesEnabled: account.charges_enabled,
+      payoutsEnabled: account.payouts_enabled,
+      requirements: account.requirements,
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get new onboarding link (if expired or returning user)
+router.post('/refresh', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('stripe_account_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider?.stripe_account_id) {
+      return res.status(400).json({ error: 'No Stripe account found. Start onboarding first.' });
+    }
+
+    const accountLink = await stripeServices.connect.createAccountLink(
+      provider.stripe_account_id,
+      `${process.env.FRONTEND_URL}/provider/onboarding/refresh`,
+      `${process.env.FRONTEND_URL}/provider/onboarding/complete`
+    );
+
+    res.json({
+      onboardingUrl: accountLink.url,
+      expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get provider dashboard link
+router.get('/dashboard', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('stripe_account_id, stripe_onboarding_complete')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider?.stripe_account_id) {
+      return res.status(400).json({ error: 'No Stripe account found' });
+    }
+
+    if (!provider.stripe_onboarding_complete) {
+      return res.status(400).json({ error: 'Complete onboarding first' });
+    }
+
+    const loginLink = await stripeServices.connect.createLoginLink(provider.stripe_account_id);
+
+    res.json({ dashboardUrl: loginLink.url });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get provider balance
+router.get('/balance', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('stripe_account_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider?.stripe_account_id) {
+      return res.status(400).json({ error: 'No Stripe account found' });
+    }
+
+    const balance = await stripeServices.connect.getBalance(provider.stripe_account_id);
+
+    res.json({
+      available: balance.available.map(b => ({
+        amount: b.amount / 100,
+        currency: b.currency,
+      })),
+      pending: balance.pending.map(b => ({
+        amount: b.amount / 100,
+        currency: b.currency,
+      })),
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get provider payouts
+router.get('/payouts', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('stripe_account_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider?.stripe_account_id) {
+      return res.status(400).json({ error: 'No Stripe account found' });
+    }
+
+    const payouts = await stripe.payouts.list(
+      { limit: 20 },
+      { stripeAccount: provider.stripe_account_id }
+    );
+
+    res.json(payouts.data.map(p => ({
+      id: p.id,
+      amount: p.amount / 100,
+      currency: p.currency,
+      status: p.status,
+      arrivalDate: new Date(p.arrival_date * 1000).toISOString(),
+      created: new Date(p.created * 1000).toISOString(),
+    })));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Handle Connect webhook events (called from main webhook handler)
+export async function handleConnectWebhook(event: any): Promise<void> {
+  const account = event.data.object;
+
+  switch (event.type) {
+    case 'account.updated':
+      // Update provider status when their Stripe account changes
+      const { data: provider } = await supabase
+        .from('providers')
+        .select('id')
+        .eq('stripe_account_id', account.id)
+        .single();
+
+      if (provider) {
+        await supabase
+          .from('providers')
+          .update({
+            stripe_onboarding_complete: account.details_submitted,
+            stripe_charges_enabled: account.charges_enabled,
+            stripe_payouts_enabled: account.payouts_enabled,
+          })
+          .eq('id', provider.id);
+      }
+      break;
+  }
+}
+
+export default router;
