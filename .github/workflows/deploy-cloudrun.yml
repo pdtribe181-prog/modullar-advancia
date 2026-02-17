@@ -11,6 +11,7 @@ on:
       - 'frontend/**'
       - '**.md'
       - '.gitignore'
+  workflow_dispatch:
 
 env:
   PROJECT_ID: boreal-augury-484505-n3
