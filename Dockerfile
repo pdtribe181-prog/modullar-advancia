@@ -6,14 +6,22 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including dev for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build TypeScript
 RUN npm run build
+
+# Production dependencies stage
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
 
 # Production stage
 FROM node:20-alpine AS production
@@ -24,9 +32,9 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S expressjs -u 1001
 
-# Copy built files
+# Copy built files and production deps
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
 # Set ownership
