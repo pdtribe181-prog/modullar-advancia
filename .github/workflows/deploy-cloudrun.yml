@@ -57,14 +57,13 @@ jobs:
           env_vars: |
             NODE_ENV=production
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
             FRONTEND_URL=${{ secrets.FRONTEND_URL }}
             EMAIL_FROM=Advancia PayLedger <noreply@advancia.us>
-          secrets: |
-            SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
-            STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest
-            STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest
-            RESEND_API_KEY=RESEND_API_KEY:latest
-            JWT_SECRET=JWT_SECRET:latest
 
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
