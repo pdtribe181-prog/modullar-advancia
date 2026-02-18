@@ -86,7 +86,7 @@ DROP POLICY IF EXISTS "service_insert_access_audit_logs" ON public.access_audit_
 CREATE POLICY "admin_select_access_audit_logs" ON public.access_audit_logs
   FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "service_insert_access_audit_logs" ON public.access_audit_logs
-  FOR INSERT TO authenticated WITH CHECK (user_id IS NULL OR user_id = auth.uid() OR public.is_admin());
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "System can insert usage logs" ON public.api_usage_logs;
 DROP POLICY IF EXISTS "admin_select_api_usage_logs" ON public.api_usage_logs;
@@ -94,7 +94,7 @@ DROP POLICY IF EXISTS "service_insert_api_usage_logs" ON public.api_usage_logs;
 CREATE POLICY "admin_select_api_usage_logs" ON public.api_usage_logs
   FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "service_insert_api_usage_logs" ON public.api_usage_logs
-  FOR INSERT TO authenticated WITH CHECK (user_id IS NULL OR user_id = auth.uid() OR public.is_admin());
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "System can insert HIPAA logs" ON public.hipaa_audit_log;
 DROP POLICY IF EXISTS "admin_select_hipaa_audit_log" ON public.hipaa_audit_log;
@@ -102,7 +102,7 @@ DROP POLICY IF EXISTS "service_insert_hipaa_audit_log" ON public.hipaa_audit_log
 CREATE POLICY "admin_select_hipaa_audit_log" ON public.hipaa_audit_log
   FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "service_insert_hipaa_audit_log" ON public.hipaa_audit_log
-  FOR INSERT TO authenticated WITH CHECK (user_id IS NULL OR user_id = auth.uid() OR public.is_admin());
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "system_insert_delivery_attempts" ON public.webhook_delivery_attempts;
 DROP POLICY IF EXISTS "admin_select_webhook_delivery_attempts" ON public.webhook_delivery_attempts;
@@ -118,9 +118,7 @@ DROP POLICY IF EXISTS "service_insert_email_history_secured" ON public.email_his
 CREATE POLICY "admin_select_email_history" ON public.email_history
   FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "service_insert_email_history_secured" ON public.email_history
-  FOR INSERT TO authenticated WITH CHECK (
-    public.is_admin() OR recipient_email IN (SELECT email FROM public.user_profiles WHERE id = auth.uid())
-  );
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 -- 3.2 ADMIN-ONLY TABLES
 DROP POLICY IF EXISTS "admin_access_advanced_analytics_reports" ON public.advanced_analytics_reports;
@@ -200,54 +198,32 @@ DROP POLICY IF EXISTS "users_insert_own_analytics_events" ON public.analytics_ev
 CREATE POLICY "admin_select_analytics_events" ON public.analytics_events
   FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "users_insert_own_analytics_events" ON public.analytics_events
-  FOR INSERT TO authenticated WITH CHECK (user_id IS NULL OR user_id = auth.uid() OR public.is_admin());
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 -- 3.4 DISPUTE-RELATED
 DROP POLICY IF EXISTS "users_create_disputes" ON public.disputes;
 DROP POLICY IF EXISTS "users_insert_own_disputes" ON public.disputes;
 CREATE POLICY "users_insert_own_disputes" ON public.disputes
-  FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.transactions t WHERE t.id = disputes.transaction_id AND (
-        EXISTS (SELECT 1 FROM public.patients p WHERE p.id = t.patient_id AND p.user_id = auth.uid())
-        OR EXISTS (SELECT 1 FROM public.providers pr WHERE pr.id = t.provider_id AND pr.user_id = auth.uid())
-      )
-    ) OR public.is_admin()
-  );
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "system_create_notifications" ON public.dispute_notifications;
 DROP POLICY IF EXISTS "users_view_own_dispute_notifications" ON public.dispute_notifications;
 DROP POLICY IF EXISTS "service_insert_dispute_notifications" ON public.dispute_notifications;
 CREATE POLICY "users_view_own_dispute_notifications" ON public.dispute_notifications
-  FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_admin());
+  FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "service_insert_dispute_notifications" ON public.dispute_notifications
-  FOR INSERT TO authenticated WITH CHECK (public.is_admin() OR user_id = auth.uid());
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "users_create_timeline_entries" ON public.dispute_timeline;
 DROP POLICY IF EXISTS "users_insert_timeline_entries" ON public.dispute_timeline;
 CREATE POLICY "users_insert_timeline_entries" ON public.dispute_timeline
-  FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.disputes d JOIN public.transactions t ON t.id = d.transaction_id
-      WHERE d.id = dispute_timeline.dispute_id AND (
-        EXISTS (SELECT 1 FROM public.patients p WHERE p.id = t.patient_id AND p.user_id = auth.uid())
-        OR EXISTS (SELECT 1 FROM public.providers pr WHERE pr.id = t.provider_id AND pr.user_id = auth.uid())
-      )
-    ) OR public.is_admin()
-  );
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "users_manage_chargebacks" ON public.chargebacks;
 DROP POLICY IF EXISTS "users_view_own_chargebacks" ON public.chargebacks;
 DROP POLICY IF EXISTS "admin_manage_chargebacks" ON public.chargebacks;
 CREATE POLICY "users_view_own_chargebacks" ON public.chargebacks
-  FOR SELECT TO authenticated USING (
-    EXISTS (
-      SELECT 1 FROM public.transactions t WHERE t.id = chargebacks.transaction_id AND (
-        EXISTS (SELECT 1 FROM public.patients p WHERE p.id = t.patient_id AND p.user_id = auth.uid())
-        OR EXISTS (SELECT 1 FROM public.providers pr WHERE pr.id = t.provider_id AND pr.user_id = auth.uid())
-      )
-    ) OR public.is_admin()
-  );
+  FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "admin_manage_chargebacks" ON public.chargebacks
   FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
@@ -255,30 +231,9 @@ DROP POLICY IF EXISTS "users_view_invoice_disputes" ON public.invoice_disputes;
 DROP POLICY IF EXISTS "users_view_own_invoice_disputes" ON public.invoice_disputes;
 DROP POLICY IF EXISTS "users_manage_own_invoice_disputes" ON public.invoice_disputes;
 CREATE POLICY "users_view_own_invoice_disputes" ON public.invoice_disputes
-  FOR SELECT TO authenticated USING (
-    EXISTS (
-      SELECT 1 FROM public.invoices i WHERE i.id = invoice_disputes.invoice_id AND (
-        EXISTS (SELECT 1 FROM public.patients p WHERE p.id = i.patient_id AND p.user_id = auth.uid())
-        OR EXISTS (SELECT 1 FROM public.providers pr WHERE pr.id = i.provider_id AND pr.user_id = auth.uid())
-      )
-    ) OR public.is_admin()
-  );
+  FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "users_manage_own_invoice_disputes" ON public.invoice_disputes
-  FOR ALL TO authenticated USING (
-    EXISTS (
-      SELECT 1 FROM public.invoices i WHERE i.id = invoice_disputes.invoice_id AND (
-        EXISTS (SELECT 1 FROM public.patients p WHERE p.id = i.patient_id AND p.user_id = auth.uid())
-        OR EXISTS (SELECT 1 FROM public.providers pr WHERE pr.id = i.provider_id AND pr.user_id = auth.uid())
-      )
-    )
-  ) WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.invoices i WHERE i.id = invoice_disputes.invoice_id AND (
-        EXISTS (SELECT 1 FROM public.patients p WHERE p.id = i.patient_id AND p.user_id = auth.uid())
-        OR EXISTS (SELECT 1 FROM public.providers pr WHERE pr.id = i.provider_id AND pr.user_id = auth.uid())
-      )
-    )
-  );
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- 3.5 INCIDENT LOGS
 DROP POLICY IF EXISTS "authenticated_users_create_incident_activity_logs" ON public.incident_activity_logs;
@@ -287,7 +242,7 @@ DROP POLICY IF EXISTS "users_insert_incident_activity_logs" ON public.incident_a
 CREATE POLICY "admin_access_incident_activity_logs" ON public.incident_activity_logs
   FOR SELECT TO authenticated USING (public.is_admin());
 CREATE POLICY "users_insert_incident_activity_logs" ON public.incident_activity_logs
-  FOR INSERT TO authenticated WITH CHECK (public.is_admin() OR user_id = auth.uid());
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 -- 3.6 REFERENCE DATA TABLES
 DROP POLICY IF EXISTS "system_manage_currency_conversions" ON public.currency_conversions;

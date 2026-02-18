@@ -16,10 +16,10 @@ const projectRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '
 
 // Supabase connection options:
 // 1. DATABASE_URL - full connection string (preferred)
-// 2. Pooler connection using project ref + password
-// Use pooler (port 6543) for serverless, direct (port 5432) for migrations
+// 2. Direct database connection (port 5432)
+// Format: postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
 const connectionString = process.env.DATABASE_URL || 
-  `postgresql://postgres.${projectRef}:${process.env.SUPABASE_DB_PASSWORD}@aws-0-us-east-1.pooler.supabase.com:6543/postgres`;
+  `postgresql://postgres:${process.env.SUPABASE_DB_PASSWORD}@db.${projectRef}.supabase.co:5432/postgres`;
 
 async function runMigration() {
   const migrationFile = process.argv[2];

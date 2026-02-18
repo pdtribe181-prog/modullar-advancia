@@ -57,17 +57,20 @@ CREATE INDEX IF NOT EXISTS idx_security_events_created ON public.security_events
 -- RLS
 ALTER TABLE public.security_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own security events" ON public.security_events;
 CREATE POLICY "Users can view their own security events"
 ON public.security_events FOR SELECT
 TO authenticated
 USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "System can insert security events" ON public.security_events;
 CREATE POLICY "System can insert security events"
 ON public.security_events FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
 -- Admins can view all security events
+DROP POLICY IF EXISTS "Admins can view all security events" ON public.security_events;
 CREATE POLICY "Admins can view all security events"
 ON public.security_events FOR SELECT
 TO authenticated
