@@ -1,14 +1,21 @@
 import { Router, Response } from 'express';
+import Stripe from 'stripe';
 import { stripeServices, stripe } from '../services/stripe.service.js';
-import { authenticate, authenticateWithProfile, requireRole, AuthenticatedRequest } from '../middleware/auth.middleware.js';
+import {
+  authenticate,
+  authenticateWithProfile,
+  requireRole,
+  AuthenticatedRequest,
+} from '../middleware/auth.middleware.js';
 import { supabase } from '../lib/supabase.js';
 import { onboardingLimiter, apiLimiter } from '../middleware/rateLimit.middleware.js';
+import { asyncHandler, AppError } from '../utils/errors.js';
 
 const router = Router();
 
 /**
  * Provider Onboarding Flow
- * 
+ *
  * 1. POST /connect/onboard - Start onboarding (creates Stripe account, returns onboarding URL)
  * 2. GET /connect/status - Check onboarding status
  * 3. POST /connect/refresh - Get new onboarding link if expired
@@ -18,11 +25,15 @@ const router = Router();
  */
 
 // Start provider onboarding
-router.post('/onboard', onboardingLimiter, authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.post(
+  '/onboard',
+  onboardingLimiter,
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
     const userProfile = req.userProfile!;
-    
+
     // Check if provider already has a Stripe account
     const { data: provider } = await supabase
       .from('providers')
@@ -31,7 +42,7 @@ router.post('/onboard', onboardingLimiter, authenticateWithProfile, requireRole(
       .single();
 
     if (!provider) {
-      return res.status(404).json({ error: 'Provider profile not found' });
+      throw AppError.notFound('Provider profile not found');
     }
 
     let stripeAccountId = provider.stripe_account_id;
@@ -62,45 +73,54 @@ router.post('/onboard', onboardingLimiter, authenticateWithProfile, requireRole(
     );
 
     res.json({
-      accountId: stripeAccountId,
-      onboardingUrl: accountLink.url,
-      expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
+      success: true,
+      data: {
+        accountId: stripeAccountId,
+        onboardingUrl: accountLink.url,
+        expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
+      },
     });
-  } catch (error: any) {
-    console.error('Onboarding error:', error);
-    res.status(400).json({ error: error.message });
-  }
-});
+  })
+);
 
 // Check onboarding status
-router.get('/status', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.get(
+  '/status',
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
 
     const { data: provider } = await supabase
       .from('providers')
-      .select('id, stripe_account_id, stripe_onboarding_complete, stripe_charges_enabled, stripe_payouts_enabled')
+      .select(
+        'id, stripe_account_id, stripe_onboarding_complete, stripe_charges_enabled, stripe_payouts_enabled'
+      )
       .eq('user_id', userId)
       .single();
 
     if (!provider) {
-      return res.status(404).json({ error: 'Provider profile not found' });
+      throw AppError.notFound('Provider profile not found');
     }
 
     if (!provider.stripe_account_id) {
-      return res.json({
-        status: 'not_started',
-        onboardingComplete: false,
-        chargesEnabled: false,
-        payoutsEnabled: false,
+      res.json({
+        success: true,
+        data: {
+          status: 'not_started',
+          onboardingComplete: false,
+          chargesEnabled: false,
+          payoutsEnabled: false,
+        },
       });
+      return;
     }
 
     // Get latest status from Stripe
     const account = await stripeServices.connect.getAccount(provider.stripe_account_id);
 
     // Update local status
-    const statusChanged = 
+    const statusChanged =
       provider.stripe_onboarding_complete !== account.details_submitted ||
       provider.stripe_charges_enabled !== account.charges_enabled ||
       provider.stripe_payouts_enabled !== account.payouts_enabled;
@@ -117,20 +137,24 @@ router.get('/status', authenticateWithProfile, requireRole('provider', 'admin'),
     }
 
     res.json({
-      status: account.details_submitted ? 'complete' : 'pending',
-      onboardingComplete: account.details_submitted,
-      chargesEnabled: account.charges_enabled,
-      payoutsEnabled: account.payouts_enabled,
-      requirements: account.requirements,
+      success: true,
+      data: {
+        status: account.details_submitted ? 'complete' : 'pending',
+        onboardingComplete: account.details_submitted,
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled,
+        requirements: account.requirements,
+      },
     });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+  })
+);
 
 // Get new onboarding link (if expired or returning user)
-router.post('/refresh', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.post(
+  '/refresh',
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
 
     const { data: provider } = await supabase
@@ -140,7 +164,7 @@ router.post('/refresh', authenticateWithProfile, requireRole('provider', 'admin'
       .single();
 
     if (!provider?.stripe_account_id) {
-      return res.status(400).json({ error: 'No Stripe account found. Start onboarding first.' });
+      throw AppError.badRequest('No Stripe account found. Start onboarding first.');
     }
 
     const accountLink = await stripeServices.connect.createAccountLink(
@@ -150,17 +174,21 @@ router.post('/refresh', authenticateWithProfile, requireRole('provider', 'admin'
     );
 
     res.json({
-      onboardingUrl: accountLink.url,
-      expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
+      success: true,
+      data: {
+        onboardingUrl: accountLink.url,
+        expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
+      },
     });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+  })
+);
 
 // Get provider dashboard link
-router.get('/dashboard', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.get(
+  '/dashboard',
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
 
     const { data: provider } = await supabase
@@ -170,24 +198,25 @@ router.get('/dashboard', authenticateWithProfile, requireRole('provider', 'admin
       .single();
 
     if (!provider?.stripe_account_id) {
-      return res.status(400).json({ error: 'No Stripe account found' });
+      throw AppError.badRequest('No Stripe account found');
     }
 
     if (!provider.stripe_onboarding_complete) {
-      return res.status(400).json({ error: 'Complete onboarding first' });
+      throw AppError.badRequest('Complete onboarding first');
     }
 
     const loginLink = await stripeServices.connect.createLoginLink(provider.stripe_account_id);
 
-    res.json({ dashboardUrl: loginLink.url });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    res.json({ success: true, data: { dashboardUrl: loginLink.url } });
+  })
+);
 
 // Get provider balance
-router.get('/balance', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.get(
+  '/balance',
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
 
     const { data: provider } = await supabase
@@ -197,29 +226,33 @@ router.get('/balance', authenticateWithProfile, requireRole('provider', 'admin')
       .single();
 
     if (!provider?.stripe_account_id) {
-      return res.status(400).json({ error: 'No Stripe account found' });
+      throw AppError.badRequest('No Stripe account found');
     }
 
     const balance = await stripeServices.connect.getBalance(provider.stripe_account_id);
 
     res.json({
-      available: balance.available.map(b => ({
-        amount: b.amount / 100,
-        currency: b.currency,
-      })),
-      pending: balance.pending.map(b => ({
-        amount: b.amount / 100,
-        currency: b.currency,
-      })),
+      success: true,
+      data: {
+        available: balance.available.map((b) => ({
+          amount: b.amount / 100,
+          currency: b.currency,
+        })),
+        pending: balance.pending.map((b) => ({
+          amount: b.amount / 100,
+          currency: b.currency,
+        })),
+      },
     });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+  })
+);
 
 // Get provider payouts
-router.get('/payouts', authenticateWithProfile, requireRole('provider', 'admin'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.get(
+  '/payouts',
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
 
     const { data: provider } = await supabase
@@ -229,7 +262,7 @@ router.get('/payouts', authenticateWithProfile, requireRole('provider', 'admin')
       .single();
 
     if (!provider?.stripe_account_id) {
-      return res.status(400).json({ error: 'No Stripe account found' });
+      throw AppError.badRequest('No Stripe account found');
     }
 
     const payouts = await stripe.payouts.list(
@@ -237,25 +270,26 @@ router.get('/payouts', authenticateWithProfile, requireRole('provider', 'admin')
       { stripeAccount: provider.stripe_account_id }
     );
 
-    res.json(payouts.data.map(p => ({
-      id: p.id,
-      amount: p.amount / 100,
-      currency: p.currency,
-      status: p.status,
-      arrivalDate: new Date(p.arrival_date * 1000).toISOString(),
-      created: new Date(p.created * 1000).toISOString(),
-    })));
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    res.json({
+      success: true,
+      data: payouts.data.map((p) => ({
+        id: p.id,
+        amount: p.amount / 100,
+        currency: p.currency,
+        status: p.status,
+        arrivalDate: new Date(p.arrival_date * 1000).toISOString(),
+        created: new Date(p.created * 1000).toISOString(),
+      })),
+    });
+  })
+);
 
 // Handle Connect webhook events (called from main webhook handler)
-export async function handleConnectWebhook(event: any): Promise<void> {
-  const account = event.data.object;
+export async function handleConnectWebhook(event: Stripe.Event): Promise<void> {
+  const account = event.data.object as Stripe.Account;
 
   switch (event.type) {
-    case 'account.updated':
+    case 'account.updated': {
       // Update provider status when their Stripe account changes
       const { data: provider } = await supabase
         .from('providers')
@@ -274,6 +308,7 @@ export async function handleConnectWebhook(event: any): Promise<void> {
           .eq('id', provider.id);
       }
       break;
+    }
   }
 }
 

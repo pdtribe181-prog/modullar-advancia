@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../providers/AuthProvider';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
+import { Spinner, LoadingButton } from '../components/Spinner';
+import { useToast } from '../components/Toast';
 
 interface Payment {
   id: string;
@@ -28,6 +30,7 @@ const statusColors: Record<string, string> = {
 
 export default function PaymentHistory() {
   useAuth(); // Ensures user is authenticated
+  const { showToast } = useToast();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +52,10 @@ export default function PaymentHistory() {
         setPayments(response.payments);
       }
       setHasMore(response.has_more);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load payment history');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load payment history';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -87,8 +92,9 @@ export default function PaymentHistory() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+      <div className="flex items-center justify-center min-h-[400px]" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+        <Spinner size={48} />
+        <p>Loading payment history...</p>
       </div>
     );
   }
@@ -175,13 +181,14 @@ export default function PaymentHistory() {
           
           {hasMore && (
             <div className="px-6 py-4 border-t border-gray-200">
-              <button
+              <LoadingButton
                 onClick={loadMore}
-                disabled={loadingMore}
+                loading={loadingMore}
+                loadingText="Loading..."
                 className="w-full py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                {loadingMore ? 'Loading...' : 'Load More'}
-              </button>
+                Load More
+              </LoadingButton>
             </div>
           )}
         </div>

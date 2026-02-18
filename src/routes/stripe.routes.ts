@@ -1,524 +1,400 @@
 import express, { Router, Request, Response } from 'express';
+import Stripe from 'stripe';
 import { stripeServices, stripe } from '../services/stripe.service.js';
 import processWebhook from '../services/stripe-webhooks.service.js';
 import { authenticate, authenticateWithProfile, requireRole, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { paymentLimiter, sensitiveLimiter, webhookLimiter } from '../middleware/rateLimit.middleware.js';
+import { validateBody, createPaymentIntentSchema, refundSchema, uuidSchema } from '../middleware/validation.middleware.js';
+import { asyncHandler, AppError, getErrorMessage } from '../utils/errors.js';
+import { logger } from '../middleware/logging.middleware.js';
+import { z } from 'zod';
 
 const router = Router();
 
+// Additional validation schemas for Stripe routes
+const createCustomerSchema = z.object({
+  email: z.string().email(),
+  name: z.string().max(200).optional(),
+  userId: z.string().uuid().optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
+});
+
+const updateCustomerSchema = z.object({
+  email: z.string().email().optional(),
+  name: z.string().max(200).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
+});
+
 // Debug middleware for stripe routes
 router.use((req, res, next) => {
-  console.log(`[STRIPE] ${req.method} ${req.path}`);
+  logger.debug('Stripe request', { method: req.method, path: req.path });
   next();
 });
 
 // Webhook endpoint - raw body is handled by server middleware
-router.post('/webhook', webhookLimiter, async (req: Request, res: Response) => {
+router.post('/webhook', webhookLimiter, asyncHandler(async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    return res.status(500).json({ error: 'Webhook secret not configured' });
+    throw AppError.internal('Webhook secret not configured');
   }
 
-  try {
-    const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    await processWebhook(event);
-    res.json({ received: true });
-  } catch (err: any) {
-    console.error('Webhook error:', err.message);
-    res.status(400).json({ error: `Webhook Error: ${err.message}` });
-  }
-});
+  const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  await processWebhook(event);
+  res.json({ success: true, received: true });
+}));
 
 // ============================================================
 // CUSTOMER ROUTES (Protected)
 // ============================================================
 
-router.post('/customers', authenticate, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { email, name, userId, metadata } = req.body;
-    console.log('Creating customer with:', { email, name, userId });
-    const customer = await stripeServices.customers.create({ email, name, userId: userId || req.user?.id, metadata });
-    res.json(customer);
-  } catch (error: any) {
-    console.error('Customer create error:', error);
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/customers', authenticate, validateBody(createCustomerSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { email, name, userId, metadata } = req.body;
+  logger.debug('Creating Stripe customer', { email, userId: userId || req.user?.id });
+  const customer = await stripeServices.customers.create({ email, name, userId: userId || req.user?.id, metadata });
+  res.json({ success: true, data: customer });
+}));
 
-router.get('/customers/:customerId', authenticate, async (req: Request, res: Response) => {
-  try {
-    const customer = await stripeServices.customers.get(String(req.params.customerId));
-    res.json(customer);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.get('/customers/:customerId', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const customer = await stripeServices.customers.get(String(req.params.customerId));
+  res.json({ success: true, data: customer });
+}));
 
-router.put('/customers/:customerId', authenticate, async (req: Request, res: Response) => {
-  try {
-    const customer = await stripeServices.customers.update(String(req.params.customerId), req.body);
-    res.json(customer);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.put('/customers/:customerId', authenticate, validateBody(updateCustomerSchema), asyncHandler(async (req: Request, res: Response) => {
+  const customer = await stripeServices.customers.update(String(req.params.customerId), req.body);
+  res.json({ success: true, data: customer });
+}));
 
 // ============================================================
 // PAYMENT INTENT ROUTES (Protected)
 // ============================================================
 
-router.post('/payment-intents', paymentLimiter, authenticate, async (req: Request, res: Response) => {
-  try {
-    const { amount, currency, customerId, patientId, providerId, appointmentId, description, metadata } = req.body;
-    const paymentIntent = await stripeServices.paymentIntents.create({
-      amount: Math.round(amount * 100),
-      currency: currency?.toLowerCase() || 'usd',
-      customerId,
-      patientId,
-      providerId,
-      appointmentId,
-      description,
-      metadata,
-    });
-    res.json({
+router.post('/payment-intents', paymentLimiter, authenticate, validateBody(createPaymentIntentSchema), asyncHandler(async (req: Request, res: Response) => {
+  const { amount, currency, customerId, patientId, providerId, appointmentId, description, metadata } = req.body;
+  const paymentIntent = await stripeServices.paymentIntents.create({
+    amount: Math.round(amount * 100),
+    currency: currency?.toLowerCase() || 'usd',
+    customerId,
+    patientId,
+    providerId,
+    appointmentId,
+    description,
+    metadata,
+  });
+  res.json({
+    success: true,
+    data: {
       id: paymentIntent.id,
       clientSecret: paymentIntent.client_secret,
       amount: paymentIntent.amount / 100,
       currency: paymentIntent.currency,
       status: paymentIntent.status,
-    });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    },
+  });
+}));
 
-router.get('/payment-intents/:id', authenticate, async (req: Request, res: Response) => {
-  try {
-    const paymentIntent = await stripeServices.paymentIntents.get(String(req.params.id));
-    res.json(paymentIntent);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.get('/payment-intents/:id', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const paymentIntent = await stripeServices.paymentIntents.get(String(req.params.id));
+  res.json({ success: true, data: paymentIntent });
+}));
 
-router.post('/payment-intents/:id/confirm', paymentLimiter, authenticate, async (req: Request, res: Response) => {
-  try {
-    const { paymentMethodId } = req.body;
-    const paymentIntent = await stripeServices.paymentIntents.confirm(String(req.params.id), paymentMethodId);
-    res.json(paymentIntent);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/payment-intents/:id/confirm', paymentLimiter, authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { paymentMethodId } = req.body;
+  const paymentIntent = await stripeServices.paymentIntents.confirm(String(req.params.id), paymentMethodId);
+  res.json({ success: true, data: paymentIntent });
+}));
 
-router.post('/payment-intents/:id/cancel', authenticate, async (req: Request, res: Response) => {
-  try {
-    const paymentIntent = await stripeServices.paymentIntents.cancel(String(req.params.id));
-    res.json(paymentIntent);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/payment-intents/:id/cancel', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const paymentIntent = await stripeServices.paymentIntents.cancel(String(req.params.id));
+  res.json({ success: true, data: paymentIntent });
+}));
 
 // ============================================================
 // REFUND ROUTES (Admin/Provider only)
 // ============================================================
 
-router.post('/refunds', sensitiveLimiter, authenticate, async (req: Request, res: Response) => {
-  try {
-    const { paymentIntentId, amount, reason } = req.body;
-    const refund = amount
-      ? await stripeServices.refunds.createPartial(paymentIntentId, Math.round(amount * 100), reason)
-      : await stripeServices.refunds.createFull(paymentIntentId, reason);
-    res.json({
+router.post('/refunds', sensitiveLimiter, authenticate, validateBody(refundSchema), asyncHandler(async (req: Request, res: Response) => {
+  const { paymentIntentId, amount, reason } = req.body;
+  const refund = amount
+    ? await stripeServices.refunds.createPartial(paymentIntentId, Math.round(amount * 100), reason)
+    : await stripeServices.refunds.createFull(paymentIntentId, reason);
+  res.json({
+    success: true,
+    data: {
       id: refund.id,
       amount: refund.amount / 100,
       currency: refund.currency,
       status: refund.status,
-    });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    },
+  });
+}));
 
-router.get('/refunds/:id', authenticate, async (req: Request, res: Response) => {
-  try {
-    const refund = await stripeServices.refunds.get(String(req.params.id));
-    res.json(refund);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.get('/refunds/:id', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const refund = await stripeServices.refunds.get(String(req.params.id));
+  res.json({ success: true, data: refund });
+}));
 
 // ============================================================
 // CONNECT ROUTES (Provider Onboarding) - Protected
 // ============================================================
 
-router.post('/connect/accounts', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { email, providerId, businessName, country } = req.body;
-    const account = await stripeServices.connect.createExpressAccount({ email, providerId, businessName: businessName || 'Healthcare Provider', country });
-    res.json({
+router.post('/connect/accounts', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { email, providerId, businessName, country } = req.body;
+  const account = await stripeServices.connect.createExpressAccount({ email, providerId, businessName: businessName || 'Healthcare Provider', country });
+  res.json({
+    success: true,
+    data: {
       id: account.id,
       type: account.type,
       detailsSubmitted: account.details_submitted,
       chargesEnabled: account.charges_enabled,
       payoutsEnabled: account.payouts_enabled,
-    });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    },
+  });
+}));
 
-router.get('/connect/accounts/:accountId', authenticate, async (req: Request, res: Response) => {
-  try {
-    const account = await stripeServices.connect.getAccount(String(req.params.accountId));
-    res.json(account);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.get('/connect/accounts/:accountId', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const account = await stripeServices.connect.getAccount(String(req.params.accountId));
+  res.json({ success: true, data: account });
+}));
 
-router.post('/connect/accounts/:accountId/onboarding-link', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { returnUrl, refreshUrl } = req.body;
-    const accountLink = await stripeServices.connect.createAccountLink(
-      String(req.params.accountId),
-      refreshUrl || `${process.env.FRONTEND_URL}/provider/setup/refresh`,
-      returnUrl || `${process.env.FRONTEND_URL}/provider/setup/complete`
-    );
-    res.json({ url: accountLink.url, expiresAt: new Date(accountLink.expires_at * 1000).toISOString() });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/connect/accounts/:accountId/onboarding-link', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { returnUrl, refreshUrl } = req.body;
+  const accountLink = await stripeServices.connect.createAccountLink(
+    String(req.params.accountId),
+    refreshUrl || `${process.env.FRONTEND_URL}/provider/setup/refresh`,
+    returnUrl || `${process.env.FRONTEND_URL}/provider/setup/complete`
+  );
+  res.json({ success: true, data: { url: accountLink.url, expiresAt: new Date(accountLink.expires_at * 1000).toISOString() } });
+}));
 
-router.post('/connect/accounts/:accountId/dashboard-link', authenticate, async (req: Request, res: Response) => {
-  try {
-    const loginLink = await stripeServices.connect.createLoginLink(String(req.params.accountId));
-    res.json({ url: loginLink.url });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/connect/accounts/:accountId/dashboard-link', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const loginLink = await stripeServices.connect.createLoginLink(String(req.params.accountId));
+  res.json({ success: true, data: { url: loginLink.url } });
+}));
 
-router.get('/connect/accounts/:accountId/balance', authenticate, async (req: Request, res: Response) => {
-  try {
-    const balance = await stripeServices.connect.getBalance(String(req.params.accountId));
-    res.json(balance);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.get('/connect/accounts/:accountId/balance', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const balance = await stripeServices.connect.getBalance(String(req.params.accountId));
+  res.json({ success: true, data: balance });
+}));
 
 // ============================================================
 // TRANSFER ROUTES (Platform to Provider) - Admin only
 // ============================================================
 
-router.post('/transfers', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { amount, destinationAccountId, transactionId, description } = req.body;
-    const transfer = await stripeServices.transfers.createTransfer({
-      amount: Math.round(amount * 100),
-      destinationAccountId,
-      transactionId,
-      description,
-    });
-    res.json({ id: transfer.id, amount: transfer.amount / 100, destination: transfer.destination });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/transfers', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { amount, destinationAccountId, transactionId, description } = req.body;
+  const transfer = await stripeServices.transfers.createTransfer({
+    amount: Math.round(amount * 100),
+    destinationAccountId,
+    transactionId,
+    description,
+  });
+  res.json({ success: true, data: { id: transfer.id, amount: transfer.amount / 100, destination: transfer.destination } });
+}));
 
 // ============================================================
 // SUBSCRIPTION ROUTES (Protected)
 // ============================================================
 
-router.post('/subscriptions', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { customerId, priceId, patientId, providerId } = req.body;
-    const subscription = await stripeServices.subscriptions.create({ customerId, priceId, patientId, providerId });
-    res.json({ id: subscription.id, status: subscription.status });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/subscriptions', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { customerId, priceId, patientId, providerId } = req.body;
+  const subscription = await stripeServices.subscriptions.create({ customerId, priceId, patientId, providerId });
+  res.json({ success: true, data: { id: subscription.id, status: subscription.status } });
+}));
 
-router.get('/subscriptions/:id', authenticate, async (req: Request, res: Response) => {
-  try {
-    const subscription = await stripeServices.subscriptions.get(String(req.params.id));
-    res.json(subscription);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.get('/subscriptions/:id', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const subscription = await stripeServices.subscriptions.get(String(req.params.id));
+  res.json({ success: true, data: subscription });
+}));
 
-router.post('/subscriptions/:id/cancel', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { cancelAtPeriodEnd } = req.body;
-    const subscription = await stripeServices.subscriptions.cancel(String(req.params.id), cancelAtPeriodEnd);
-    res.json(subscription);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/subscriptions/:id/cancel', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { cancelAtPeriodEnd } = req.body;
+  const subscription = await stripeServices.subscriptions.cancel(String(req.params.id), cancelAtPeriodEnd);
+  res.json({ success: true, data: subscription });
+}));
 
-router.post('/subscriptions/:id/pause', authenticate, async (req: Request, res: Response) => {
-  try {
-    const subscription = await stripeServices.subscriptions.pause(String(req.params.id));
-    res.json(subscription);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/subscriptions/:id/pause', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const subscription = await stripeServices.subscriptions.pause(String(req.params.id));
+  res.json({ success: true, data: subscription });
+}));
 
-router.post('/subscriptions/:id/resume', authenticate, async (req: Request, res: Response) => {
-  try {
-    const subscription = await stripeServices.subscriptions.resume(String(req.params.id));
-    res.json(subscription);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/subscriptions/:id/resume', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const subscription = await stripeServices.subscriptions.resume(String(req.params.id));
+  res.json({ success: true, data: subscription });
+}));
 
 // ============================================================
 // PRODUCT/PRICE ROUTES (Admin only for create, public for list)
 // ============================================================
 
-router.post('/products', authenticate, async (req: Request, res: Response) => {
-  try {
-    const product = await stripeServices.products.create(req.body);
-    res.json(product);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/products', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const product = await stripeServices.products.create(req.body);
+  res.json({ success: true, data: product });
+}));
 
-router.get('/products', async (req: Request, res: Response) => {
-  try {
-    const products = await stripeServices.products.list(true);
-    res.json(products);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.get('/products', asyncHandler(async (req: Request, res: Response) => {
+  const products = await stripeServices.products.list(true);
+  res.json({ success: true, data: products });
+}));
 
-router.post('/prices', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { productId, unitAmount, currency, interval } = req.body;
-    const price = await stripeServices.products.createPrice(
-      productId,
-      Math.round(unitAmount * 100),
-      currency || 'usd',
-      interval ? { interval } : undefined
-    );
-    res.json({ id: price.id, unitAmount: price.unit_amount ? price.unit_amount / 100 : null, currency: price.currency });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/prices', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { productId, unitAmount, currency, interval } = req.body;
+  const price = await stripeServices.products.createPrice(
+    productId,
+    Math.round(unitAmount * 100),
+    currency || 'usd',
+    interval ? { interval } : undefined
+  );
+  res.json({ success: true, data: { id: price.id, unitAmount: price.unit_amount ? price.unit_amount / 100 : null, currency: price.currency } });
+}));
 
 // ============================================================
 // PAYMENT METHOD ROUTES (Protected)
 // ============================================================
 
-router.get('/customers/:customerId/payment-methods', authenticate, async (req: Request, res: Response) => {
-  try {
-    const paymentMethods = await stripeServices.customers.listPaymentMethods(String(req.params.customerId));
-    res.json(paymentMethods);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.get('/customers/:customerId/payment-methods', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const paymentMethods = await stripeServices.customers.listPaymentMethods(String(req.params.customerId));
+  res.json({ success: true, data: paymentMethods });
+}));
 
-router.post('/payment-methods/:id/attach', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { customerId } = req.body;
-    const paymentMethod = await stripeServices.paymentMethods.attach(String(req.params.id), customerId);
-    res.json(paymentMethod);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/payment-methods/:id/attach', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { customerId } = req.body;
+  const paymentMethod = await stripeServices.paymentMethods.attach(String(req.params.id), customerId);
+  res.json({ success: true, data: paymentMethod });
+}));
 
-router.post('/payment-methods/:id/detach', authenticate, async (req: Request, res: Response) => {
-  try {
-    const paymentMethod = await stripeServices.paymentMethods.detach(String(req.params.id));
-    res.json(paymentMethod);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/payment-methods/:id/detach', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const paymentMethod = await stripeServices.paymentMethods.detach(String(req.params.id));
+  res.json({ success: true, data: paymentMethod });
+}));
 
 // ============================================================
 // SETUP INTENT ROUTES (Protected)
 // ============================================================
 
-router.post('/setup-intents', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { customerId } = req.body;
-    const setupIntent = await stripeServices.setupIntents.create(customerId);
-    res.json({ id: setupIntent.id, clientSecret: setupIntent.client_secret });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/setup-intents', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { customerId } = req.body;
+  const setupIntent = await stripeServices.setupIntents.create(customerId);
+  res.json({ success: true, data: { id: setupIntent.id, clientSecret: setupIntent.client_secret } });
+}));
 
 // ============================================================
 // CHECKOUT SESSION ROUTES (Protected)
 // ============================================================
 
-router.post('/checkout/sessions', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { customerId, amount, productName, successUrl, cancelUrl, metadata } = req.body;
-    const session = await stripeServices.checkout.createPaymentSession({
-      customerId,
-      amount: Math.round(amount * 100),
-      productName: productName || 'Healthcare Service',
-      successUrl: successUrl || `${process.env.FRONTEND_URL}/payment/success`,
-      cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancelled`,
-      metadata,
-    });
-    res.json({ id: session.id, url: session.url });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/checkout/sessions', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { customerId, amount, productName, successUrl, cancelUrl, metadata } = req.body;
+  const session = await stripeServices.checkout.createPaymentSession({
+    customerId,
+    amount: Math.round(amount * 100),
+    productName: productName || 'Healthcare Service',
+    successUrl: successUrl || `${process.env.FRONTEND_URL}/payment/success`,
+    cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancelled`,
+    metadata,
+  });
+  res.json({ success: true, data: { id: session.id, url: session.url } });
+}));
 
-router.get('/checkout/sessions/:id', authenticate, async (req: Request, res: Response) => {
-  try {
-    const session = await stripeServices.checkout.get(String(req.params.id));
-    res.json(session);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.get('/checkout/sessions/:id', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const session = await stripeServices.checkout.get(String(req.params.id));
+  res.json({ success: true, data: session });
+}));
 
 // ============================================================
 // INVOICE ROUTES (Protected)
 // ============================================================
 
-router.post('/invoices', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { customerId, metadata, items } = req.body;
-    const invoice = await stripeServices.invoices.create(customerId, metadata);
-    
-    // Add line items if provided
-    if (items && items.length > 0) {
-      for (const item of items) {
-        await stripeServices.invoices.addLineItem(
-          invoice.id,
-          Math.round(item.amount * 100),
-          item.description,
-          item.currency || 'usd'
-        );
-      }
+router.post('/invoices', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const { customerId, metadata, items } = req.body;
+  const invoice = await stripeServices.invoices.create(customerId, metadata);
+  
+  // Add line items if provided
+  if (items && items.length > 0) {
+    for (const item of items) {
+      await stripeServices.invoices.addLineItem(
+        invoice.id,
+        Math.round(item.amount * 100),
+        item.description,
+        item.currency || 'usd'
+      );
     }
-    
-    res.json({ id: invoice.id, status: invoice.status, amountDue: (invoice.amount_due || 0) / 100 });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
   }
-});
+  
+  res.json({ success: true, data: { id: invoice.id, status: invoice.status, amountDue: (invoice.amount_due || 0) / 100 } });
+}));
 
-router.post('/invoices/:id/finalize', authenticate, async (req: Request, res: Response) => {
-  try {
-    const invoice = await stripeServices.invoices.finalizeAndSend(String(req.params.id));
-    res.json(invoice);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/invoices/:id/finalize', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const invoice = await stripeServices.invoices.finalizeAndSend(String(req.params.id));
+  res.json({ success: true, data: invoice });
+}));
 
-router.post('/invoices/:id/pay', authenticate, async (req: Request, res: Response) => {
-  try {
-    const invoice = await stripeServices.invoices.markPaid(String(req.params.id));
-    res.json(invoice);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/invoices/:id/pay', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const invoice = await stripeServices.invoices.markPaid(String(req.params.id));
+  res.json({ success: true, data: invoice });
+}));
 
-router.post('/invoices/:id/void', authenticate, async (req: Request, res: Response) => {
-  try {
-    const invoice = await stripeServices.invoices.void(String(req.params.id));
-    res.json(invoice);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/invoices/:id/void', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const invoice = await stripeServices.invoices.void(String(req.params.id));
+  res.json({ success: true, data: invoice });
+}));
 
 // ============================================================
 // DISPUTE ROUTES (Admin/Provider only)
 // ============================================================
 
-router.get('/disputes', authenticate, async (req: Request, res: Response) => {
-  try {
-    const disputes = await stripeServices.disputes.list(100);
-    res.json(disputes);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.get('/disputes', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const disputes = await stripeServices.disputes.list(100);
+  res.json({ success: true, data: disputes });
+}));
 
-router.get('/disputes/:id', authenticate, async (req: Request, res: Response) => {
-  try {
-    const dispute = await stripeServices.disputes.get(String(req.params.id));
-    res.json(dispute);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.get('/disputes/:id', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const dispute = await stripeServices.disputes.get(String(req.params.id));
+  res.json({ success: true, data: dispute });
+}));
 
-router.post('/disputes/:id/evidence', authenticate, async (req: Request, res: Response) => {
-  try {
-    const dispute = await stripeServices.disputes.submitEvidence(String(req.params.id), req.body);
-    res.json(dispute);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/disputes/:id/evidence', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const dispute = await stripeServices.disputes.submitEvidence(String(req.params.id), req.body);
+  res.json({ success: true, data: dispute });
+}));
 
-router.post('/disputes/:id/close', authenticate, async (req: Request, res: Response) => {
-  try {
-    const dispute = await stripeServices.disputes.close(String(req.params.id));
-    res.json(dispute);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+router.post('/disputes/:id/close', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const dispute = await stripeServices.disputes.close(String(req.params.id));
+  res.json({ success: true, data: dispute });
+}));
 
 // ============================================================
 // PAYMENT HISTORY ROUTES
 // ============================================================
 
-router.get('/payment-history', authenticateWithProfile, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { limit = 20, starting_after, status } = req.query;
-    const customerId = req.userProfile?.stripe_customer_id;
-    
-    if (!customerId) {
-      return res.json({ payments: [], has_more: false });
-    }
+router.get('/payment-history', authenticateWithProfile, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { limit = 20, starting_after, status } = req.query;
+  const customerId = req.userProfile?.stripe_customer_id;
+  
+  if (!customerId) {
+    res.json({ success: true, data: { payments: [], has_more: false } });
+    return;
+  }
 
-    const params: any = {
-      customer: customerId,
-      limit: Math.min(Number(limit), 100),
-    };
-    
-    if (starting_after) params.starting_after = starting_after;
+  const params: Stripe.PaymentIntentListParams = {
+    customer: customerId,
+    limit: Math.min(Number(limit), 100),
+  };
+  
+  if (starting_after && typeof starting_after === 'string') params.starting_after = starting_after;
 
-    const paymentIntents = await stripe.paymentIntents.list(params);
-    
-    // Filter by status if provided
-    let payments = paymentIntents.data;
-    if (status && typeof status === 'string') {
-      payments = payments.filter(pi => pi.status === status);
-    }
+  const paymentIntents = await stripe.paymentIntents.list(params);
+  
+  // Filter by status if provided
+  let payments = paymentIntents.data;
+  if (status && typeof status === 'string') {
+    payments = payments.filter(pi => pi.status === status);
+  }
 
-    res.json({
+  res.json({
+    success: true,
+    data: {
       payments: payments.map(pi => ({
         id: pi.id,
         amount: pi.amount / 100,
@@ -530,28 +406,27 @@ router.get('/payment-history', authenticateWithProfile, async (req: Authenticate
         metadata: pi.metadata,
       })),
       has_more: paymentIntents.has_more,
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    },
+  });
+}));
+
+router.get('/payment-history/:id', authenticateWithProfile, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const paymentIntentId = req.params.id as string;
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+    expand: ['latest_charge', 'invoice'],
+  }) as any;
+  
+  // Verify ownership
+  const customerId = req.userProfile?.stripe_customer_id;
+  if (paymentIntent.customer !== customerId) {
+    throw AppError.forbidden('Access denied');
   }
-});
 
-router.get('/payment-history/:id', authenticateWithProfile, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const paymentIntentId = req.params.id as string;
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-      expand: ['latest_charge', 'invoice'],
-    }) as any;
-    
-    // Verify ownership
-    const customerId = req.userProfile?.stripe_customer_id;
-    if (paymentIntent.customer !== customerId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    const charge = paymentIntent.latest_charge;
-    
-    res.json({
+  const charge = paymentIntent.latest_charge;
+  
+  res.json({
+    success: true,
+    data: {
       id: paymentIntent.id,
       amount: paymentIntent.amount / 100,
       currency: paymentIntent.currency.toUpperCase(),
@@ -563,10 +438,8 @@ router.get('/payment-history/:id', authenticateWithProfile, async (req: Authenti
       payment_method: paymentIntent.payment_method,
       metadata: paymentIntent.metadata,
       invoice: paymentIntent.invoice,
-    });
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
-  }
-});
+    },
+  });
+}));
 
 export default router;

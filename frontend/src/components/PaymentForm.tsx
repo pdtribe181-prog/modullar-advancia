@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { LoadingButton } from './Spinner';
+import { validateAmount } from '../utils/validation';
 
 interface PaymentFormProps {
   clientSecret?: string;
@@ -13,6 +15,15 @@ export function PaymentForm({ amount, onSuccess, onError }: PaymentFormProps) {
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState('');
+  const [ready, setReady] = useState(false);
+
+  // Validate amount prop
+  useEffect(() => {
+    const amountError = validateAmount(amount);
+    if (amountError) {
+      setMessage(amountError);
+    }
+  }, [amount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,26 +32,42 @@ export function PaymentForm({ amount, onSuccess, onError }: PaymentFormProps) {
       return;
     }
 
+    // Validate amount before submission
+    const amountError = validateAmount(amount);
+    if (amountError) {
+      setMessage(amountError);
+      onError(amountError);
+      return;
+    }
+
     setProcessing(true);
     setMessage('');
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/payment/success`,
-      },
-      redirect: 'if_required',
-    });
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment/success`,
+        },
+        redirect: 'if_required',
+      });
 
-    if (error) {
-      setMessage(error.message || 'Payment failed');
-      onError(error.message || 'Payment failed');
-    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      setMessage('Payment successful!');
-      onSuccess();
+      if (error) {
+        setMessage(error.message || 'Payment failed');
+        onError(error.message || 'Payment failed');
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        setMessage('Payment successful!');
+        onSuccess();
+      } else if (paymentIntent && paymentIntent.status === 'requires_action') {
+        setMessage('Additional authentication required');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Payment processing failed';
+      setMessage(errorMessage);
+      onError(errorMessage);
+    } finally {
+      setProcessing(false);
     }
-
-    setProcessing(false);
   };
 
   const formatAmount = (cents: number) => {
@@ -64,21 +91,28 @@ export function PaymentForm({ amount, onSuccess, onError }: PaymentFormProps) {
         options={{
           layout: 'tabs',
         }}
+        onReady={() => setReady(true)}
       />
 
       {message && (
-        <div className={`message ${message.includes('successful') ? 'success' : 'error'}`}>
+        <div 
+          className={`message ${message.includes('successful') ? 'success' : 'error'}`}
+          role="alert"
+          aria-live="polite"
+        >
           {message}
         </div>
       )}
 
-      <button
+      <LoadingButton
         type="submit"
-        disabled={!stripe || processing}
+        disabled={!stripe || !ready || processing}
         className="pay-button"
+        loading={processing}
+        loadingText="Processing..."
       >
-        {processing ? 'Processing...' : `Pay ${formatAmount(amount)}`}
-      </button>
+        Pay {formatAmount(amount)}
+      </LoadingButton>
     </form>
   );
 }

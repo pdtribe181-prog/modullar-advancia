@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
+import { Spinner } from '../components/Spinner';
+import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmDialog';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -42,9 +45,13 @@ export default function Appointments() {
   const [reason, setReason] = useState('');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingProviders, setLoadingProviders] = useState(true);
+  const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [error, setError] = useState('');
   const [step, setStep] = useState<'list' | 'book' | 'payment'>('list');
   const [clientSecret, setClientSecret] = useState('');
+  const { showToast } = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     loadProviders();
@@ -53,19 +60,29 @@ export default function Appointments() {
 
   async function loadProviders() {
     try {
+      setLoadingProviders(true);
       const data = await api.get<{ providers: Provider[] }>('/appointments/providers');
       setProviders(data.providers);
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load providers';
       console.error('Failed to load providers:', err);
+      showToast(message, 'error');
+    } finally {
+      setLoadingProviders(false);
     }
   }
 
   async function loadAppointments() {
     try {
+      setLoadingAppointments(true);
       const data = await api.get<{ appointments: Appointment[] }>('/appointments/my-appointments?upcoming=true');
       setAppointments(data.appointments);
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load appointments';
       console.error('Failed to load appointments:', err);
+      showToast(message, 'error');
+    } finally {
+      setLoadingAppointments(false);
     }
   }
 
@@ -76,8 +93,10 @@ export default function Appointments() {
         `/appointments/providers/${providerId}/availability?date=${date}`
       );
       setSlots(data.slots);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load availability';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -106,7 +125,7 @@ export default function Appointments() {
       setError('');
 
       const data = await api.post<{
-        appointment: any;
+        appointment: { id: string };
         payment: { clientSecret: string; amount: number };
       }>('/appointments/book', {
         providerId: selectedProvider.id,
@@ -117,21 +136,35 @@ export default function Appointments() {
 
       setClientSecret(data.payment.clientSecret);
       setStep('payment');
-    } catch (err: any) {
-      setError(err.message);
+      showToast('Appointment created! Please complete payment.', 'success');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to book appointment';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
   }
 
   async function handleCancelAppointment(id: string) {
-    if (!confirm('Are you sure you want to cancel this appointment?')) return;
+    const confirmed = await confirm({
+      title: 'Cancel Appointment',
+      message: 'Are you sure you want to cancel this appointment? This action cannot be undone.',
+      confirmText: 'Cancel Appointment',
+      cancelText: 'Keep Appointment',
+      variant: 'danger',
+    });
+    
+    if (!confirmed) return;
 
     try {
       await api.post(`/appointments/${id}/cancel`, { reason: 'Patient requested' });
+      showToast('Appointment cancelled successfully', 'success');
       loadAppointments();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to cancel appointment';
+      setError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -177,7 +210,11 @@ export default function Appointments() {
           {/* Upcoming Appointments */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Your Upcoming Appointments</h2>
-            {appointments.length === 0 ? (
+            {loadingAppointments ? (
+              <div className="flex items-center gap-2 text-gray-500">
+                <Spinner size={20} /> Loading appointments...
+              </div>
+            ) : appointments.length === 0 ? (
               <p className="text-gray-500">No upcoming appointments</p>
             ) : (
               <div className="space-y-4">
@@ -215,26 +252,34 @@ export default function Appointments() {
           {/* Book New Appointment */}
           <section>
             <h2 className="text-xl font-semibold mb-4">Book an Appointment</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {providers.map((provider) => (
-                <div
-                  key={provider.id}
-                  className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer transition"
-                  onClick={() => handleProviderSelect(provider)}
-                >
-                  <h3 className="font-medium">{provider.name}</h3>
-                  <p className="text-sm text-gray-600">{provider.specialty}</p>
-                  <p className="text-lg font-semibold mt-2">
-                    ${provider.consultationFee}
-                  </p>
-                  {provider.acceptsPayments && (
-                    <span className="text-green-600 text-sm">Online payments available</span>
-                  )}
+            {loadingProviders ? (
+              <div className="flex items-center gap-2 text-gray-500">
+                <Spinner size={20} /> Loading providers...
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {providers.map((provider) => (
+                    <div
+                      key={provider.id}
+                      className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer transition"
+                      onClick={() => handleProviderSelect(provider)}
+                    >
+                      <h3 className="font-medium">{provider.name}</h3>
+                      <p className="text-sm text-gray-600">{provider.specialty}</p>
+                      <p className="text-lg font-semibold mt-2">
+                        ${provider.consultationFee}
+                      </p>
+                      {provider.acceptsPayments && (
+                        <span className="text-green-600 text-sm">Online payments available</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            {providers.length === 0 && (
-              <p className="text-gray-500">No providers available</p>
+                {providers.length === 0 && (
+                  <p className="text-gray-500">No providers available</p>
+                )}
+              </>
             )}
           </section>
         </>

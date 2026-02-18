@@ -1,0 +1,240 @@
+# Deploy PR Preview Environment
+# Creates a temporary preview deployment for each pull request
+
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build backend
+        run: npm run build
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+        env:
+          VITE_API_URL: https://preview-${{ env.PR_NUMBER }}-api.advancia.us
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and push API Docker image
+        run: |
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/healthcare/api:pr-${{ env.PR_NUMBER }}"
+          docker build -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
+
+      - name: Deploy API to Cloud Run (Preview)
+        id: deploy-api
+        run: |
+          gcloud run deploy preview-${{ env.PR_NUMBER }}-api \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/healthcare/api:pr-${{ env.PR_NUMBER }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 2 \
+            --timeout 60s \
+            --set-env-vars "NODE_ENV=preview" \
+            --set-env-vars "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+            --set-env-vars "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+            --set-env-vars "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            --set-env-vars "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" \
+            --set-env-vars "STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}" \
+            --set-env-vars "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
+            --set-env-vars "TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}" \
+            --set-env-vars "TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}" \
+            --set-env-vars "TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}" \
+            --set-env-vars "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" \
+            --set-env-vars "SENTRY_ENVIRONMENT=preview" \
+            --set-env-vars "FRONTEND_URL=https://preview-${{ env.PR_NUMBER }}.advancia.us" \
+            --set-env-vars "TRUST_PROXY=true" \
+            --tag pr-${{ env.PR_NUMBER }} \
+            --no-traffic \
+            --quiet
+
+          API_URL=$(gcloud run services describe preview-${{ env.PR_NUMBER }}-api --region ${{ env.REGION }} --format 'value(status.url)')
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Deploy Frontend to Cloud Run (Preview)
+        id: deploy-frontend
+        run: |
+          # Create minimal Dockerfile for static frontend
+          cat > frontend/Dockerfile.preview << 'EOF'
+          FROM nginx:alpine
+          COPY dist /usr/share/nginx/html
+          COPY nginx.conf /etc/nginx/conf.d/default.conf
+          EXPOSE 8080
+          CMD ["nginx", "-g", "daemon off;"]
+          EOF
+
+          # Create nginx config
+          cat > frontend/nginx.conf << 'EOF'
+          server {
+            listen 8080;
+            root /usr/share/nginx/html;
+            index index.html;
+            
+            location / {
+              try_files $uri $uri/ /index.html;
+            }
+            
+            location /health {
+              return 200 'ok';
+              add_header Content-Type text/plain;
+            }
+          }
+          EOF
+
+          cd frontend
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/healthcare/frontend:pr-${{ env.PR_NUMBER }}"
+          docker build -t $IMAGE_TAG -f Dockerfile.preview .
+          docker push $IMAGE_TAG
+
+          gcloud run deploy preview-${{ env.PR_NUMBER }} \
+            --image $IMAGE_TAG \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 256Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 2 \
+            --port 8080 \
+            --tag pr-${{ env.PR_NUMBER }} \
+            --no-traffic \
+            --quiet
+
+          FRONTEND_URL=$(gcloud run services describe preview-${{ env.PR_NUMBER }} --region ${{ env.REGION }} --format 'value(status.url)')
+          echo "frontend_url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR with Preview URLs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const apiUrl = '${{ steps.deploy-api.outputs.api_url }}';
+            const frontendUrl = '${{ steps.deploy-frontend.outputs.frontend_url }}';
+            
+            const body = `## 🚀 Preview Deployment Ready
+            
+            | Service | URL |
+            |---------|-----|
+            | Frontend | ${frontendUrl} |
+            | API | ${apiUrl} |
+            | API Docs | ${apiUrl}/docs |
+            
+            **Note:** Preview environments use test credentials. Changes will be destroyed when the PR is closed.
+            
+            ---
+            *Deployed at ${new Date().toISOString()}*`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && c.body.includes('Preview Deployment Ready')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  cleanup-preview:
+    name: Cleanup Preview
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Delete Preview Services
+        run: |
+          # Delete frontend preview
+          gcloud run services delete preview-${{ env.PR_NUMBER }} \
+            --region ${{ env.REGION }} \
+            --quiet || true
+
+          # Delete API preview
+          gcloud run services delete preview-${{ env.PR_NUMBER }}-api \
+            --region ${{ env.REGION }} \
+            --quiet || true
+
+          echo "Preview environment for PR #${{ env.PR_NUMBER }} cleaned up"

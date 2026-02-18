@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../providers/AuthProvider';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
+import { Spinner, LoadingButton } from '../components/Spinner';
+import { useToast } from '../components/Toast';
 
 interface UserProfile {
   id: string;
@@ -14,11 +16,11 @@ interface UserProfile {
 
 export default function Profile() {
   useAuth(); // Ensures user is authenticated
+  const { showToast } = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -36,8 +38,10 @@ export default function Profile() {
         full_name: response.full_name || '',
         phone: response.phone || '',
       });
-    } catch (err: any) {
-      setError(err.message || 'Failed to load profile');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load profile';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -47,14 +51,15 @@ export default function Profile() {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(null);
 
     try {
       const response = await api.put<UserProfile>('/auth/profile', formData);
       setProfile(response);
-      setSuccess('Profile updated successfully');
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+      showToast('Profile updated successfully', 'success');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to update profile';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -69,8 +74,9 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+      <div className="flex items-center justify-center min-h-[400px]" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+        <Spinner size={48} />
+        <p>Loading profile...</p>
       </div>
     );
   }
@@ -85,14 +91,8 @@ export default function Profile() {
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
           {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-          {success}
         </div>
       )}
 
@@ -169,13 +169,14 @@ export default function Profile() {
           )}
 
           <div className="pt-4 border-t border-gray-200">
-            <button
+            <LoadingButton
               type="submit"
-              disabled={saving}
+              loading={saving}
+              loadingText="Saving..."
               className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+              Save Changes
+            </LoadingButton>
           </div>
         </form>
       </div>

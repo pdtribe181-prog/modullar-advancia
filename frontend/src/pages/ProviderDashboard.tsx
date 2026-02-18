@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
+import { Spinner } from '../components/Spinner';
+import { useToast } from '../components/Toast';
 
 interface Appointment {
   id: string;
@@ -39,6 +41,7 @@ interface Earnings {
 }
 
 export default function ProviderDashboard() {
+  const { showToast } = useToast();
   const [provider, setProvider] = useState<Provider | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [earnings, setEarnings] = useState<Earnings | null>(null);
@@ -56,8 +59,9 @@ export default function ProviderDashboard() {
     try {
       const data = await api.get<{ provider: Provider }>('/provider/me');
       setProvider(data.provider);
-    } catch (err: any) {
-      if (err.message.includes('not found')) {
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load provider';
+      if (message.includes('not found')) {
         setError('You are not registered as a provider');
       }
     } finally {
@@ -69,7 +73,7 @@ export default function ProviderDashboard() {
     try {
       const data = await api.get<{ appointments: Appointment[] }>('/provider/appointments?upcoming=true');
       setAppointments(data.appointments);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load appointments');
     }
   }
@@ -78,7 +82,7 @@ export default function ProviderDashboard() {
     try {
       const data = await api.get<Earnings>('/provider/earnings?period=30');
       setEarnings(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load earnings');
     }
   }
@@ -86,9 +90,12 @@ export default function ProviderDashboard() {
   async function handleConfirm(id: string) {
     try {
       await api.post(`/provider/appointments/${id}/confirm`, {});
+      showToast('Appointment confirmed', 'success');
       loadAppointments();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to confirm';
+      setError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -96,10 +103,13 @@ export default function ProviderDashboard() {
     const notes = prompt('Enter any notes for this appointment:');
     try {
       await api.post(`/provider/appointments/${id}/complete`, { notes });
+      showToast('Appointment marked as complete', 'success');
       loadAppointments();
       loadEarnings();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to complete';
+      setError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -108,9 +118,12 @@ export default function ProviderDashboard() {
     if (!reason) return;
     try {
       await api.post(`/provider/appointments/${id}/cancel`, { reason });
+      showToast('Appointment cancelled', 'success');
       loadAppointments();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to cancel';
+      setError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -133,7 +146,12 @@ export default function ProviderDashboard() {
   }
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="p-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '16px' }}>
+        <Spinner size={48} />
+        <p>Loading dashboard...</p>
+      </div>
+    );
   }
 
   if (!provider) {
@@ -335,8 +353,9 @@ function ProviderProfile({ provider, onUpdate }: { provider: Provider; onUpdate:
       await api.put('/provider/me', form);
       onUpdate();
       setEditing(false);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'An error occurred';
+      alert(message);
     } finally {
       setSaving(false);
     }

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../providers/AuthProvider';
 import { api } from '../services/api';
+import { Spinner } from '../components/Spinner';
+import { useToast } from '../components/Toast';
 
 interface Transaction {
   id: string;
@@ -11,6 +13,7 @@ interface Transaction {
 
 export function Dashboard() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,6 +34,7 @@ export function Dashboard() {
       // Handle gracefully if endpoint doesn't exist yet
       console.log('Transactions not available');
       setError('Failed to load transactions');
+      showToast('Failed to load transactions', 'error');
     } finally {
       setLoading(false);
     }
@@ -85,7 +89,9 @@ export function Dashboard() {
           <h3>Recent Transactions</h3>
           
           {loading ? (
-            <div className="loading">Loading transactions...</div>
+            <div className="loading" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Spinner size={20} /> Loading transactions...
+            </div>
           ) : error ? (
             <div className="error-message">{error}</div>
           ) : transactions.length === 0 ? (

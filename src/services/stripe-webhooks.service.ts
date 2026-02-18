@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { createServiceClient } from '../lib/supabase.js';
 import { sendPaymentSuccessEmail, sendPaymentFailedEmail, sendRefundEmail } from './email.service.js';
+import { logger } from '../middleware/logging.middleware.js';
 
 // Use service role client for webhook operations (bypasses RLS)
 const supabase = createServiceClient();
@@ -74,10 +75,10 @@ export async function processWebhook(event: Stripe.Event): Promise<void> {
   const handler = eventHandlers[event.type];
 
   if (handler) {
-    console.log(`Processing webhook: ${event.type}`);
+    logger.info('Processing webhook', { type: event.type, id: event.id });
     await handler(event);
   } else {
-    console.log(`Unhandled webhook event: ${event.type}`);
+    logger.debug('Unhandled webhook event', { type: event.type });
   }
 
   // Log all webhook events
@@ -96,7 +97,7 @@ async function logWebhookEvent(event: Stripe.Event): Promise<void> {
       processed_at: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Failed to log webhook event:', error);
+    logger.error('Failed to log webhook event', error as Error, { eventId: event.id });
   }
 }
 
@@ -416,7 +417,7 @@ async function handleCustomerCreated(event: Stripe.Event): Promise<void> {
 
 async function handleCustomerUpdated(event: Stripe.Event): Promise<void> {
   // Handle customer updates if needed
-  console.log('Customer updated:', (event.data.object as Stripe.Customer).id);
+  logger.debug('Customer updated', { customerId: (event.data.object as Stripe.Customer).id });
 }
 
 async function handleCustomerDeleted(event: Stripe.Event): Promise<void> {
@@ -522,7 +523,7 @@ function mapBillingInterval(interval?: string): string {
 
 async function handleInvoiceCreated(event: Stripe.Event): Promise<void> {
   const invoice = event.data.object as Stripe.Invoice;
-  console.log('Invoice created:', invoice.id);
+  logger.debug('Invoice created', { invoiceId: invoice.id });
 }
 
 async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
@@ -703,7 +704,7 @@ async function handleTransferReversed(event: Stripe.Event): Promise<void> {
 // ============================================================
 
 async function handlePayoutCreated(event: Stripe.Event): Promise<void> {
-  console.log('Payout created:', (event.data.object as Stripe.Payout).id);
+  logger.debug('Payout created', { payoutId: (event.data.object as Stripe.Payout).id });
 }
 
 async function handlePayoutPaid(event: Stripe.Event): Promise<void> {
@@ -778,13 +779,13 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event): Promise<void
     }
   } else if (session.mode === 'subscription') {
     // Subscription handled by subscription.created webhook
-    console.log('Subscription checkout completed:', session.subscription);
+    logger.debug('Subscription checkout completed', { subscriptionId: session.subscription });
   }
 }
 
 async function handleCheckoutSessionExpired(event: Stripe.Event): Promise<void> {
   const session = event.data.object as Stripe.Checkout.Session;
-  console.log('Checkout session expired:', session.id);
+  logger.debug('Checkout session expired', { sessionId: session.id });
 }
 
 // ============================================================
@@ -807,7 +808,7 @@ async function createNotification(
       read_status: 'unread',
     });
   } catch (error) {
-    console.error('Failed to create notification:', error);
+    logger.error('Failed to create notification', error as Error, { userId, type });
   }
 }
 

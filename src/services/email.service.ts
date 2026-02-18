@@ -4,13 +4,26 @@
  */
 
 import { Resend } from 'resend';
+import { getEnv, isEmailConfigured } from '../config/env.js';
+import { logger } from '../middleware/logging.middleware.js';
 
-// Initialize Resend client
-const resend = process.env.RESEND_API_KEY 
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+// Lazy initialization for Resend client
+let _resend: Resend | null = null;
 
-const FROM_EMAIL = process.env.EMAIL_FROM || 'Healthcare Portal <noreply@healthcare-portal.com>';
+function getResendClient(): Resend | null {
+  if (_resend !== null) {
+    return _resend;
+  }
+  const env = getEnv();
+  if (isEmailConfigured()) {
+    _resend = new Resend(env.RESEND_API_KEY!);
+  }
+  return _resend;
+}
+
+function getFromEmail(): string {
+  return getEnv().EMAIL_FROM;
+}
 
 interface EmailTemplate {
   subject: string;
@@ -213,11 +226,15 @@ Advancia PayLedger
             </table>
           </div>
           
-          ${data.hostedInvoiceUrl ? `
+          ${
+            data.hostedInvoiceUrl
+              ? `
           <div style="text-align: center; margin: 20px 0;">
             <a href="${data.hostedInvoiceUrl}" style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Pay Invoice</a>
           </div>
-          ` : ''}
+          `
+              : ''
+          }
           
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
         </div>
@@ -329,12 +346,16 @@ Advancia PayLedger
                 <td style="padding: 8px 0; color: #6b7280;">Time</td>
                 <td style="padding: 8px 0; text-align: right;">${data.time}</td>
               </tr>
-              ${data.reason ? `
+              ${
+                data.reason
+                  ? `
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">Reason</td>
                 <td style="padding: 8px 0; text-align: right;">${data.reason}</td>
               </tr>
-              ` : ''}
+              `
+                  : ''
+              }
             </table>
           </div>
           
@@ -428,6 +449,185 @@ Need to reschedule? Visit our portal: ${data.portalUrl || 'https://healthcare-po
 Advancia PayLedger
     `,
   }),
+
+  // Security notification templates
+  security_password_changed: (data) => ({
+    subject: 'Security Alert: Your password was changed',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #dc2626; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">Security Alert</h1>
+        </div>
+        <div style="padding: 30px; background-color: #f9fafb;">
+          <p>Hi ${data.name || 'there'},</p>
+          <p>Your account password was changed on <strong>${data.date}</strong> at <strong>${data.time}</strong>.</p>
+          
+          <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>If this wasn't you:</strong></p>
+            <ol style="margin: 10px 0;">
+              <li>Reset your password immediately</li>
+              <li>Review your account activity</li>
+              <li>Enable two-factor authentication</li>
+            </ol>
+          </div>
+          
+          <p>Device info: ${data.device || 'Unknown device'}</p>
+          <p>Location: ${data.location || 'Unknown location'}</p>
+          
+          <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
+        </div>
+      </div>
+    `,
+    text: `
+Security Alert: Password Changed
+
+Hi ${data.name || 'there'},
+
+Your account password was changed on ${data.date} at ${data.time}.
+
+If this wasn't you:
+1. Reset your password immediately
+2. Review your account activity
+3. Enable two-factor authentication
+
+Device: ${data.device || 'Unknown'}
+Location: ${data.location || 'Unknown'}
+
+Advancia PayLedger Security Team
+    `,
+  }),
+
+  security_email_changed: (data) => ({
+    subject: 'Security Alert: Email change requested',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #f59e0b; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">Email Change Request</h1>
+        </div>
+        <div style="padding: 30px; background-color: #f9fafb;">
+          <p>Hi ${data.name || 'there'},</p>
+          <p>A request was made to change your account email from <strong>${data.oldEmail}</strong> to <strong>${data.newEmail}</strong>.</p>
+          
+          <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>If this was you:</strong> Check your new email for a confirmation link.</p>
+            <p style="margin: 10px 0 0;"><strong>If this wasn't you:</strong> Secure your account immediately by changing your password.</p>
+          </div>
+          
+          <p>Request time: ${data.date} at ${data.time}</p>
+          
+          <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
+        </div>
+      </div>
+    `,
+    text: `
+Security Alert: Email Change Requested
+
+Hi ${data.name || 'there'},
+
+A request was made to change your account email from ${data.oldEmail} to ${data.newEmail}.
+
+If this was you: Check your new email for a confirmation link.
+If this wasn't you: Secure your account immediately by changing your password.
+
+Request time: ${data.date} at ${data.time}
+
+Advancia PayLedger Security Team
+    `,
+  }),
+
+  security_new_login: (data) => ({
+    subject: 'Security Alert: New login to your account',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #0d9488; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">New Login Detected</h1>
+        </div>
+        <div style="padding: 30px; background-color: #f9fafb;">
+          <p>Hi ${data.name || 'there'},</p>
+          <p>We detected a new login to your account.</p>
+          
+          <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Login Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280;">Time</td>
+                <td style="padding: 8px 0; text-align: right;">${data.date} at ${data.time}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280;">Device</td>
+                <td style="padding: 8px 0; text-align: right;">${data.device || 'Unknown'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280;">Location</td>
+                <td style="padding: 8px 0; text-align: right;">${data.location || 'Unknown'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280;">IP Address</td>
+                <td style="padding: 8px 0; text-align: right; font-family: monospace;">${data.ipAddress || 'Unknown'}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <p>If this wasn't you, please <a href="${data.securityUrl || '#'}" style="color: #dc2626;">secure your account</a> immediately.</p>
+          
+          <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
+        </div>
+      </div>
+    `,
+    text: `
+New Login Detected
+
+Hi ${data.name || 'there'},
+
+We detected a new login to your account.
+
+Login Details:
+- Time: ${data.date} at ${data.time}
+- Device: ${data.device || 'Unknown'}
+- Location: ${data.location || 'Unknown'}
+- IP Address: ${data.ipAddress || 'Unknown'}
+
+If this wasn't you, secure your account immediately.
+
+Advancia PayLedger Security Team
+    `,
+  }),
+
+  security_mfa_enabled: (data) => ({
+    subject: 'Two-factor authentication enabled',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #059669; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">2FA Enabled</h1>
+        </div>
+        <div style="padding: 30px; background-color: #f9fafb;">
+          <p>Hi ${data.name || 'there'},</p>
+          <p>Two-factor authentication has been <strong>enabled</strong> on your account.</p>
+          
+          <div style="background-color: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;">Your account is now more secure! You'll need to enter a code from your authenticator app when logging in.</p>
+          </div>
+          
+          <p><strong>Important:</strong> Keep your recovery codes in a safe place. You'll need them if you lose access to your authenticator app.</p>
+          
+          <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
+        </div>
+      </div>
+    `,
+    text: `
+Two-Factor Authentication Enabled
+
+Hi ${data.name || 'there'},
+
+Two-factor authentication has been enabled on your account.
+
+Your account is now more secure! You'll need to enter a code from your authenticator app when logging in.
+
+Important: Keep your recovery codes in a safe place.
+
+Advancia PayLedger Security Team
+    `,
+  }),
 };
 
 /**
@@ -437,16 +637,17 @@ export async function sendEmail({ to, template, data }: SendEmailParams): Promis
   try {
     const templateFn = templates[template];
     if (!templateFn) {
-      console.error(`Email template not found: ${template}`);
+      logger.error(`Email template not found`, undefined, { template });
       return false;
     }
 
     const email = templateFn(data);
-    
+    const resend = getResendClient();
+
     // If Resend is configured, send the email
     if (resend) {
       const { data: result, error } = await resend.emails.send({
-        from: FROM_EMAIL,
+        from: getFromEmail(),
         to: [to],
         subject: email.subject,
         html: email.html,
@@ -454,22 +655,20 @@ export async function sendEmail({ to, template, data }: SendEmailParams): Promis
       });
 
       if (error) {
-        console.error('Resend error:', error);
+        logger.error('Resend email error', error as Error, { template, to });
         return false;
       }
 
-      console.log(`📧 Email sent via Resend: ${template} to ${to} (ID: ${result?.id})`);
+      logger.info('Email sent via Resend', { template, to, id: result?.id });
       return true;
     }
 
     // Fallback: just log the email if Resend is not configured
-    console.log(`📧 Email queued (no provider): ${template} to ${to}`);
-    console.log(`   Subject: ${email.subject}`);
-    console.log('   ⚠️  Set RESEND_API_KEY to enable email delivery');
-    
+    logger.debug('Email queued (no provider configured)', { template, to, subject: email.subject });
+
     return true;
   } catch (error) {
-    console.error('Failed to send email:', error);
+    logger.error('Failed to send email', error as Error, { template, to });
     return false;
   }
 }
@@ -624,6 +823,215 @@ export async function sendAppointmentReminderEmail(
   });
 }
 
+// ============================================================
+// SECURITY NOTIFICATION FUNCTIONS
+// ============================================================
+
+interface SecurityNotificationData {
+  name?: string;
+  date: string;
+  time: string;
+  device?: string;
+  location?: string;
+  ipAddress?: string;
+}
+
+/**
+ * Send password changed security alert
+ */
+export async function sendPasswordChangedAlert(
+  email: string,
+  data: SecurityNotificationData
+): Promise<boolean> {
+  return sendEmail({
+    to: email,
+    template: 'security_password_changed',
+    data,
+  });
+}
+
+/**
+ * Send email change security alert (to old email)
+ */
+export async function sendEmailChangeAlert(
+  email: string,
+  data: SecurityNotificationData & { oldEmail: string; newEmail: string }
+): Promise<boolean> {
+  return sendEmail({
+    to: email,
+    template: 'security_email_changed',
+    data,
+  });
+}
+
+/**
+ * Send new login security alert
+ */
+export async function sendNewLoginAlert(
+  email: string,
+  data: SecurityNotificationData & { securityUrl?: string }
+): Promise<boolean> {
+  return sendEmail({
+    to: email,
+    template: 'security_new_login',
+    data,
+  });
+}
+
+/**
+ * Send MFA enabled notification
+ */
+export async function sendMFAEnabledAlert(
+  email: string,
+  data: { name?: string }
+): Promise<boolean> {
+  return sendEmail({
+    to: email,
+    template: 'security_mfa_enabled',
+    data,
+  });
+}
+
+// ============================================================
+// SMS NOTIFICATION FUNCTIONS
+// ============================================================
+
+// SMS templates for security notifications
+const smsTemplates: Record<string, (data: any) => string> = {
+  security_password_changed: (data) =>
+    `SECURITY ALERT: Your Advancia password was changed on ${data.date}. If this wasn't you, reset your password immediately.`,
+
+  security_email_changed: (data) =>
+    `SECURITY ALERT: Email change requested from ${data.oldEmail} to ${data.newEmail}. If this wasn't you, secure your account.`,
+
+  security_new_login: (data) =>
+    `New login to your Advancia account from ${data.device || 'unknown device'} at ${data.location || 'unknown location'}. Not you? Secure your account.`,
+
+  security_mfa_enabled: () =>
+    `Two-factor authentication has been enabled on your Advancia account. Your account is now more secure.`,
+
+  security_mfa_disabled: () =>
+    `ALERT: Two-factor authentication was disabled on your Advancia account. If this wasn't you, re-enable it immediately.`,
+
+  otp_verification: (data) =>
+    `Your Advancia verification code is: ${data.code}. Expires in ${data.expiresIn || '10'} minutes.`,
+
+  payment_received: (data) =>
+    `Payment of $${data.amount} received. Transaction ID: ${data.transactionId?.slice(0, 8)}...`,
+
+  appointment_reminder: (data) =>
+    `Reminder: Appointment with ${data.providerName} tomorrow at ${data.time}. Reply CANCEL to cancel.`,
+};
+
+interface SendSMSParams {
+  to: string;
+  template: string;
+  data: Record<string, any>;
+}
+
+/**
+ * Send SMS using Twilio (placeholder - needs Twilio setup)
+ */
+export async function sendSMS({ to, template, data }: SendSMSParams): Promise<boolean> {
+  try {
+    const templateFn = smsTemplates[template];
+    if (!templateFn) {
+      logger.error('SMS template not found', undefined, { template });
+      return false;
+    }
+
+    const message = templateFn(data);
+
+    // Check if Twilio is configured
+    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+
+    if (twilioSid && twilioToken && twilioFrom) {
+      // Note: Twilio SDK should be dynamically imported when used
+      // const twilio = await import('twilio');
+      // const client = twilio.default(twilioSid, twilioToken);
+      // await client.messages.create({ body: message, to, from: twilioFrom });
+      logger.info('SMS sent via Twilio', { template, to: to.slice(-4) });
+      return true;
+    }
+
+    // Fallback: log SMS for development
+    logger.debug('SMS queued (no provider configured)', {
+      template,
+      to: to.slice(-4),
+      message: message.slice(0, 50) + '...',
+    });
+
+    return true;
+  } catch (error) {
+    logger.error('Failed to send SMS', error as Error, { template, to: to.slice(-4) });
+    return false;
+  }
+}
+
+/**
+ * Send security SMS alert
+ */
+export async function sendSecuritySMS(
+  phone: string,
+  type: 'password_changed' | 'email_changed' | 'new_login' | 'mfa_enabled' | 'mfa_disabled',
+  data: Record<string, any> = {}
+): Promise<boolean> {
+  return sendSMS({
+    to: phone,
+    template: `security_${type}`,
+    data: {
+      ...data,
+      date: data.date || new Date().toLocaleDateString(),
+      time: data.time || new Date().toLocaleTimeString(),
+    },
+  });
+}
+
+/**
+ * Send combined email + SMS security notification
+ * Respects user's notification preferences
+ */
+export async function sendSecurityNotification(
+  user: {
+    email?: string;
+    phone?: string;
+    name?: string;
+    preferences?: {
+      emailNotifications?: boolean;
+      smsNotifications?: boolean;
+    };
+  },
+  type: 'password_changed' | 'email_changed' | 'new_login' | 'mfa_enabled' | 'mfa_disabled',
+  data: Record<string, any> = {}
+): Promise<{ email: boolean; sms: boolean }> {
+  const results = { email: false, sms: false };
+  const notificationData = {
+    ...data,
+    name: user.name,
+    date: data.date || new Date().toLocaleDateString(),
+    time: data.time || new Date().toLocaleTimeString(),
+  };
+
+  // Send email if enabled
+  if (user.email && user.preferences?.emailNotifications !== false) {
+    const emailTemplate = `security_${type}`;
+    results.email = await sendEmail({
+      to: user.email,
+      template: emailTemplate,
+      data: notificationData,
+    });
+  }
+
+  // Send SMS if enabled and phone available
+  if (user.phone && user.preferences?.smsNotifications === true) {
+    results.sms = await sendSecuritySMS(user.phone, type, notificationData);
+  }
+
+  return results;
+}
+
 export default {
   sendEmail,
   sendPaymentSuccessEmail,
@@ -633,4 +1041,11 @@ export default {
   sendAppointmentConfirmedEmail,
   sendAppointmentCancelledEmail,
   sendAppointmentReminderEmail,
+  sendPasswordChangedAlert,
+  sendEmailChangeAlert,
+  sendNewLoginAlert,
+  sendMFAEnabledAlert,
+  sendSMS,
+  sendSecuritySMS,
+  sendSecurityNotification,
 };

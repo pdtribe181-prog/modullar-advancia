@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LoadingButton } from '../components/Spinner';
+import { useToast } from '../components/Toast';
+import { validatePaymentForm, getFieldError, type ValidationError } from '../utils/validation';
 
 export function PaymentPage() {
   const [amount, setAmount] = useState('');
@@ -7,20 +10,32 @@ export function PaymentPage() {
   const [patientId, setPatientId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<ValidationError[]>([]);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors([]);
+
+    const amountCents = Math.round(parseFloat(amount) * 100);
+
+    // Validate with our validation utility
+    const validation = validatePaymentForm({ amount: amountCents });
+    if (!validation.success && validation.errors) {
+      setFieldErrors(validation.errors);
+      return;
+    }
+
+    if (amountCents < 50) {
+      setFieldErrors([{ field: 'amount', message: 'Minimum payment amount is $0.50' }]);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const amountCents = Math.round(parseFloat(amount) * 100);
-      
-      if (amountCents < 50) {
-        throw new Error('Minimum payment amount is $0.50');
-      }
-
       // Store payment info and navigate to checkout
       sessionStorage.setItem('paymentInfo', JSON.stringify({
         amount: amountCents,
@@ -29,13 +44,18 @@ export function PaymentPage() {
         description: invoiceId ? `Invoice #${invoiceId}` : 'Healthcare Payment',
       }));
 
+      showToast('Proceeding to checkout...', 'info');
       navigate('/checkout');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to process');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
   };
+
+  const amountError = getFieldError(fieldErrors, 'amount');
 
   return (
     <div className="payment-page">
@@ -66,7 +86,7 @@ export function PaymentPage() {
             />
           </div>
 
-          <div className="form-group">
+          <div className={`form-group ${amountError ? 'has-error' : ''}`}>
             <label htmlFor="amount">Payment Amount *</label>
             <div className="amount-input">
               <span className="currency">$</span>
@@ -79,15 +99,23 @@ export function PaymentPage() {
                 min="0.50"
                 step="0.01"
                 placeholder="0.00"
+                aria-invalid={!!amountError}
+                aria-describedby={amountError ? 'amount-error' : undefined}
               />
             </div>
+            {amountError && <span id="amount-error" className="field-error">{amountError}</span>}
           </div>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message" role="alert">{error}</div>}
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Processing...' : 'Continue to Payment'}
-          </button>
+          <LoadingButton 
+            type="submit" 
+            className="btn btn-primary" 
+            loading={loading}
+            loadingText="Processing..."
+          >
+            Continue to Payment
+          </LoadingButton>
         </form>
       </div>
 

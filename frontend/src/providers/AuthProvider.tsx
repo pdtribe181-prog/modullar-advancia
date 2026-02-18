@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { api } from '../services/api';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { api, ApiError } from '../services/api';
 
 interface User {
   id: string;
   email: string;
+  phone?: string;
   role: string;
 }
 
@@ -11,6 +12,7 @@ interface AuthResponse {
   data: {
     token: string;
     user: User;
+    expiresAt?: number; // Unix timestamp
   };
 }
 
@@ -18,70 +20,314 @@ interface ProfileResponse {
   data: User;
 }
 
+interface MFAFactor {
+  id: string;
+  type: 'totp' | 'phone';
+  friendlyName?: string;
+  status: 'verified' | 'unverified';
+}
+
+interface MFAEnrollResponse {
+  data: {
+    id: string;
+    type: 'totp';
+    totp: {
+      qr_code: string;
+      secret: string;
+      uri: string;
+    };
+  };
+}
+
+interface MFAFactorsResponse {
+  data: {
+    all: MFAFactor[];
+    totp: MFAFactor[];
+    phone: MFAFactor[];
+  };
+}
+
+interface PhoneOtpResponse {
+  success: boolean;
+  message: string;
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  isAuthenticated: boolean;
+  mfaRequired: boolean;
+  mfaFactorId: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, role?: string) => Promise<void>;
   logout: () => void;
+  refreshSession: () => Promise<void>;
+  // Phone auth
+  sendPhoneOtp: (phone: string) => Promise<void>;
+  verifyPhoneOtp: (phone: string, code: string) => Promise<void>;
+  // OAuth
+  signInWithGoogle: () => Promise<void>;
+  // MFA
+  enrollMFA: (friendlyName?: string) => Promise<MFAEnrollResponse['data']>;
+  verifyMFA: (factorId: string, code: string) => Promise<void>;
+  challengeMFA: (factorId: string, code: string) => Promise<void>;
+  listMFAFactors: () => Promise<MFAFactor[]>;
+  unenrollMFA: (factorId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+// Session storage keys
+const TOKEN_KEY = 'token';
+const TOKEN_EXPIRY_KEY = 'token_expiry';
+const USER_KEY = 'user_data';
 
-  useEffect(() => {
-    // Check for stored token and validate
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      api.setToken(storedToken);
-      // Fetch user profile
-      api.get<ProfileResponse>('/profile')
-        .then((data) => {
-          setUser(data.data);
-          setToken(storedToken);
-        })
-        .catch(() => {
-          localStorage.removeItem('token');
-          setToken(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+// Check if token is expired (with 5 minute buffer)
+function isTokenExpired(expiryTime: number | null): boolean {
+  if (!expiryTime) return false;
+  const bufferMs = 5 * 60 * 1000; // 5 minutes
+  return Date.now() >= expiryTime - bufferMs;
+}
+
+// Parse JWT to get expiry (if no expiresAt from server)
+function getTokenExpiry(token: string): number | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload));
+    return decoded.exp ? decoded.exp * 1000 : null; // Convert to milliseconds
+  } catch {
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = localStorage.getItem(USER_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
     }
+  });
+  const [token, setToken] = useState<string | null>(localStorage.getItem(TOKEN_KEY));
+  const [tokenExpiry, setTokenExpiry] = useState<number | null>(() => {
+    const stored = localStorage.getItem(TOKEN_EXPIRY_KEY);
+    return stored ? parseInt(stored, 10) : null;
+  });
+  const [loading, setLoading] = useState(true);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+
+  // Clear all auth data
+  const clearAuth = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXPIRY_KEY);
+    localStorage.removeItem(USER_KEY);
+    api.setToken(null);
+    setToken(null);
+    setTokenExpiry(null);
+    setUser(null);
   }, []);
+
+  // Set auth data
+  const setAuth = useCallback((newToken: string, userData: User, expiresAt?: number) => {
+    const expiry = expiresAt || getTokenExpiry(newToken);
+    
+    localStorage.setItem(TOKEN_KEY, newToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    if (expiry) {
+      localStorage.setItem(TOKEN_EXPIRY_KEY, expiry.toString());
+    }
+    
+    api.setToken(newToken);
+    setToken(newToken);
+    setTokenExpiry(expiry);
+    setUser(userData);
+  }, []);
+
+  // Validate current session
+  const validateSession = useCallback(async () => {
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    const storedExpiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+    const expiry = storedExpiry ? parseInt(storedExpiry, 10) : null;
+
+    if (!storedToken) {
+      clearAuth();
+      return false;
+    }
+
+    // Check if token is expired
+    if (isTokenExpired(expiry)) {
+      clearAuth();
+      return false;
+    }
+
+    // Validate token with server
+    try {
+      api.setToken(storedToken);
+      const response = await api.get<ProfileResponse>('/profile');
+      setAuth(storedToken, response.data, expiry || undefined);
+      return true;
+    } catch (err) {
+      // If 401, clear auth
+      if (err instanceof ApiError && err.status === 401) {
+        clearAuth();
+      }
+      return false;
+    }
+  }, [clearAuth, setAuth]);
+
+  // Initial session validation
+  useEffect(() => {
+    validateSession().finally(() => setLoading(false));
+  }, [validateSession]);
+
+  // Session expiry timer
+  useEffect(() => {
+    if (!tokenExpiry || !token) return;
+
+    const timeUntilExpiry = tokenExpiry - Date.now();
+    if (timeUntilExpiry <= 0) {
+      clearAuth();
+      return;
+    }
+
+    // Set timer to clear auth when token expires
+    const timerId = setTimeout(() => {
+      clearAuth();
+      // Dispatch custom event for UI to react
+      window.dispatchEvent(new CustomEvent('auth:session-expired'));
+    }, timeUntilExpiry);
+
+    return () => clearTimeout(timerId);
+  }, [tokenExpiry, token, clearAuth]);
+
+  // Cross-tab session sync
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === TOKEN_KEY) {
+        if (e.newValue === null) {
+          // Logged out in another tab
+          setToken(null);
+          setUser(null);
+          setTokenExpiry(null);
+        } else if (e.newValue !== token) {
+          // Token changed in another tab
+          validateSession();
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [token, validateSession]);
+
+  // API error handler for 401 responses
+  useEffect(() => {
+    const handleAuthError = () => {
+      clearAuth();
+    };
+
+    window.addEventListener('auth:unauthorized', handleAuthError);
+    return () => window.removeEventListener('auth:unauthorized', handleAuthError);
+  }, [clearAuth]);
 
   const login = async (email: string, password: string) => {
     const response = await api.post<AuthResponse>('/auth/signin', { email, password });
-    const { token: newToken, user: userData } = response.data;
-    localStorage.setItem('token', newToken);
-    api.setToken(newToken);
-    setToken(newToken);
-    setUser(userData);
+    const { token: newToken, user: userData, expiresAt } = response.data;
+    setAuth(newToken, userData, expiresAt);
   };
 
   const signup = async (email: string, password: string, role = 'patient') => {
     const response = await api.post<AuthResponse>('/auth/signup', { email, password, role });
-    const { token: newToken, user: userData } = response.data;
-    localStorage.setItem('token', newToken);
-    api.setToken(newToken);
-    setToken(newToken);
-    setUser(userData);
+    const { token: newToken, user: userData, expiresAt } = response.data;
+    setAuth(newToken, userData, expiresAt);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    api.setToken(null);
-    setToken(null);
-    setUser(null);
+  const logout = useCallback(() => {
+    clearAuth();
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+  }, [clearAuth]);
+
+  const refreshSession = useCallback(async () => {
+    await validateSession();
+  }, [validateSession]);
+
+  // Phone auth methods
+  const sendPhoneOtp = async (phone: string) => {
+    await api.post<PhoneOtpResponse>('/auth/phone/signin', { phone });
   };
+
+  const verifyPhoneOtp = async (phone: string, code: string) => {
+    const response = await api.post<AuthResponse>('/auth/phone/verify', { phone, token: code });
+    const { token: newToken, user: userData, expiresAt } = response.data;
+    setAuth(newToken, userData, expiresAt);
+    setMfaRequired(false);
+    setMfaFactorId(null);
+  };
+
+  // OAuth methods
+  const signInWithGoogle = async () => {
+    // This redirects to Supabase OAuth flow
+    const googleAuthUrl = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/callback')}`;
+    window.location.href = googleAuthUrl;
+  };
+
+  // MFA methods
+  const enrollMFA = async (friendlyName = 'Authenticator App'): Promise<MFAEnrollResponse['data']> => {
+    const response = await api.post<MFAEnrollResponse>('/auth/mfa/enroll', { friendlyName });
+    return response.data;
+  };
+
+  const verifyMFA = async (factorId: string, code: string) => {
+    await api.post('/auth/mfa/verify', { factorId, code });
+  };
+
+  const challengeMFA = async (factorId: string, code: string) => {
+    const response = await api.post<AuthResponse>('/auth/mfa/challenge', { factorId, code });
+    const { token: newToken, user: userData, expiresAt } = response.data;
+    setAuth(newToken, userData, expiresAt);
+    setMfaRequired(false);
+    setMfaFactorId(null);
+  };
+
+  const listMFAFactors = async (): Promise<MFAFactor[]> => {
+    const response = await api.get<MFAFactorsResponse>('/auth/mfa/factors');
+    return response.data.all;
+  };
+
+  const unenrollMFA = async (factorId: string) => {
+    await api.delete(`/auth/mfa/factors/${factorId}`);
+  };
+
+  const isAuthenticated = !!token && !!user && !isTokenExpired(tokenExpiry);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      loading, 
+      isAuthenticated,
+      mfaRequired,
+      mfaFactorId,
+      login, 
+      signup, 
+      logout,
+      refreshSession,
+      // Phone auth
+      sendPhoneOtp,
+      verifyPhoneOtp,
+      // OAuth
+      signInWithGoogle,
+      // MFA
+      enrollMFA,
+      verifyMFA,
+      challengeMFA,
+      listMFAFactors,
+      unenrollMFA,
+    }}>
       {children}
     </AuthContext.Provider>
   );

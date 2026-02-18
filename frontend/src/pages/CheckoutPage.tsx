@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentForm } from '../components/PaymentForm';
-import { api } from '../services/api';
+import { Spinner } from '../components/Spinner';
+import { useToast } from '../components/Toast';
+import { api, ApiError } from '../services/api';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
 
@@ -20,6 +22,7 @@ export function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const stored = sessionStorage.getItem('paymentInfo');
@@ -55,8 +58,11 @@ export function CheckoutPage() {
       } else {
         throw new Error('Failed to initialize payment');
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to initialize payment');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 
+                      err instanceof Error ? err.message : 'Failed to initialize payment';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -64,18 +70,20 @@ export function CheckoutPage() {
 
   const handleSuccess = () => {
     sessionStorage.removeItem('paymentInfo');
+    showToast('Payment completed successfully!', 'success');
     navigate('/?payment=success');
   };
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
+    showToast(errorMessage, 'error');
   };
 
   if (loading) {
     return (
       <div className="checkout-page">
-        <div className="loading-state">
-          <div className="spinner"></div>
+        <div className="loading-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+          <Spinner size={40} />
           <p>Preparing secure checkout...</p>
         </div>
       </div>

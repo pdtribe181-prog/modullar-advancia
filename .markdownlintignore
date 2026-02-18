@@ -1,0 +1,6 @@
+# Ignore files that aren't actually markdown
+.gcloudignore
+.gitignore
+.dockerignore
+.env*
+*.sql

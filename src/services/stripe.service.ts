@@ -1,9 +1,25 @@
 import Stripe from 'stripe';
+import { getEnv } from '../config/env.js';
 
-// Initialize Stripe with API version
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2026-01-28.clover',
-  typescript: true,
+// Lazy initialization to ensure env is validated first
+let _stripe: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!_stripe) {
+    const env = getEnv();
+    _stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+      apiVersion: '2026-01-28.clover',
+      typescript: true,
+    });
+  }
+  return _stripe;
+}
+
+// Export stripe instance as proxy for backwards compatibility
+export const stripe = new Proxy({} as Stripe, {
+  get(_, prop) {
+    return (getStripe() as any)[prop];
+  },
 });
 
 // Type definitions
@@ -768,9 +784,6 @@ export const webhooksService = {
     return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   },
 };
-
-// Export raw stripe instance for advanced usage
-export { stripe };
 
 // Export all services
 export const stripeServices = {
