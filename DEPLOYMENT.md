@@ -22,7 +22,7 @@
 
 | Service | URL | Status |
 |---------|-----|--------|
-| Frontend | https://frontend-pink-nu-46.vercel.app | ✅ Live |
+| Frontend | https://app.advancia.us | ✅ Live |
 | Backend | https://modullar-advancia.onrender.com | ✅ Live |
 | Database | https://pikguczsvikzragmrojz.supabase.co | ✅ Connected |
 
@@ -89,7 +89,7 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 RESEND_API_KEY=re_xxxxx
 EMAIL_FROM=noreply@advancia.us
-FRONTEND_URL=https://frontend-pink-nu-46.vercel.app
+FRONTEND_URL=https://app.advancia.us
 ```
 
 ---

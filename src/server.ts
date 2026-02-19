@@ -64,7 +64,13 @@ app.use(sentryRequestHandler);
 // Load OpenAPI spec
 let swaggerDocument: OpenAPIV3.Document | null = null;
 try {
-  const openapiFile = readFileSync('./openapi.yaml', 'utf8');
+  // Try dist folder first (production), then root (development)
+  let openapiFile: string;
+  try {
+    openapiFile = readFileSync('./dist/openapi.yaml', 'utf8');
+  } catch {
+    openapiFile = readFileSync('./openapi.yaml', 'utf8');
+  }
   swaggerDocument = parse(openapiFile) as OpenAPIV3.Document;
 } catch {
   logger.warn('OpenAPI spec not found, /docs will be unavailable');

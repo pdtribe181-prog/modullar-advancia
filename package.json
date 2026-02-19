@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "esbuild src/server.ts --bundle --platform=node --target=node20 --outfile=dist/server.js --format=esm --packages=external",
+    "postbuild": "node -e \"require('fs').copyFileSync('openapi.yaml', 'dist/openapi.yaml')\" && echo Build completed successfully",
     "start": "node dist/server.js",
     "dev": "tsx --watch src/server.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -25,7 +26,6 @@
     "format": "npx prettier --write \"src/**/*.ts\"",
     "format:check": "npx prettier --check \"src/**/*.ts\"",
     "prepare": "husky",
-    "postbuild": "echo Build completed successfully",
     "clean": "rimraf dist",
     "build:prod": "npm run clean && npm run build",
     "docker:build": "docker build -t healthcare-payment-api .",
