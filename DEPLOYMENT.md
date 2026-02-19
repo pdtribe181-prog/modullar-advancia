@@ -96,7 +96,7 @@ FRONTEND_URL=https://app.advancia.us
 
 ## 3. Frontend Deployment (Vercel) ✅ Deployed
 
-**Live**: https://frontend-pink-nu-46.vercel.app
+**Live**: https://app.advancia.us
 
 ### Redeploy if needed
 
@@ -228,6 +228,49 @@ The marketing site at `advancia.us` (built with Rocket.new) needs updated links:
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
 1. Adding crypto payment support to the app, OR
 2. Updating landing page messaging to reflect card payment features
+
+---
+
+## 11. CI/CD Setup
+
+### GitHub Actions Pipeline
+
+The repository includes a comprehensive CI/CD pipeline (`.github/workflows/ci.yml`) that runs:
+
+| Job | Description |
+|-----|-------------|
+| **Lint** | TypeScript check + ESLint |
+| **Backend Tests** | Jest tests with mock env vars |
+| **Frontend Tests** | Vitest tests |
+| **Security Scan** | npm audit + secrets detection |
+| **E2E Tests** | Playwright with Chromium |
+
+### Required GitHub Secrets
+
+Go to **Settings → Secrets and variables → Actions** and add:
+
+| Secret Name | Description |
+|-------------|-------------|
+| `SUPABASE_URL` | `https://pikguczsvikzragmrojz.supabase.co` |
+| `SUPABASE_ANON_KEY` | Your Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
+| `STRIPE_SECRET_KEY` | Your Stripe secret key |
+| `STRIPE_PUBLISHABLE_KEY` | Your Stripe publishable key |
+
+### Branch Protection (Recommended)
+
+1. Go to **Settings → Branches → Add rule**
+2. Branch name pattern: `main`
+3. Enable:
+   - ✅ Require status checks to pass before merging
+   - Select: `Lint`, `Backend Tests`, `Frontend Tests`
+   - ✅ Require branches to be up to date before merging
+
+### Auto-Deploy
+
+Deployments are automatic on push to `main`:
+- **Render** - Backend auto-deploys via GitHub integration
+- **Vercel** - Frontend auto-deploys via GitHub integration
 
 ---
 

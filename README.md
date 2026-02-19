@@ -1,185 +1,197 @@
-# Modullar Advancia
+# Advancia PayLedger
 
-Healthcare payment and compliance management platform built with Supabase, Express, and Stripe.
+> Healthcare payment and compliance management platform
+
+[![Backend](https://img.shields.io/badge/Backend-Live-brightgreen)](https://modullar-advancia.onrender.com)
+[![Frontend](https://img.shields.io/badge/Frontend-Live-brightgreen)](https://app.advancia.us)
+[![Tests](https://img.shields.io/badge/Tests-131%20Passing-brightgreen)]()
+
+## Live URLs
+
+| Service | URL | Status |
+|---------|-----|--------|
+| **App** | https://app.advancia.us | ✅ Live |
+| **API** | https://modullar-advancia.onrender.com | ✅ Live |
+| **API Docs** | https://modullar-advancia.onrender.com/docs | ✅ Live |
+| **Landing** | https://advancia.us | ✅ Live |
+
+## Tech Stack
+
+- **Backend**: Node.js + Express + TypeScript
+- **Database**: Supabase (PostgreSQL + Auth + RLS)
+- **Payments**: Stripe (card payments)
+- **Frontend**: React + Vite + TypeScript
+- **Hosting**: Render (API) + Vercel (Frontend)
+- **Monitoring**: Sentry
+- **Email**: Resend
+- **SMS**: Twilio
 
 ## Quick Start
 
 ```bash
-# Backend API
+# Clone and install
+git clone https://github.com/pdtribe181-prog/modullar-advancia.git
+cd modullar-advancia
 npm install
-cp .env.example .env  # Configure environment variables
-npm run dev           # Start API server at http://localhost:3000
 
-# Frontend (in another terminal)
+# Configure environment
+cp .env.example .env
+# Edit .env with your credentials
+
+# Start backend
+npm run dev           # API at http://localhost:3000
+
+# Start frontend (new terminal)
 cd frontend
 npm install
-npm run dev           # Start frontend at http://localhost:5173
+npm run dev           # App at http://localhost:5173
 ```
 
 ## Environment Variables
 
 ```env
-SUPABASE_URL=your-supabase-url
+# Required
+SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-FRONTEND_URL=http://localhost:3001
-PORT=3000
+FRONTEND_URL=http://localhost:5173
+
+# Optional
+RESEND_API_KEY=re_...           # Email notifications
+TWILIO_ACCOUNT_SID=AC...        # SMS notifications
+SENTRY_DSN=https://...          # Error monitoring
 ```
 
 ## Project Structure
 
 ```
 modullar-advancia/
-├── migrations/           # SQL migration files (001-018)
 ├── src/
-│   ├── lib/supabase.ts         # Supabase client
-│   ├── types/                  # TypeScript types
-│   ├── config/                 # Production config
-│   ├── middleware/             # Express middleware (auth, rate limiting)
-│   ├── routes/                 # API routes
-│   │   ├── stripe.routes.ts    # Stripe payment routes
-│   │   ├── connect.routes.ts   # Provider onboarding
-│   │   └── admin.routes.ts     # Admin dashboard API
-│   ├── services/               # Business logic
-│   │   ├── stripe.service.ts   # Stripe SDK wrapper
-│   │   └── stripe-webhooks.service.ts
-│   └── server.ts               # Express API server
-├── src/__tests__/              # API & E2E tests
-├── frontend/                   # React frontend
+│   ├── server.ts              # Express entry point
+│   ├── config/                # Environment config
+│   ├── lib/                   # Supabase client
+│   ├── middleware/            # Auth, rate limiting, security
+│   ├── routes/                # API endpoints
+│   │   ├── auth.routes.ts     # Login, register, MFA
+│   │   ├── stripe.routes.ts   # Payments, subscriptions
+│   │   ├── connect.routes.ts  # Provider onboarding
+│   │   ├── admin.routes.ts    # Admin dashboard
+│   │   ├── appointments.routes.ts
+│   │   ├── provider.routes.ts
+│   │   └── wallet.routes.ts   # Crypto wallet linking
+│   ├── services/              # Business logic
+│   └── __tests__/             # Jest unit tests
+├── frontend/
 │   ├── src/
-│   │   ├── components/         # PaymentForm, Layout, etc
-│   │   ├── pages/              # Home, Payment, Checkout, Dashboard
-│   │   ├── providers/          # Auth, Stripe
-│   │   └── services/           # API client
+│   │   ├── pages/             # React pages
+│   │   ├── components/        # UI components
+│   │   └── providers/         # Auth, Stripe context
 │   └── package.json
-├── Dockerfile                  # Production container
-├── docker-compose.yml          # Container orchestration
-└── package.json
+├── migrations/                # SQL migrations (001-019)
+├── e2e/                       # Playwright E2E tests
+├── render.yaml                # Render deployment config
+└── openapi.yaml               # API documentation
 ```
 
 ## API Endpoints
 
-### Public Routes
-- `GET /health` - Health check
-- `GET /providers` - List all providers
-- `GET /providers/:id` - Get provider by ID
-- `GET /stripe/products` - List products/services
+### Health & Docs
+- `GET /health` - Health check with DB status
+- `GET /docs` - Swagger API documentation
 
 ### Authentication
-- `POST /auth/signup` - Register user
-- `POST /auth/signin` - Login (returns JWT)
-- `POST /auth/signout` - Logout (requires auth)
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login (returns JWT)
+- `POST /auth/logout` - Logout
+- `POST /auth/refresh` - Refresh token
+- `POST /auth/forgot-password` - Password reset email
+- `POST /auth/reset-password` - Reset password
+- `POST /auth/mfa/enroll` - Enable MFA
+- `POST /auth/mfa/verify` - Verify MFA code
 
-### Protected Routes (requires `Authorization: Bearer <token>`)
-- `GET /profile` - Get current user profile
-- `PATCH /profile` - Update profile
-- `GET /patients` - List patients
-- `GET /appointments/patient/:id` - Patient appointments
-
-### Stripe Payment Routes (Protected)
-- `POST /stripe/customers` - Create Stripe customer
-- `POST /stripe/payment-intents` - Create payment intent
-- `GET /stripe/payment-intents/:id` - Get payment intent
-- `POST /stripe/payment-intents/:id/confirm` - Confirm payment
+### Payments (requires auth)
+- `POST /stripe/payment-intents` - Create payment
+- `GET /stripe/payment-intents/:id` - Get payment status
+- `POST /stripe/customers` - Create customer
 - `POST /stripe/refunds` - Issue refund
 - `POST /stripe/subscriptions` - Create subscription
-- `POST /stripe/checkout/sessions` - Create checkout session
-- `POST /stripe/invoices` - Create invoice
 
-### Provider Connect Routes (Protected - Provider role)
-- `POST /connect/onboard` - Start provider onboarding
-- `GET /connect/status` - Check onboarding status
-- `POST /connect/refresh` - Refresh onboarding link
-- `GET /connect/dashboard` - Get Stripe dashboard link
-- `GET /connect/balance` - Get provider balance
-- `GET /connect/payouts` - Get payout history
+### Provider Connect (providers only)
+- `POST /connect/onboard` - Start Stripe onboarding
+- `GET /connect/status` - Onboarding status
+- `GET /connect/balance` - Provider balance
+- `GET /connect/dashboard` - Stripe dashboard link
 
-### Admin Dashboard Routes (Protected - Admin role)
+### Admin (admin role only)
 - `GET /admin/dashboard` - Overview stats
-- `GET /admin/transactions` - List/filter transactions
-- `GET /admin/transactions/:id` - Transaction details
-- `GET /admin/disputes` - List disputes
-- `PATCH /admin/disputes/:id` - Resolve dispute
-- `GET /admin/providers` - Provider management
-- `GET /admin/providers/:id/stripe` - Provider Stripe details
-- `GET /admin/webhooks` - Webhook event log
-- `GET /admin/audit-log` - Compliance audit log
-- `GET /admin/analytics/revenue` - Revenue analytics
-- `GET /admin/system/health` - System health check
+- `GET /admin/transactions` - Transaction list
+- `GET /admin/disputes` - Dispute management
+- `GET /admin/analytics/revenue` - Revenue reports
 
-### Stripe Webhook (No auth - uses Stripe signature)
-- `POST /stripe/webhook` - Handle Stripe webhook events
+### Webhooks
+- `POST /stripe/webhook` - Stripe events
+- `POST /webhooks/supabase` - Database triggers
 
-## Local Development with Stripe
+## Database
 
-```bash
-# Install Stripe CLI
-winget install Stripe.StripeCLI  # Windows
-brew install stripe/stripe-cli/stripe  # macOS
-
-# Login to Stripe
-stripe login
-
-# Start webhook listener (get local webhook secret)
-stripe listen --forward-to localhost:3000/stripe/webhook
-
-# Update .env with CLI webhook secret for local dev
-STRIPE_WEBHOOK_SECRET=whsec_xxxxx
-
-# Test webhook events
-stripe trigger payment_intent.succeeded
-stripe trigger customer.subscription.created
-```
+97+ tables including:
+- `user_profiles`, `patients`, `providers`
+- `appointments`, `transactions`, `invoices`
+- `disputes`, `notifications`, `audit_events`
+- `stripe_customers`, `stripe_webhook_events`
+- `recurring_billing`, `payment_schedules`
 
 ## Testing
 
 ```bash
-npm test              # Run all tests
+npm test              # 131 Jest unit tests
 npm run test:watch    # Watch mode
-npm run test:coverage # With coverage report
+npm run test:coverage # Coverage report
+npm run test:e2e      # Playwright E2E tests
 ```
-
-## Database
-
-97+ tables including: user_profiles, patients, providers, appointments, transactions, invoices, disputes, notifications, stripe_webhook_events, recurring_billing
-
-## Scripts
-
-- `npm run dev` - Start dev server with hot reload
-- `npm run build` - Compile TypeScript
-- `npm start` - Run production server
-- `npm test` - Run API tests
-- `npm run test:connection` - Test Supabase connection
 
 ## Deployment
 
-### Docker
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.
+
+### Quick Deploy
 ```bash
-docker build -t healthcare-payment-api .
-docker run -p 3000:3000 --env-file .env healthcare-payment-api
+# Backend (Render auto-deploys from main branch)
+git push origin main
+
+# Frontend
+cd frontend && vercel --prod
 ```
 
-### Docker Compose
-```bash
-docker-compose up -d
-```
+## Security Features
 
-### Vercel (Frontend)
-```bash
-cd frontend
-vercel --prod
-```
+- JWT authentication with Supabase Auth
+- Row-Level Security (RLS) on all tables
+- Rate limiting per endpoint category
+- Helmet security headers
+- CORS whitelist
+- MFA support (TOTP)
 
-## Rate Limiting
+## Rate Limits
 
-- API: 100 requests per 15 minutes
-- Auth: 10 requests per 15 minutes
-- Payments: 10 requests per minute
-- Sensitive ops: 20 requests per hour
-- Webhooks: 100 requests per minute
+| Category | Limit |
+|----------|-------|
+| API | 100 req/15min |
+| Auth | 10 req/15min |
+| Payments | 10 req/min |
+| Sensitive | 20 req/hour |
+| Webhooks | 100 req/min |
+
+## Contributing
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -m 'feat: add feature'`
+4. Push: `git push origin feature/my-feature`
+5. Open Pull Request
 
 ## License
 
