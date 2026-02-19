@@ -24,7 +24,7 @@ describe('Environment Configuration', () => {
       .string()
       .startsWith('whsec_', 'STRIPE_WEBHOOK_SECRET must start with whsec_'),
     RESEND_API_KEY: z.string().optional(),
-    EMAIL_FROM: z.string().default('Advancia PayLedger <noreply@advanciapayledger.com>'),
+    EMAIL_FROM: z.string().default('Advancia PayLedger <noreply@advancia.us>'),
     FRONTEND_URL: z
       .string()
       .url('FRONTEND_URL must be a valid URL')
@@ -273,7 +273,7 @@ describe('Environment Configuration', () => {
       const result = envSchema.safeParse(validEnv);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.EMAIL_FROM).toBe('Advancia PayLedger <noreply@advanciapayledger.com>');
+        expect(result.data.EMAIL_FROM).toBe('Advancia PayLedger <noreply@advancia.us>');
       }
     });
   });
