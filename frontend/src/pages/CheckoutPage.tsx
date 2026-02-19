@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentForm } from '../components/PaymentForm';
+import { CryptoPaymentOption } from '../components/CryptoPayment';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { api, ApiError } from '../services/api';
@@ -109,6 +110,23 @@ export function CheckoutPage() {
       <div className="checkout-card">
         <h2>Complete Your Payment</h2>
         
+        {/* Crypto Payment Option */}
+        {paymentInfo && (
+          <CryptoPaymentOption
+            amount={paymentInfo.amount}
+            appointmentId={paymentInfo.invoiceId}
+            onSuccess={(url) => {
+              showToast('Redirecting to crypto checkout...', 'info');
+              console.log('Crypto payment URL:', url);
+            }}
+            onError={handleError}
+          />
+        )}
+
+        <div className="payment-divider">
+          <span>or pay with card</span>
+        </div>
+        
         {clientSecret && paymentInfo && (
           <Elements
             stripe={stripePromise}
@@ -133,7 +151,7 @@ export function CheckoutPage() {
       </div>
 
       <div className="security-badge">
-        <span>🔒 Secured by Stripe</span>
+        <span>🔒 Secured by Stripe & Coinbase Commerce</span>
         <p>Your payment information is encrypted and secure</p>
       </div>
     </div>

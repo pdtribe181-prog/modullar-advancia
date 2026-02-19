@@ -1091,3 +1091,144 @@ body {
   border-color: var(--primary);
   outline: none;
 }
+
+/* Crypto Payment Option */
+.crypto-payment-option {
+  background: linear-gradient(135deg, #f7931a 0%, #627eea 100%);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  color: white;
+}
+
+.crypto-payment-option.loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--light);
+  color: var(--secondary);
+}
+
+.crypto-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.crypto-icons {
+  display: flex;
+  gap: 4px;
+}
+
+.crypto-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 1rem;
+}
+
+.crypto-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.crypto-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.benefit-icon {
+  font-size: 1.1rem;
+}
+
+.crypto-currencies {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.currency-badge {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.crypto-pay-button {
+  width: 100%;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a2e;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.crypto-pay-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.crypto-pay-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.crypto-note {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.payment-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  color: var(--secondary);
+}
+
+.payment-divider::before,
+.payment-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.payment-divider span {
+  padding: 0 16px;
+  font-size: 0.9rem;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

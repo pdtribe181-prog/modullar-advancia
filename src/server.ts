@@ -17,6 +17,7 @@ import appointmentsRoutes from './routes/appointments.routes.js';
 import providerRoutes from './routes/provider.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import databaseWebhookRoutes from './routes/database-webhook.routes.js';
+import cryptoRoutes from './routes/crypto.routes.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
 import {
@@ -123,6 +124,9 @@ app.use('/provider', providerRoutes);
 
 // Wallet routes (Web3 wallet linking & crypto payouts)
 app.use('/wallet', walletRoutes);
+
+// Crypto payment routes (Coinbase Commerce)
+app.use('/crypto', cryptoRoutes);
 
 // Database webhook routes (Supabase triggers)
 app.use('/webhooks/supabase', databaseWebhookRoutes);

@@ -1,0 +1,179 @@
+import { useState } from 'react';
+import { LoadingButton } from './Spinner';
+
+interface CryptoPaymentProps {
+  amount: number;
+  appointmentId?: string;
+  onSuccess: (hostedUrl: string) => void;
+  onError: (error: string) => void;
+}
+
+interface CryptoStatusResponse {
+  success: boolean;
+  data: {
+    enabled: boolean;
+    supportedCurrencies: string[];
+    features: {
+      instantSettlement: boolean;
+      noChargebacks: boolean;
+      lowFees: boolean;
+    };
+  };
+}
+
+interface CryptoChargeResponse {
+  success: boolean;
+  data: {
+    id: string;
+    code: string;
+    hostedUrl: string;
+    expiresAt: string;
+    addresses: {
+      bitcoin?: string;
+      ethereum?: string;
+      usdc?: string;
+    };
+    pricing: {
+      local: { amount: string; currency: string };
+      bitcoin?: { amount: string; currency: string };
+      ethereum?: { amount: string; currency: string };
+    };
+  };
+}
+
+export function CryptoPaymentOption({ amount, appointmentId, onSuccess, onError }: CryptoPaymentProps) {
+  const [loading, setLoading] = useState(false);
+  const [cryptoEnabled, setCryptoEnabled] = useState<boolean | null>(null);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+  // Check if crypto payments are enabled
+  const checkStatus = async () => {
+    setCheckingStatus(true);
+    try {
+      const response = await fetch(`${API_URL}/crypto/status`);
+      const data: CryptoStatusResponse = await response.json();
+      setCryptoEnabled(data.success && data.data.enabled);
+    } catch {
+      setCryptoEnabled(false);
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  // Initialize status check on first render
+  if (cryptoEnabled === null && !checkingStatus) {
+    checkStatus();
+  }
+
+  const handleCryptoPayment = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        onError('Please log in to make a payment');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/crypto/charges`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          amount,
+          currency: 'USD',
+          appointmentId,
+          description: `Healthcare payment - ${new Date().toLocaleDateString()}`,
+        }),
+      });
+
+      const data: CryptoChargeResponse = await response.json();
+
+      if (data.success && data.data.hostedUrl) {
+        onSuccess(data.data.hostedUrl);
+        // Redirect to Coinbase Commerce hosted checkout
+        window.location.href = data.data.hostedUrl;
+      } else {
+        onError('Failed to create crypto payment');
+      }
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Crypto payment failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatAmount = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100);
+  };
+
+  // Don't render if crypto is not enabled
+  if (cryptoEnabled === false) {
+    return null;
+  }
+
+  // Loading state
+  if (cryptoEnabled === null) {
+    return (
+      <div className="crypto-payment-option loading">
+        <div className="spinner-small" />
+        <span>Checking crypto payment availability...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="crypto-payment-option">
+      <div className="crypto-header">
+        <div className="crypto-icons">
+          <span className="crypto-icon" title="Bitcoin">₿</span>
+          <span className="crypto-icon" title="Ethereum">Ξ</span>
+          <span className="crypto-icon" title="USDC">$</span>
+        </div>
+        <h4>Pay with Cryptocurrency</h4>
+      </div>
+
+      <div className="crypto-benefits">
+        <div className="benefit">
+          <span className="benefit-icon">⚡</span>
+          <span>Instant settlement</span>
+        </div>
+        <div className="benefit">
+          <span className="benefit-icon">🔒</span>
+          <span>Secure blockchain payment</span>
+        </div>
+        <div className="benefit">
+          <span className="benefit-icon">💰</span>
+          <span>Low 0.5% fee</span>
+        </div>
+      </div>
+
+      <div className="crypto-currencies">
+        <span className="currency-badge">BTC</span>
+        <span className="currency-badge">ETH</span>
+        <span className="currency-badge">USDC</span>
+        <span className="currency-badge">DAI</span>
+      </div>
+
+      <LoadingButton
+        onClick={handleCryptoPayment}
+        disabled={loading}
+        className="crypto-pay-button"
+        loading={loading}
+        loadingText="Creating payment..."
+      >
+        Pay {formatAmount(amount)} with Crypto
+      </LoadingButton>
+
+      <p className="crypto-note">
+        You'll be redirected to a secure payment page to complete your transaction.
+      </p>
+    </div>
+  );
+}
