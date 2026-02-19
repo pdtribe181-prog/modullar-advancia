@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - GitHub repository
-- Google Cloud account with billing enabled
+- Railway account ([railway.app](https://railway.app)) OR Google Cloud account
 - Vercel account ([vercel.com](https://vercel.com))
 - Stripe account with live keys
 - Domain: advancia.us (verified for email)
@@ -14,7 +14,7 @@
 
 ```
 ┌─────────────────┐     ┌──────────────────────┐     ┌─────────────┐
-│   Vercel CDN    │────▶│  Google Cloud Run    │────▶│  Supabase   │
+│   Vercel CDN    │────▶│  Railway / GCP       │────▶│  Supabase   │
 │  (Frontend)     │     │    (Backend API)     │     │ (PostgreSQL)│
 │  app.advancia.us│     │  api.advancia.us     │     │             │
 └─────────────────┘     └──────────────────────┘     └─────────────┘
@@ -28,7 +28,116 @@
 
 ---
 
-## 1. Backend Deployment (Google Cloud Run)
+## 1. Backend Deployment (Railway - Recommended)
+
+### Step 1: Install Railway CLI
+
+```powershell
+# Windows (npm)
+npm install -g @railway/cli
+
+# Or with scoop
+scoop install railway
+```
+
+```bash
+# macOS/Linux
+npm install -g @railway/cli
+# Or: brew install railway
+```
+
+### Step 2: Login and Initialize Project
+
+```bash
+# Login to Railway
+railway login
+
+# Initialize in project directory
+cd modullar-advancia
+railway init
+```
+
+### Step 3: Link to GitHub Repository
+
+```bash
+# Link existing project (if already created on Railway dashboard)
+railway link
+```
+
+### Step 4: Configure Environment Variables
+
+In Railway Dashboard (https://railway.app/dashboard):
+
+1. Select your project
+2. Go to **Variables** tab
+3. Add these environment variables:
+
+```
+NODE_ENV=production
+PORT=3000
+
+# Supabase
+SUPABASE_URL=https://pikguczsvikzragmrojz.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Stripe
+STRIPE_SECRET_KEY=sk_live_xxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+STRIPE_CONNECT_WEBHOOK_SECRET=whsec_connect_xxxxx
+
+# Email
+RESEND_API_KEY=re_xxxxx
+RESEND_FROM_EMAIL=payments@advancia.us
+
+# Security
+JWT_SECRET=your-jwt-secret-at-least-32-chars
+ENCRYPTION_KEY=your-32-byte-encryption-key
+
+# Sentry (optional)
+SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
+```
+
+### Step 5: Deploy
+
+```bash
+# Deploy to Railway
+railway up
+
+# Or with detach (don't wait for completion)
+railway up --detach
+```
+
+### Step 6: Get Deployment URL
+
+```bash
+# View deployment status
+railway status
+
+# Open in browser
+railway open
+```
+
+Your API will be available at: `https://your-project.up.railway.app`
+
+### Step 7: Set Custom Domain (Optional)
+
+1. Go to Railway Dashboard → Settings → Domains
+2. Add custom domain: `api.advancia.us`
+3. Update DNS settings at your registrar
+
+### GitHub Actions Auto-Deploy
+
+Add `RAILWAY_TOKEN` to your GitHub repository secrets:
+
+1. Generate token: `railway login --token` or from Railway Dashboard → Account Settings → Tokens
+2. Add to GitHub: Repository → Settings → Secrets → Actions → New secret → `RAILWAY_TOKEN`
+
+Pushes to `main` will auto-deploy via `.github/workflows/railway-deploy.yml`.
+
+---
+
+## 2. Backend Deployment (Google Cloud Run - Alternative)
 
 ### Step 1: Install Google Cloud CLI
 
