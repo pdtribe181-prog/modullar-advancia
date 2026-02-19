@@ -7,7 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including dev for build)
-RUN npm ci
+# --ignore-scripts skips husky prepare which isn't needed in Docker
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
@@ -21,7 +22,8 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+# --ignore-scripts skips husky prepare which isn't needed in production
+RUN npm ci --omit=dev --ignore-scripts
 
 # Production stage
 FROM node:20-alpine AS production
