@@ -195,8 +195,39 @@ npm run test:coverage
 - [x] 131 tests passing
 - [x] Frontend deployed to Vercel
 - [x] Backend deployed to Render
-- [ ] Stripe webhook configured
-- [ ] VITE_API_URL set in Vercel
+- [x] Stripe webhook configured
+- [x] VITE_API_URL set in Vercel
+- [x] Google OAuth enabled
+- [x] SMTP configured (Resend)
+- [x] Sentry monitoring enabled
+
+---
+
+## 9. Verified Tests (Feb 19, 2026)
+
+| Test | Result |
+|------|--------|
+| Health check | ✅ `{"status":"healthy","database":"connected","monitoring":"enabled"}` |
+| User registration | ✅ Creates user + session |
+| Stripe payment intent | ✅ `pi_*` created with client secret |
+| Frontend accessibility | ✅ HTTP 200 |
+
+---
+
+## 10. Landing Page Integration
+
+The marketing site at `advancia.us` (built with Rocket.new) needs updated links:
+
+| Current Link | Should Point To |
+|--------------|-----------------|
+| `/signup` | `https://app.advancia.us/login?mode=signup` |
+| `/login` | `https://app.advancia.us/login` |
+| "Get Started" button | `https://app.advancia.us` |
+| "Create Free Account" | `https://app.advancia.us/login?mode=signup` |
+
+**Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
+1. Adding crypto payment support to the app, OR
+2. Updating landing page messaging to reflect card payment features
 
 ---
 
