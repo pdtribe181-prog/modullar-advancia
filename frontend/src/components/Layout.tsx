@@ -17,6 +17,8 @@ export function Layout() {
             {user ? (
               <>
                 <Link to="/dashboard">Dashboard</Link>
+                <Link to="/booking/medbed">MedBed</Link>
+                <Link to="/wallet">Wallet</Link>
                 <Link to="/appointments">Appointments</Link>
                 <Link to="/history">Payment History</Link>
                 <Link to="/provider">Provider Portal</Link>

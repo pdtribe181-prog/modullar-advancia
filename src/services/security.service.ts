@@ -6,7 +6,6 @@
 import { supabase } from '../lib/supabase.js';
 import { logger } from '../middleware/logging.middleware.js';
 import { sendSecurityNotification } from './email.service.js';
-import { sendSecuritySMS } from './sms.service.js';
 
 export type SecurityEventType =
   | 'login'

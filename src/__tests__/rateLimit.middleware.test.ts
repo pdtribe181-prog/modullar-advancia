@@ -2,18 +2,18 @@
  * Unit tests for rate limiting middleware
  */
 
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 // Mock express-rate-limit before importing the middleware
-const mockRateLimit = jest.fn();
-jest.mock('express-rate-limit', () => ({
+const mockRateLimit = jest.fn<any>();
+jest.unstable_mockModule('express-rate-limit', () => ({
   __esModule: true,
   default: mockRateLimit,
 }));
 
 // Mock environment config
-jest.mock('../config/env', () => ({
+jest.unstable_mockModule('../config/env', () => ({
   getEnv: jest.fn(() => ({
     RATE_LIMIT_API_WINDOW_MS: 900000,
     RATE_LIMIT_API_MAX: 100,
@@ -44,8 +44,8 @@ describe('Rate Limit Middleware', () => {
       ip: '127.0.0.1',
     };
     mockRes = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn().mockReturnThis() as any,
+      json: jest.fn() as any,
     };
     mockNext = jest.fn() as NextFunction;
 
@@ -75,7 +75,7 @@ describe('Rate Limit Middleware', () => {
 
       apiLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       const keyGenerator = config.keyGenerator;
 
       const reqWithUser = { ...mockReq, user: { id: 'user-123' } } as any;
@@ -87,7 +87,7 @@ describe('Rate Limit Middleware', () => {
 
       apiLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       const keyGenerator = config.keyGenerator;
 
       expect(keyGenerator(mockReq)).toBe('127.0.0.1');
@@ -98,7 +98,7 @@ describe('Rate Limit Middleware', () => {
 
       apiLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       const keyGenerator = config.keyGenerator;
 
       expect(keyGenerator({})).toBe('unknown');
@@ -122,7 +122,7 @@ describe('Rate Limit Middleware', () => {
 
       apiLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       expect(config.message).toEqual({ error: 'Too many requests, please try again later' });
     });
   });
@@ -153,7 +153,7 @@ describe('Rate Limit Middleware', () => {
 
       authLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       expect(config.message).toEqual({
         error: 'Too many authentication attempts, please try again later',
       });
@@ -185,7 +185,7 @@ describe('Rate Limit Middleware', () => {
 
       paymentLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       expect(config.message).toEqual({ error: 'Too many payment requests, please slow down' });
     });
   });
@@ -233,7 +233,7 @@ describe('Rate Limit Middleware', () => {
 
       webhookLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       // Webhook limiter should not have a custom keyGenerator
       expect(config.keyGenerator).toBeUndefined();
     });
@@ -264,7 +264,7 @@ describe('Rate Limit Middleware', () => {
 
       onboardingLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       expect(config.message).toEqual({
         error: 'Too many onboarding attempts, please try again later',
       });
@@ -280,7 +280,7 @@ describe('Rate Limit Middleware', () => {
 
       apiLimiter(mockReq as Request, mockRes as Response, mockNext);
 
-      const config = mockRateLimit.mock.calls[0][0];
+      const config = mockRateLimit.mock.calls[0][0] as any;
       expect(config.standardHeaders).toBe(true);
       expect(config.legacyHeaders).toBe(false);
     });

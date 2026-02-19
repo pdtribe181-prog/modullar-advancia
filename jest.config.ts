@@ -11,25 +11,33 @@ export default {
       'ts-jest',
       {
         useESM: true,
+        tsconfig: {
+          target: 'ES2022',
+          module: 'ESNext',
+        },
       },
     ],
   },
   testMatch: ['**/src/__tests__/**/*.test.ts'],
-  // Exclude E2E, API integration tests (require running server), and complex mock tests
+  // Exclude E2E and API integration tests (require running server)
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
     '/tests/',
     'e2e\\.test\\.ts$',
     'api\\.test\\.ts$',
-    'auth\\.middleware\\.test\\.ts$',
-    'rateLimit\\.middleware\\.test\\.ts$',
-    'stripe\\.service\\.test\\.ts$',
-    'security\\.middleware\\.test\\.ts$',
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testTimeout: 30000,
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/types/**'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
+  coverageThreshold: {
+    global: {
+      statements: 12,
+      branches: 15,
+      functions: 15,
+      lines: 12,
+    },
+  },
 };

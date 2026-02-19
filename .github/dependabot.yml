@@ -1,0 +1,90 @@
+# Dependabot — automated dependency update PRs
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # ── Backend npm ──
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/New_York
+    open-pull-requests-limit: 10
+    reviewers:
+      - pdtribe181-prog
+    labels:
+      - dependencies
+      - backend
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # Group all minor/patch updates together to reduce PR noise
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Pin major versions manually
+      - dependency-name: '@supabase/supabase-js'
+        update-types: [version-update:semver-major]
+      - dependency-name: stripe
+        update-types: [version-update:semver-major]
+      - dependency-name: express
+        update-types: [version-update:semver-major]
+
+  # ── Frontend npm ──
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    reviewers:
+      - pdtribe181-prog
+    labels:
+      - dependencies
+      - frontend
+    commit-message:
+      prefix: 'chore(deps-frontend)'
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # ── GitHub Actions ──
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    reviewers:
+      - pdtribe181-prog
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: 'chore(actions)'
+
+  # ── Docker ──
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/New_York
+    reviewers:
+      - pdtribe181-prog
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: 'chore(docker)'

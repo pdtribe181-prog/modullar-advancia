@@ -22,6 +22,9 @@ const WalletConnect = lazy(() => import('./pages/WalletConnect').then(m => ({ de
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings').then(m => ({ default: m.SecuritySettings })));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
+// Add MedBed Booking Page
+const MedBedBooking = lazy(() => import('./pages/MedBedBooking').then(m => ({ default: m.MedBedBooking })));
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -61,6 +64,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Appointments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="booking/medbed"
+            element={
+              <ProtectedRoute>
+                <MedBedBooking />
               </ProtectedRoute>
             }
           />

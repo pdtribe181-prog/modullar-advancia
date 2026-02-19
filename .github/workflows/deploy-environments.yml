@@ -1,0 +1,191 @@
+# Multi-Environment Deployment
+# Deploys to staging (develop branch) and production (main branch + manual)
+
+name: Deploy Environments
+
+on:
+  push:
+    branches:
+      - main      # → production
+      - develop   # → staging
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      reason:
+        description: 'Reason for manual deploy'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel an in-flight deploy
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Staging deploy — triggered by push to develop or manual
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → Staging
+    runs-on: ubuntu-latest
+    if: |
+      (github.ref == 'refs/heads/develop' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://modullar-advancia-staging.onrender.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Trigger Render staging deploy
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}")
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -1)
+          if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
+            echo "Deploy hook failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Staging deploy triggered (HTTP $HTTP_STATUS)"
+
+      - name: Health check staging
+        run: |
+          echo "Waiting 90 seconds for Render to spin up..."
+          sleep 90
+          for i in $(seq 1 10); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://modullar-advancia-staging.onrender.com/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Staging is healthy (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i/10 — got HTTP $STATUS, retrying in 20s..."
+            sleep 20
+          done
+          echo "Staging health check timed out"
+          exit 1
+
+      - name: Notify staging deployed
+        run: |
+          echo "✅ Staging deployment successful"
+          echo "URL: https://modullar-advancia-staging.onrender.com"
+          echo "Commit: ${{ github.sha }}"
+          echo "Deployed by: ${{ github.actor }}"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Production deploy — triggered by push to main or manual
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy → Production
+    runs-on: ubuntu-latest
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://modullar-advancia.onrender.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run production smoke tests
+        run: npm test -- --testPathPattern="smoke|sanity" --passWithNoTests
+        env:
+          NODE_ENV: test
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_ANON_KEY: test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: test-service-key
+          JWT_SECRET: test-jwt-secret-min-32-chars-long-enough
+
+      - name: Trigger Render production deploy
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -1)
+          if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
+            echo "Deploy hook failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Production deploy triggered (HTTP $HTTP_STATUS)"
+
+      - name: Wait and health check production
+        run: |
+          echo "Waiting 90 seconds for deploy to start..."
+          sleep 90
+          for i in $(seq 1 15); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://modullar-advancia.onrender.com/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Production is healthy (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i/15 — HTTP $STATUS, retrying in 20s..."
+            sleep 20
+          done
+          echo "Production health check timed out"
+          exit 1
+
+      - name: Verify API docs
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://modullar-advancia.onrender.com/docs)
+          if [ "$STATUS" = "200" ]; then
+            echo "API docs reachable"
+          else
+            echo "Warning: /docs returned HTTP $STATUS"
+          fi
+
+      - name: Create GitHub deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              auto_merge: false,
+              required_contexts: [],
+              description: 'Deployed via GitHub Actions',
+              production_environment: true
+            });
+
+      - name: Log deployment summary
+        run: |
+          echo "## Production Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          echo "| **URL** | https://modullar-advancia.onrender.com |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Actor** | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Reason** | ${{ inputs.reason || 'Automatic push to main' }} |" >> $GITHUB_STEP_SUMMARY

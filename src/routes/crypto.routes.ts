@@ -163,7 +163,7 @@ router.get(
       return;
     }
 
-    const { code } = req.params;
+    const code = req.params.code as string;
     const charge = await cryptoService.getChargeByCode(code);
 
     res.json({
@@ -199,7 +199,7 @@ router.post(
       return;
     }
 
-    const { code } = req.params;
+    const code = req.params.code as string;
     const charge = await cryptoService.cancelCharge(code);
 
     res.json({
@@ -223,7 +223,7 @@ router.post(
   webhookLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const signature = req.headers['x-cc-webhook-signature'] as string;
-    
+
     if (!signature) {
       res.status(400).json({
         success: false,
@@ -234,10 +234,10 @@ router.post(
 
     // Get raw body for signature verification
     const rawBody = JSON.stringify(req.body);
-    
+
     // Verify signature
     const isValid = cryptoService.verifyWebhookSignature(rawBody, signature);
-    
+
     if (!isValid) {
       console.error('[Crypto Webhook] Invalid signature');
       res.status(401).json({
@@ -248,7 +248,7 @@ router.post(
     }
 
     const event = req.body as { event: CryptoWebhookEvent };
-    
+
     // Process the event asynchronously
     cryptoService.processWebhookEvent(event.event).catch((error) => {
       console.error('[Crypto Webhook] Error processing event:', error);

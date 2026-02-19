@@ -17,7 +17,7 @@ const router = Router();
 
 /**
  * Web3 Wallet Routes
- * 
+ *
  * Provider Wallet Management:
  * 1. POST /wallet/challenge - Generate verification challenge
  * 2. POST /wallet/verify - Verify signature and link wallet
@@ -26,7 +26,7 @@ const router = Router();
  * 5. PATCH /wallet/:id - Update wallet settings
  * 6. DELETE /wallet/:id - Unlink wallet
  * 7. POST /wallet/:id/primary - Set as primary payout wallet
- * 
+ *
  * Transactions:
  * 8. GET /wallet/transactions - Get wallet transactions
  * 9. GET /wallet/transactions/:id - Get transaction details
@@ -232,6 +232,85 @@ router.get(
   })
 );
 
+// ============================================================
+// TRANSACTIONS
+// ============================================================
+
+/**
+ * Get wallet transactions for authenticated provider
+ * GET /wallet/transactions
+ */
+router.get(
+  '/transactions',
+  apiLimiter,
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    // Get provider
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', req.user!.id)
+      .single();
+
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const transactions = await walletTransactionsService.getByProviderId(provider.id, limit);
+
+    res.json({
+      success: true,
+      data: transactions.map((tx) => ({
+        id: tx.id,
+        type: tx.transaction_type,
+        amount: tx.amount,
+        currency: tx.currency,
+        fiatEquivalent: tx.fiat_equivalent,
+        status: tx.status,
+        txHash: tx.tx_hash,
+        createdAt: tx.created_at,
+      })),
+    });
+  })
+);
+
+/**
+ * Get transaction details
+ * GET /wallet/transactions/:id
+ */
+router.get(
+  '/transactions/:id',
+  apiLimiter,
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const transactionId = req.params.id as string;
+    // Get provider
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', req.user!.id)
+      .single();
+
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
+
+    const transaction = await walletTransactionsService.getById(transactionId);
+
+    if (!transaction || transaction.provider_id !== provider.id) {
+      throw AppError.notFound('Transaction not found');
+    }
+
+    res.json({
+      success: true,
+      data: transaction,
+    });
+  })
+);
+
 /**
  * Get wallet details by ID
  * GET /wallet/:id
@@ -389,85 +468,6 @@ router.delete(
     res.json({
       success: true,
       message: 'Wallet unlinked successfully',
-    });
-  })
-);
-
-// ============================================================
-// TRANSACTIONS
-// ============================================================
-
-/**
- * Get wallet transactions for authenticated provider
- * GET /wallet/transactions
- */
-router.get(
-  '/transactions',
-  apiLimiter,
-  authenticateWithProfile,
-  requireRole('provider', 'admin'),
-  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    // Get provider
-    const { data: provider } = await supabase
-      .from('providers')
-      .select('id')
-      .eq('user_id', req.user!.id)
-      .single();
-
-    if (!provider) {
-      throw AppError.notFound('Provider profile not found');
-    }
-
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-    const transactions = await walletTransactionsService.getByProviderId(provider.id, limit);
-
-    res.json({
-      success: true,
-      data: transactions.map((tx) => ({
-        id: tx.id,
-        type: tx.transaction_type,
-        amount: tx.amount,
-        currency: tx.currency,
-        fiatEquivalent: tx.fiat_equivalent,
-        status: tx.status,
-        txHash: tx.tx_hash,
-        createdAt: tx.created_at,
-      })),
-    });
-  })
-);
-
-/**
- * Get transaction details
- * GET /wallet/transactions/:id
- */
-router.get(
-  '/transactions/:id',
-  apiLimiter,
-  authenticateWithProfile,
-  requireRole('provider', 'admin'),
-  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const transactionId = req.params.id as string;
-    // Get provider
-    const { data: provider } = await supabase
-      .from('providers')
-      .select('id')
-      .eq('user_id', req.user!.id)
-      .single();
-
-    if (!provider) {
-      throw AppError.notFound('Provider profile not found');
-    }
-
-    const transaction = await walletTransactionsService.getById(transactionId);
-
-    if (!transaction || transaction.provider_id !== provider.id) {
-      throw AppError.notFound('Transaction not found');
-    }
-
-    res.json({
-      success: true,
-      data: transaction,
     });
   })
 );

@@ -79,6 +79,20 @@ export function Dashboard() {
             <a href="/payment" className="action-btn">
               💳 Make Payment
             </a>
+            <a href="/booking/medbed" className="action-btn">
+              🛏️ MedBed Booking
+            </a>
+            <a href="/wallet" className="action-btn">
+              🦊 Connect Wallet
+            </a>
+            <a href="/profile" className="action-btn">
+              👤 View Profile
+            </a>
+            {user?.role === 'provider' && (
+              <a href="/provider" className="action-btn">
+                👨‍⚕️ Provider Panel
+              </a>
+            )}
             <button className="action-btn" onClick={() => window.print()}>
               🧾 Download Statement
             </button>
@@ -87,7 +101,7 @@ export function Dashboard() {
 
         <div className="dashboard-card full-width">
           <h3>Recent Transactions</h3>
-          
+
           {loading ? (
             <div className="loading" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Spinner size={20} /> Loading transactions...

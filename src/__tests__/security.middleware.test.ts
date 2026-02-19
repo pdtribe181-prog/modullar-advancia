@@ -73,12 +73,12 @@ describe('Security Middleware', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
-    it('should allow custom FRONTEND_URL', () => {
+    it('should allow custom FRONTEND_URL', async () => {
       process.env.FRONTEND_URL = 'https://custom-app.example.com';
 
       // Re-import to get fresh config
       jest.resetModules();
-      const { getCorsConfig: getFreshConfig } = require('../middleware/security.middleware');
+      const { getCorsConfig: getFreshConfig } = await import('../middleware/security.middleware');
       const config = getFreshConfig();
       const callback = jest.fn();
 
@@ -97,11 +97,11 @@ describe('Security Middleware', () => {
       expect(callback).toHaveBeenCalledWith(expect.any(Error));
     });
 
-    it('should allow production origins in production mode', () => {
+    it('should allow production origins in production mode', async () => {
       process.env.NODE_ENV = 'production';
 
       jest.resetModules();
-      const { getCorsConfig: getFreshConfig } = require('../middleware/security.middleware');
+      const { getCorsConfig: getFreshConfig } = await import('../middleware/security.middleware');
       const config = getFreshConfig();
       const callback = jest.fn();
 
@@ -110,11 +110,11 @@ describe('Security Middleware', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
-    it('should allow www subdomain in production', () => {
+    it('should allow www subdomain in production', async () => {
       process.env.NODE_ENV = 'production';
 
       jest.resetModules();
-      const { getCorsConfig: getFreshConfig } = require('../middleware/security.middleware');
+      const { getCorsConfig: getFreshConfig } = await import('../middleware/security.middleware');
       const config = getFreshConfig();
       const callback = jest.fn();
 
@@ -123,11 +123,11 @@ describe('Security Middleware', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
-    it('should allow app subdomain in production', () => {
+    it('should allow app subdomain in production', async () => {
       process.env.NODE_ENV = 'production';
 
       jest.resetModules();
-      const { getCorsConfig: getFreshConfig } = require('../middleware/security.middleware');
+      const { getCorsConfig: getFreshConfig } = await import('../middleware/security.middleware');
       const config = getFreshConfig();
       const callback = jest.fn();
 

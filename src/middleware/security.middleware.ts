@@ -45,25 +45,37 @@ export function configureSecurityHeaders(app: Express) {
  * Configure CORS based on environment
  */
 export function getCorsConfig() {
-  const allowedOrigins = [
-    process.env.FRONTEND_URL || 'http://localhost:3001',
-    'http://localhost:3001',
-    'http://localhost:5173', // Vite dev server
-  ];
+  const allowedOrigins: string[] = [];
 
-  // Add production origins
   if (process.env.NODE_ENV === 'production') {
+    // Production: only allow known production origins
+    if (process.env.FRONTEND_URL) {
+      allowedOrigins.push(process.env.FRONTEND_URL);
+    }
     allowedOrigins.push(
       'https://advancia.us',
       'https://www.advancia.us',
       'https://app.advancia.us'
     );
+  } else {
+    // Development: allow localhost origins
+    allowedOrigins.push(
+      process.env.FRONTEND_URL || 'http://localhost:3001',
+      'http://localhost:3001',
+      'http://localhost:5173' // Vite dev server
+    );
   }
 
   return {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
+      // Allow requests with no origin in development (mobile apps, Postman, etc.)
+      // In production, require an origin header for browser-based requests
       if (!origin) {
+        if (process.env.NODE_ENV === 'production') {
+          // Still allow server-to-server / mobile / curl requests in production
+          // but log for monitoring
+          logger.debug('Request with no origin allowed (server-to-server)', {});
+        }
         return callback(null, true);
       }
 

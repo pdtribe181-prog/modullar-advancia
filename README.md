@@ -2,18 +2,17 @@
 
 > Healthcare payment and compliance management platform
 
-[![Backend](https://img.shields.io/badge/Backend-Live-brightgreen)](https://modullar-advancia.onrender.com)
-[![Frontend](https://img.shields.io/badge/Frontend-Live-brightgreen)](https://app.advancia.us)
-[![Tests](https://img.shields.io/badge/Tests-131%20Passing-brightgreen)]()
+[![Deploy to VPS](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/deploy-vps.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/deploy-vps.yml)
+[![Automated Testing](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/automated-testing.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/automated-testing.yml)
+[![Security Scan](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/security-scan.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/security-scan.yml)
 
 ## Live URLs
 
-| Service | URL | Status |
-|---------|-----|--------|
-| **App** | https://app.advancia.us | ✅ Live |
-| **API** | https://modullar-advancia.onrender.com | ✅ Live |
-| **API Docs** | https://modullar-advancia.onrender.com/docs | ✅ Live |
-| **Landing** | https://advancia.us | ✅ Live |
+| Service      | URL                                                              | Status  |
+| ------------ | ---------------------------------------------------------------- | ------- |
+| **App**      | <https://advanciapayledger.com>                                  | ⏳ Pending |
+| **API**      | <https://advanciapayledger.com/api>                              | ⏳ Pending |
+| **Brand**    | <https://advancia.us>                                            | ⏳ Pending |
 
 ## Tech Stack
 
@@ -67,7 +66,7 @@ SENTRY_DSN=https://...          # Error monitoring
 
 ## Project Structure
 
-```
+```text
 modullar-advancia/
 ├── src/
 │   ├── server.ts              # Express entry point
@@ -99,10 +98,12 @@ modullar-advancia/
 ## API Endpoints
 
 ### Health & Docs
+
 - `GET /health` - Health check with DB status
 - `GET /docs` - Swagger API documentation
 
 ### Authentication
+
 - `POST /auth/register` - Register new user
 - `POST /auth/login` - Login (returns JWT)
 - `POST /auth/logout` - Logout
@@ -113,6 +114,7 @@ modullar-advancia/
 - `POST /auth/mfa/verify` - Verify MFA code
 
 ### Payments (requires auth)
+
 - `POST /stripe/payment-intents` - Create payment
 - `GET /stripe/payment-intents/:id` - Get payment status
 - `POST /stripe/customers` - Create customer
@@ -120,24 +122,28 @@ modullar-advancia/
 - `POST /stripe/subscriptions` - Create subscription
 
 ### Provider Connect (providers only)
+
 - `POST /connect/onboard` - Start Stripe onboarding
 - `GET /connect/status` - Onboarding status
 - `GET /connect/balance` - Provider balance
 - `GET /connect/dashboard` - Stripe dashboard link
 
 ### Admin (admin role only)
+
 - `GET /admin/dashboard` - Overview stats
 - `GET /admin/transactions` - Transaction list
 - `GET /admin/disputes` - Dispute management
 - `GET /admin/analytics/revenue` - Revenue reports
 
 ### Webhooks
+
 - `POST /stripe/webhook` - Stripe events
 - `POST /webhooks/supabase` - Database triggers
 
 ## Database
 
 97+ tables including:
+
 - `user_profiles`, `patients`, `providers`
 - `appointments`, `transactions`, `invoices`
 - `disputes`, `notifications`, `audit_events`
@@ -158,6 +164,7 @@ npm run test:e2e      # Playwright E2E tests
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.
 
 ### Quick Deploy
+
 ```bash
 # Backend (Render auto-deploys from main branch)
 git push origin main
@@ -177,13 +184,13 @@ cd frontend && vercel --prod
 
 ## Rate Limits
 
-| Category | Limit |
-|----------|-------|
-| API | 100 req/15min |
-| Auth | 10 req/15min |
-| Payments | 10 req/min |
-| Sensitive | 20 req/hour |
-| Webhooks | 100 req/min |
+| Category  | Limit         |
+| --------- | ------------- |
+| API       | 100 req/15min |
+| Auth      | 10 req/15min  |
+| Payments  | 10 req/min    |
+| Sensitive | 20 req/hour   |
+| Webhooks  | 100 req/min   |
 
 ## Contributing
 

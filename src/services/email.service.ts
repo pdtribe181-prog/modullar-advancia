@@ -49,7 +49,7 @@ const templates: Record<string, (data: any) => EmailTemplate> = {
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.customerName || 'there'},</p>
           <p>Your payment of <strong>$${data.amount} ${data.currency}</strong> has been successfully processed.</p>
-          
+
           <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Payment Details</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -71,9 +71,9 @@ const templates: Record<string, (data: any) => EmailTemplate> = {
               </tr>
             </table>
           </div>
-          
+
           ${data.receiptUrl ? `<p><a href="${data.receiptUrl}" style="color: #0d9488;">View Receipt</a></p>` : ''}
-          
+
           <p>Thank you for your payment!</p>
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
         </div>
@@ -109,19 +109,19 @@ Advancia PayLedger
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.customerName || 'there'},</p>
           <p>Unfortunately, your payment of <strong>$${data.amount} ${data.currency}</strong> could not be processed.</p>
-          
+
           <div style="background-color: #fef2f2; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #dc2626;">
             <h3 style="margin-top: 0; color: #dc2626;">Reason</h3>
             <p style="margin-bottom: 0;">${data.reason || 'Your payment method was declined.'}</p>
           </div>
-          
+
           <p><strong>What you can do:</strong></p>
           <ul>
             <li>Check your payment details and try again</li>
             <li>Use a different payment method</li>
             <li>Contact your bank if the issue persists</li>
           </ul>
-          
+
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
         </div>
       </div>
@@ -154,7 +154,7 @@ Advancia PayLedger
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.customerName || 'there'},</p>
           <p>Your refund of <strong>$${data.amount} ${data.currency}</strong> has been processed.</p>
-          
+
           <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Refund Details</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -172,9 +172,9 @@ Advancia PayLedger
               </tr>
             </table>
           </div>
-          
+
           <p>The refund should appear in your account within 5-10 business days, depending on your bank.</p>
-          
+
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
         </div>
       </div>
@@ -207,7 +207,7 @@ Advancia PayLedger
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.customerName || 'there'},</p>
           <p>You have a new invoice for <strong>$${data.amount} ${data.currency}</strong>.</p>
-          
+
           <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Invoice Details</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -225,7 +225,7 @@ Advancia PayLedger
               </tr>
             </table>
           </div>
-          
+
           ${
             data.hostedInvoiceUrl
               ? `
@@ -235,7 +235,7 @@ Advancia PayLedger
           `
               : ''
           }
-          
+
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
         </div>
       </div>
@@ -268,7 +268,7 @@ Advancia PayLedger
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.patientName || 'there'},</p>
           <p>Your appointment has been confirmed!</p>
-          
+
           <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Appointment Details</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -294,7 +294,7 @@ Advancia PayLedger
               </tr>
             </table>
           </div>
-          
+
           <p>Please arrive 10 minutes early for your appointment.</p>
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
         </div>
@@ -330,7 +330,7 @@ Advancia PayLedger
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.patientName || 'there'},</p>
           <p>Your appointment has been cancelled.</p>
-          
+
           <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Cancelled Appointment</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -358,7 +358,7 @@ Advancia PayLedger
               }
             </table>
           </div>
-          
+
           ${data.refunded ? '<p>A refund has been processed and should appear in your account within 5-10 business days.</p>' : ''}
           <p>To reschedule, please visit our portal or contact us.</p>
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
@@ -396,7 +396,7 @@ Advancia PayLedger
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.patientName || 'there'},</p>
           <p>This is a friendly reminder that you have an appointment <strong>tomorrow</strong>.</p>
-          
+
           <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Appointment Details</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -414,14 +414,14 @@ Advancia PayLedger
               </tr>
             </table>
           </div>
-          
+
           <p>Please remember to:</p>
           <ul>
             <li>Arrive 10 minutes early</li>
             <li>Bring your ID and insurance card</li>
             <li>Bring a list of current medications</li>
           </ul>
-          
+
           <p>Need to reschedule? <a href="${data.portalUrl || '#'}" style="color: #0d9488;">Visit our portal</a></p>
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger</p>
         </div>
@@ -461,7 +461,7 @@ Advancia PayLedger
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.name || 'there'},</p>
           <p>Your account password was changed on <strong>${data.date}</strong> at <strong>${data.time}</strong>.</p>
-          
+
           <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
             <p style="margin: 0;"><strong>If this wasn't you:</strong></p>
             <ol style="margin: 10px 0;">
@@ -470,10 +470,10 @@ Advancia PayLedger
               <li>Enable two-factor authentication</li>
             </ol>
           </div>
-          
+
           <p>Device info: ${data.device || 'Unknown device'}</p>
           <p>Location: ${data.location || 'Unknown location'}</p>
-          
+
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
         </div>
       </div>
@@ -507,14 +507,14 @@ Advancia PayLedger Security Team
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.name || 'there'},</p>
           <p>A request was made to change your account email from <strong>${data.oldEmail}</strong> to <strong>${data.newEmail}</strong>.</p>
-          
+
           <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
             <p style="margin: 0;"><strong>If this was you:</strong> Check your new email for a confirmation link.</p>
             <p style="margin: 10px 0 0;"><strong>If this wasn't you:</strong> Secure your account immediately by changing your password.</p>
           </div>
-          
+
           <p>Request time: ${data.date} at ${data.time}</p>
-          
+
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
         </div>
       </div>
@@ -545,7 +545,7 @@ Advancia PayLedger Security Team
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.name || 'there'},</p>
           <p>We detected a new login to your account.</p>
-          
+
           <div style="background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Login Details</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -567,9 +567,9 @@ Advancia PayLedger Security Team
               </tr>
             </table>
           </div>
-          
+
           <p>If this wasn't you, please <a href="${data.securityUrl || '#'}" style="color: #dc2626;">secure your account</a> immediately.</p>
-          
+
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
         </div>
       </div>
@@ -603,13 +603,13 @@ Advancia PayLedger Security Team
         <div style="padding: 30px; background-color: #f9fafb;">
           <p>Hi ${data.name || 'there'},</p>
           <p>Two-factor authentication has been <strong>enabled</strong> on your account.</p>
-          
+
           <div style="background-color: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
             <p style="margin: 0;">Your account is now more secure! You'll need to enter a code from your authenticator app when logging in.</p>
           </div>
-          
+
           <p><strong>Important:</strong> Keep your recovery codes in a safe place. You'll need them if you lose access to your authenticator app.</p>
-          
+
           <p style="color: #6b7280; font-size: 14px;">Advancia PayLedger Security Team</p>
         </div>
       </div>
@@ -894,100 +894,10 @@ export async function sendMFAEnabledAlert(
 
 // ============================================================
 // SMS NOTIFICATION FUNCTIONS
+// Delegated to the dedicated sms.service.ts (Twilio integration)
 // ============================================================
 
-// SMS templates for security notifications
-const smsTemplates: Record<string, (data: any) => string> = {
-  security_password_changed: (data) =>
-    `SECURITY ALERT: Your Advancia password was changed on ${data.date}. If this wasn't you, reset your password immediately.`,
-
-  security_email_changed: (data) =>
-    `SECURITY ALERT: Email change requested from ${data.oldEmail} to ${data.newEmail}. If this wasn't you, secure your account.`,
-
-  security_new_login: (data) =>
-    `New login to your Advancia account from ${data.device || 'unknown device'} at ${data.location || 'unknown location'}. Not you? Secure your account.`,
-
-  security_mfa_enabled: () =>
-    `Two-factor authentication has been enabled on your Advancia account. Your account is now more secure.`,
-
-  security_mfa_disabled: () =>
-    `ALERT: Two-factor authentication was disabled on your Advancia account. If this wasn't you, re-enable it immediately.`,
-
-  otp_verification: (data) =>
-    `Your Advancia verification code is: ${data.code}. Expires in ${data.expiresIn || '10'} minutes.`,
-
-  payment_received: (data) =>
-    `Payment of $${data.amount} received. Transaction ID: ${data.transactionId?.slice(0, 8)}...`,
-
-  appointment_reminder: (data) =>
-    `Reminder: Appointment with ${data.providerName} tomorrow at ${data.time}. Reply CANCEL to cancel.`,
-};
-
-interface SendSMSParams {
-  to: string;
-  template: string;
-  data: Record<string, any>;
-}
-
-/**
- * Send SMS using Twilio (placeholder - needs Twilio setup)
- */
-export async function sendSMS({ to, template, data }: SendSMSParams): Promise<boolean> {
-  try {
-    const templateFn = smsTemplates[template];
-    if (!templateFn) {
-      logger.error('SMS template not found', undefined, { template });
-      return false;
-    }
-
-    const message = templateFn(data);
-
-    // Check if Twilio is configured
-    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-
-    if (twilioSid && twilioToken && twilioFrom) {
-      // Note: Twilio SDK should be dynamically imported when used
-      // const twilio = await import('twilio');
-      // const client = twilio.default(twilioSid, twilioToken);
-      // await client.messages.create({ body: message, to, from: twilioFrom });
-      logger.info('SMS sent via Twilio', { template, to: to.slice(-4) });
-      return true;
-    }
-
-    // Fallback: log SMS for development
-    logger.debug('SMS queued (no provider configured)', {
-      template,
-      to: to.slice(-4),
-      message: message.slice(0, 50) + '...',
-    });
-
-    return true;
-  } catch (error) {
-    logger.error('Failed to send SMS', error as Error, { template, to: to.slice(-4) });
-    return false;
-  }
-}
-
-/**
- * Send security SMS alert
- */
-export async function sendSecuritySMS(
-  phone: string,
-  type: 'password_changed' | 'email_changed' | 'new_login' | 'mfa_enabled' | 'mfa_disabled',
-  data: Record<string, any> = {}
-): Promise<boolean> {
-  return sendSMS({
-    to: phone,
-    template: `security_${type}`,
-    data: {
-      ...data,
-      date: data.date || new Date().toLocaleDateString(),
-      time: data.time || new Date().toLocaleTimeString(),
-    },
-  });
-}
+import { sendSMS, sendSecuritySMS } from './sms.service.js';
 
 /**
  * Send combined email + SMS security notification
@@ -1024,13 +934,16 @@ export async function sendSecurityNotification(
     });
   }
 
-  // Send SMS if enabled and phone available
+  // Send SMS if enabled and phone available (delegates to sms.service)
   if (user.phone && user.preferences?.smsNotifications === true) {
-    results.sms = await sendSecuritySMS(user.phone, type, notificationData);
+    const smsResult = await sendSecuritySMS(user.phone, type, notificationData);
+    results.sms = smsResult.success;
   }
 
   return results;
 }
+
+export { sendSMS, sendSecuritySMS };
 
 export default {
   sendEmail,

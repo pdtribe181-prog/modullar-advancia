@@ -1,12 +1,12 @@
-# Advancia PayLedger - Deployment Guide
+# Advancia Padvancia-vps-guide
 
-## Architecture
+## Architecture (VPS - Hostinger)
 
-```
+```text
 ┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
-│   Vercel CDN    │────▶│     Render.com       │────▶│    Supabase     │
-│  (Frontend)     │     │   (Express API)      │     │  (PostgreSQL)   │
-│  React + Vite   │     │     Backend          │     │   Auth + RLS    │
+│  Cloudflare     │────▶│    Hostinger VPS     │────▶│    Supabase     │
+│   (DNS / SSL)   │     │  (Ubuntu 22.04)      │     │  (PostgreSQL)   │
+│                 │     │  Nginx + Node + PM2  │     │   Auth + RLS    │
 └─────────────────┘     └──────────────────────┘     └─────────────────┘
                                │
                                ▼
@@ -20,83 +20,71 @@
 
 ## Live URLs
 
-| Service | URL | Status |
-|---------|-----|--------|
-| Frontend | https://app.advancia.us | ✅ Live |
-| Backend | https://modullar-advancia.onrender.com | ✅ Live |
-| Database | https://pikguczsvikzragmrojz.supabase.co | ✅ Connected |
+| Service  | URL                                        | Status       |
+| -------- | ------------------------------------------ | ------------ |
+| App      | <https://advanciapayledger.com>            | ⏳ Pending   |
+| API      | <https://advanciapayledger.com/api>        | ⏳ Pending   |
+| Brand    | <https://advancia.us>                      | ⏳ Pending   |
+| Database | <https://pikguczsvikzragmrojz.supabase.co> | ✅ Connected |
 
 ---
 
-## Prerequisites
+## 1. VPS Setup Instructions (IP: 76.13.77.8)
 
-- GitHub repository: `pdtribe181-prog/modullar-advancia`
-- Supabase project: `pikguczsvikzragmrojz` ✅
-- Vercel account ✅
-- Render account (free tier)
-- Stripe account
-- Domain: advancia.us
+### Phase 1: Initial Server Setup
+1. SSH into the server: `ssh root@76.13.77.8`
+2. Update system: `apt update && apt upgrade -y`
+3. Install essentials:
+   ```bash
+   apt install -y curl git nginx ufw build-essential
+   ```
+4. Install Node.js 20:
+   ```bash
+   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+   apt install -y nodejs
+   npm install -g pm2
+   ```
 
----
+### Phase 2: Firewall & Security
+1. Configure UFW:
+   ```bash
+   ufw allow OpenSSH
+   ufw allow 'Nginx Full'
+   ufw enable
+   ```
 
-## 1. Supabase (Database) ✅ Already Configured
+### Phase 3: Application Setup
+1. Create directory:
+   ```bash
+   mkdir -p /var/www/advancia
+   chown -R $USER:$USER /var/www/advancia
+   ```
+2. Clone repo (first time manually):
+   ```bash
+   git clone https://github.com/pdtribe181-prog/modullar-advancia.git /var/www/advancia
+   ```
+3. Set environment variables in `.env` on server.
 
-Your Supabase project is ready:
-- **URL**: `https://pikguczsvikzragmrojz.supabase.co`
-- **80+ tables** with RLS policies
-- **131 tests** passing
-
-### Verify Connection
-```bash
-npx tsx test-connection.ts
-```
-
----
-
-## 2. Backend Deployment (Render)
-
-### Option A: One-Click Deploy (Blueprint)
-
-1. Go to https://dashboard.render.com/
-2. Click **"New" → "Blueprint"**
-3. Connect your GitHub repo: `pdtribe181-prog/modullar-advancia`
-4. Render will use `render.yaml` to configure everything
-
-### Option B: Manual Setup
-
-1. Go to https://dashboard.render.com/
-2. Click **"New" → "Web Service"**
-3. Connect GitHub repo
-4. Configure:
-   - **Name**: `advancia-api`
-   - **Region**: Ohio (US East)
-   - **Branch**: `main`
-   - **Runtime**: Node
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-   - **Plan**: Free
-
-### Environment Variables (in Render Dashboard)
-
-```env
-NODE_ENV=production
-PORT=3000
-SUPABASE_URL=https://pikguczsvikzragmrojz.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-STRIPE_SECRET_KEY=sk_test_xxxxx
-STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
-STRIPE_WEBHOOK_SECRET=whsec_xxxxx
-RESEND_API_KEY=re_xxxxx
-EMAIL_FROM=noreply@advancia.us
-FRONTEND_URL=https://app.advancia.us
-```
+### Phase 4: Nginx Configuration
+1. Copy local config to server:
+   ```bash
+   # From local machine
+   scp config/nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
+   ```
+2. Enable site:
+   ```bash
+   # On server
+   ln -s /etc/nginx/sites-available/advancia /etc/nginx/sites-enabled/
+   rm /etc/nginx/sites-enabled/default
+   nginx -t
+   systemctl restart nginx
+   ```
 
 ---
 
-## 3. Frontend Deployment (Vercel) ✅ Deployed
+## 2. CI/CD Pipeline
 
-**Live**: https://app.advancia.us
+**Live**: <https://app.advancia.us>
 
 ### Redeploy if needed
 
@@ -205,12 +193,12 @@ npm run test:coverage
 
 ## 9. Verified Tests (Feb 19, 2026)
 
-| Test | Result |
-|------|--------|
-| Health check | ✅ `{"status":"healthy","database":"connected","monitoring":"enabled"}` |
-| User registration | ✅ Creates user + session |
-| Stripe payment intent | ✅ `pi_*` created with client secret |
-| Frontend accessibility | ✅ HTTP 200 |
+| Test                   | Result                                                                  |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Health check           | ✅ `{"status":"healthy","database":"connected","monitoring":"enabled"}` |
+| User registration      | ✅ Creates user + session                                               |
+| Stripe payment intent  | ✅ `pi_*` created with client secret                                    |
+| Frontend accessibility | ✅ HTTP 200                                                             |
 
 ---
 
@@ -218,14 +206,15 @@ npm run test:coverage
 
 The marketing site at `advancia.us` (built with Rocket.new) needs updated links:
 
-| Current Link | Should Point To |
-|--------------|-----------------|
-| `/signup` | `https://app.advancia.us/login?mode=signup` |
-| `/login` | `https://app.advancia.us/login` |
-| "Get Started" button | `https://app.advancia.us` |
-| "Create Free Account" | `https://app.advancia.us/login?mode=signup` |
+| Current Link           | Should Point To                          |
+| ---------------------- | ---------------------------------------- |
+| `/signup`              | `https://app.advancia.us/login?mode=signup` |
+| `/login`               | `https://app.advancia.us/login`             |
+| "Get Started" button   | `https://app.advancia.us`                   |
+| "Create Free Account"  | `https://app.advancia.us/login?mode=signup` |
 
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
+
 1. Adding crypto payment support to the app, OR
 2. Updating landing page messaging to reflect card payment features
 
@@ -237,29 +226,30 @@ The marketing site at `advancia.us` (built with Rocket.new) needs updated links:
 
 The repository includes a comprehensive CI/CD pipeline (`.github/workflows/ci.yml`) that runs:
 
-| Job | Description |
-|-----|-------------|
-| **Lint** | TypeScript check + ESLint |
-| **Backend Tests** | Jest tests with mock env vars |
-| **Frontend Tests** | Vitest tests |
-| **Security Scan** | npm audit + secrets detection |
-| **E2E Tests** | Playwright with Chromium |
+| Job               | Description                              |
+| ----------------- | ---------------------------------------- |
+| **Lint**          | TypeScript check + ESLint                |
+| **Backend Tests** | Jest tests with mock env vars            |
+| **Frontend Tests**| Vitest tests                             |
+| **Security Scan** | npm audit + secrets detection            |
+| **E2E Tests**     | Playwright with Chromium                 |
 
 ### Required GitHub Secrets
 
 Go to **Settings → Secrets and variables → Actions** and add:
 
-| Secret Name | Description |
-|-------------|-------------|
-| `SUPABASE_URL` | `https://pikguczsvikzragmrojz.supabase.co` |
-| `SUPABASE_ANON_KEY` | Your Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
-| `STRIPE_SECRET_KEY` | Your Stripe secret key |
-| `STRIPE_PUBLISHABLE_KEY` | Your Stripe publishable key |
+| Secret Name                | Description                               |
+| -------------------------- | ----------------------------------------- |
+| `SUPABASE_URL`             | `https://pikguczsvikzragmrojz.supabase.co` |
+| `SUPABASE_ANON_KEY`        | Your Supabase anon key                    |
+| `SUPABASE_SERVICE_ROLE_KEY`| Your Supabase service role key            |
+| `STRIPE_SECRET_KEY`        | Your Stripe secret key                    |
+| `STRIPE_PUBLISHABLE_KEY`   | Your Stripe publishable key               |
 
 ### Branch Protection (Recommended)
 
 1. Go to **Settings → Branches → Add rule**
+
 2. Branch name pattern: `main`
 3. Enable:
    - ✅ Require status checks to pass before merging
@@ -276,7 +266,7 @@ Deployments are automatic on push to `main`:
 
 ## Support
 
-- Render Docs: https://render.com/docs
-- Vercel Docs: https://vercel.com/docs
-- Supabase Docs: https://supabase.com/docs
-- Stripe Docs: https://stripe.com/docs
+- Render Docs: <https://render.com/docs>
+- Vercel Docs: <https://vercel.com/docs>
+- Supabase Docs: <https://supabase.com/docs>
+- Stripe Docs: <https://stripe.com/docs>

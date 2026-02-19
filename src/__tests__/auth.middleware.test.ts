@@ -2,28 +2,32 @@
  * Unit tests for authentication middleware
  */
 
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { Request, Response, NextFunction } from 'express';
-import {
+
+// Create mock functions at top level
+const mockGetUser = jest.fn<any>();
+const mockFrom = jest.fn<any>();
+
+// Use unstable_mockModule for ESM compatibility
+jest.unstable_mockModule('../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: mockGetUser,
+    },
+    from: mockFrom,
+  },
+}));
+
+// Dynamic import after mocks are set up
+const {
   authenticate,
   authenticateWithProfile,
   requireRole,
   optionalAuth,
-  AuthenticatedRequest,
-} from '../middleware/auth.middleware';
-import { supabase } from '../lib/supabase';
+} = await import('../middleware/auth.middleware');
 
-// Mock Supabase
-jest.mock('../lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getUser: jest.fn(),
-    },
-    from: jest.fn(),
-  },
-}));
-
-const mockSupabase = supabase as any;
+type AuthenticatedRequest = Request & { user?: any; userProfile?: any };
 
 describe('Auth Middleware', () => {
   let mockReq: Partial<AuthenticatedRequest>;
@@ -68,7 +72,7 @@ describe('Auth Middleware', () => {
 
     it('should return 401 when token is invalid', async () => {
       mockReq.headers = { authorization: 'Bearer invalid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: null },
         error: new Error('Invalid token'),
       });
@@ -81,7 +85,7 @@ describe('Auth Middleware', () => {
 
     it('should return 401 when user is not found', async () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -95,7 +99,7 @@ describe('Auth Middleware', () => {
     it('should set user on request and call next when token is valid', async () => {
       const mockUser = { id: 'user-123', email: 'test@example.com' };
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
@@ -109,7 +113,7 @@ describe('Auth Middleware', () => {
 
     it('should return 401 when getUser throws an exception', async () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockRejectedValue(new Error('Network error'));
+      mockGetUser.mockRejectedValue(new Error('Network error'));
 
       await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
@@ -129,7 +133,7 @@ describe('Auth Middleware', () => {
       mockSingleMock.mockImplementation(() => Promise.resolve({ data: null, error: null }));
       mockEqMock.mockReturnValue({ single: mockSingleMock });
       mockSelectMock.mockReturnValue({ eq: mockEqMock });
-      mockSupabase.from.mockReturnValue({ select: mockSelectMock });
+      mockFrom.mockReturnValue({ select: mockSelectMock });
     });
 
     it('should return 401 when authorization header is missing', async () => {
@@ -141,7 +145,7 @@ describe('Auth Middleware', () => {
 
     it('should return 401 when token is invalid', async () => {
       mockReq.headers = { authorization: 'Bearer invalid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: null },
         error: new Error('Invalid token'),
       });
@@ -155,7 +159,7 @@ describe('Auth Middleware', () => {
     it('should return 401 when profile is not found', async () => {
       const mockUser = { id: 'user-123', email: 'test@example.com' };
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
@@ -171,7 +175,7 @@ describe('Auth Middleware', () => {
       const mockUser = { id: 'user-123', email: 'test@example.com' };
       const mockProfile = { id: 'user-123', role: 'patient', full_name: 'Test User' };
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
@@ -186,7 +190,7 @@ describe('Auth Middleware', () => {
 
     it('should return 401 when supabase throws an exception', async () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockRejectedValue(new Error('Network error'));
+      mockGetUser.mockRejectedValue(new Error('Network error'));
 
       await authenticateWithProfile(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
@@ -206,7 +210,7 @@ describe('Auth Middleware', () => {
       mockSingleMock.mockImplementation(() => Promise.resolve({ data: null, error: null }));
       mockEqMock.mockReturnValue({ single: mockSingleMock });
       mockSelectMock.mockReturnValue({ eq: mockEqMock });
-      mockSupabase.from.mockReturnValue({ select: mockSelectMock });
+      mockFrom.mockReturnValue({ select: mockSelectMock });
     });
 
     it('should return 403 when user has no profile and no role', async () => {
@@ -262,7 +266,7 @@ describe('Auth Middleware', () => {
       const middleware = requireRole('admin');
       await middleware(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('user_profiles');
+      expect(mockFrom).toHaveBeenCalledWith('user_profiles');
       expect(mockSelectMock).toHaveBeenCalledWith('*');
       expect(mockEqMock).toHaveBeenCalledWith('id', 'user-123');
       expect(mockNext).toHaveBeenCalled();
@@ -299,7 +303,7 @@ describe('Auth Middleware', () => {
     it('should set user when valid token is provided', async () => {
       const mockUser = { id: 'user-123', email: 'test@example.com' };
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
@@ -312,7 +316,7 @@ describe('Auth Middleware', () => {
 
     it('should call next without user when token is invalid', async () => {
       mockReq.headers = { authorization: 'Bearer invalid-token' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: null },
         error: new Error('Invalid token'),
       });
@@ -325,7 +329,7 @@ describe('Auth Middleware', () => {
 
     it('should call next without user when getUser throws', async () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      mockSupabase.auth.getUser.mockRejectedValue(new Error('Network error'));
+      mockGetUser.mockRejectedValue(new Error('Network error'));
 
       await optionalAuth(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
@@ -337,7 +341,7 @@ describe('Auth Middleware', () => {
   describe('edge cases', () => {
     it('should handle empty Bearer token', async () => {
       mockReq.headers = { authorization: 'Bearer ' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: null },
         error: new Error('Empty token'),
       });
@@ -351,7 +355,7 @@ describe('Auth Middleware', () => {
       const mockUser = { id: 'user-123', email: 'test@example.com' };
       mockReq.headers = { authorization: 'Bearer   token-with-spaces  ' };
       // The token would include the spaces after split
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
@@ -359,7 +363,7 @@ describe('Auth Middleware', () => {
       await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
       // Just verify the middleware continues to work
-      expect(mockSupabase.auth.getUser).toHaveBeenCalled();
+      expect(mockGetUser).toHaveBeenCalled();
     });
 
     it('should handle case-sensitive Bearer prefix', async () => {

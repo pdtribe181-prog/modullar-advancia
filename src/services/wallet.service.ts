@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { getEnv } from '../config/env.js';
 import crypto from 'crypto';
+import { verifyMessage } from 'ethers';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 
 // Types
 export type BlockchainNetwork = 'ethereum' | 'solana' | 'polygon' | 'base' | 'arbitrum';
@@ -136,7 +139,7 @@ export const walletChallengeService = {
    */
   async getById(challengeId: string): Promise<WalletChallenge | null> {
     const supabase = getSupabase();
-    
+
     const { data, error } = await supabase
       .from('wallet_verification_challenges')
       .select('*')
@@ -178,31 +181,19 @@ export const walletChallengeService = {
 export const signatureVerificationService = {
   /**
    * Verify an Ethereum/EVM signature (EIP-191 personal sign)
+   * Uses ethers.js verifyMessage to recover the signer address from
+   * the signature and compare it against the expected wallet address.
    */
   verifyEvmSignature(message: string, signature: string, expectedAddress: string): boolean {
     try {
-      // EIP-191 prefixed message hash
-      const messagePrefix = '\x19Ethereum Signed Message:\n';
-      const messageHash = crypto
-        .createHash('sha3-256')
-        .update(messagePrefix + message.length + message)
-        .digest();
-
-      // For production, use ethers.js or viem:
-      // import { verifyMessage } from 'ethers';
-      // const recoveredAddress = verifyMessage(message, signature);
-      // return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
-
-      // Placeholder - in production, implement proper ECDSA recovery
-      // This requires secp256k1 curve operations
-      console.log('EVM signature verification - implement with ethers.js');
-      
       // Basic format validation
       if (!signature.startsWith('0x') || signature.length !== 132) {
         return false;
       }
 
-      return true; // TODO: Implement actual verification
+      // Recover the signer address from the EIP-191 personal_sign signature
+      const recoveredAddress = verifyMessage(message, signature);
+      return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
     } catch {
       return false;
     }
@@ -210,25 +201,41 @@ export const signatureVerificationService = {
 
   /**
    * Verify a Solana signature (Ed25519)
+   * Uses tweetnacl to verify the detached Ed25519 signature against
+   * the public key derived from the base58-encoded Solana address.
    */
   verifySolanaSignature(message: string, signature: string, expectedAddress: string): boolean {
     try {
-      // For production, use @solana/web3.js:
-      // import { PublicKey } from '@solana/web3.js';
-      // import nacl from 'tweetnacl';
-      // const publicKey = new PublicKey(expectedAddress);
-      // const messageBytes = new TextEncoder().encode(message);
-      // const signatureBytes = Buffer.from(signature, 'base64');
-      // return nacl.sign.detached.verify(messageBytes, signatureBytes, publicKey.toBytes());
-
-      console.log('Solana signature verification - implement with @solana/web3.js');
-      
-      // Basic validation
+      // Basic address validation
       if (expectedAddress.length < 32 || expectedAddress.length > 44) {
         return false;
       }
 
-      return true; // TODO: Implement actual verification
+      // Decode the Solana public key from base58
+      const publicKeyBytes = bs58.decode(expectedAddress);
+      if (publicKeyBytes.length !== 32) {
+        return false;
+      }
+
+      // Encode the message as bytes
+      const messageBytes = new TextEncoder().encode(message);
+
+      // Decode the signature (accept both base58 and base64 formats)
+      let signatureBytes: Uint8Array;
+      try {
+        // Try base58 first (Phantom wallet format)
+        signatureBytes = bs58.decode(signature);
+      } catch {
+        // Fall back to base64
+        signatureBytes = new Uint8Array(Buffer.from(signature, 'base64'));
+      }
+
+      if (signatureBytes.length !== 64) {
+        return false;
+      }
+
+      // Verify the Ed25519 detached signature
+      return nacl.sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes);
     } catch {
       return false;
     }
@@ -628,8 +635,16 @@ export const walletTransactionsService = {
       throw new Error(`Failed to initiate payout: ${error.message}`);
     }
 
-    // TODO: Queue actual blockchain transaction
-    // This would integrate with a blockchain RPC provider
+    // Payout is created with 'pending' status.
+    // A background job or admin action is required to process the actual
+    // blockchain transaction via an RPC provider (e.g. Alchemy, QuickNode).
+    // Once the tx is broadcast, call walletTransactionsService.updateStatus()
+    // with the tx_hash and update to 'processing', then 'confirmed' on-chain.
+    //
+    // For now, payouts remain in 'pending' until manually or programmatically
+    // processed. This is intentional — automatic on-chain transfers require
+    // a hot wallet with private key access, which should be handled by a
+    // dedicated, audited payout processor service.
 
     return data;
   },
@@ -646,15 +661,15 @@ export const walletTransactionsService = {
     const supabase = getSupabase();
 
     const updates: Record<string, unknown> = { status };
-    
+
     if (txHash) {
       updates.tx_hash = txHash;
     }
-    
+
     if (confirmations !== undefined) {
       updates.confirmations = confirmations;
     }
-    
+
     if (status === 'confirmed') {
       updates.confirmed_at = new Date().toISOString();
     }
