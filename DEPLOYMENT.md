@@ -3,11 +3,11 @@
 ## Architecture
 
 ```
-┌─────────────────┐     ┌──────────────────────┐
-│   Vercel CDN    │────▶│     Supabase         │
-│  (Frontend)     │     │    (PostgreSQL +     │
-│  app.advancia.us│     │     Auth + API)      │
-└─────────────────┘     └──────────────────────┘
+┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
+│   Vercel CDN    │────▶│     Render.com       │────▶│    Supabase     │
+│  (Frontend)     │     │   (Express API)      │     │  (PostgreSQL)   │
+│  React + Vite   │     │     Backend          │     │   Auth + RLS    │
+└─────────────────┘     └──────────────────────┘     └─────────────────┘
                                │
                                ▼
                         ┌─────────────┐
@@ -18,12 +18,23 @@
 
 ---
 
+## Live URLs
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://frontend-pink-nu-46.vercel.app |
+| Backend | (Deploy to Render - see below) |
+| Database | https://pikguczsvikzragmrojz.supabase.co |
+
+---
+
 ## Prerequisites
 
-- GitHub repository (pdtribe181-prog/modullar-advancia)
+- GitHub repository: `pdtribe181-prog/modullar-advancia`
 - Supabase project: `pikguczsvikzragmrojz` ✅
-- Vercel account
-- Stripe account with live keys
+- Vercel account ✅
+- Render account (free tier)
+- Stripe account
 - Domain: advancia.us
 
 ---
@@ -42,54 +53,107 @@ npx tsx test-connection.ts
 
 ---
 
-## 2. Frontend Deployment (Vercel)
+## 2. Backend Deployment (Render)
 
-### Step 1: Install Vercel CLI
+### Option A: One-Click Deploy (Blueprint)
 
-```bash
-npm install -g vercel
+1. Go to https://dashboard.render.com/
+2. Click **"New" → "Blueprint"**
+3. Connect your GitHub repo: `pdtribe181-prog/modullar-advancia`
+4. Render will use `render.yaml` to configure everything
+
+### Option B: Manual Setup
+
+1. Go to https://dashboard.render.com/
+2. Click **"New" → "Web Service"**
+3. Connect GitHub repo
+4. Configure:
+   - **Name**: `advancia-api`
+   - **Region**: Ohio (US East)
+   - **Branch**: `main`
+   - **Runtime**: Node
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Plan**: Free
+
+### Environment Variables (in Render Dashboard)
+
+```env
+NODE_ENV=production
+PORT=3000
+SUPABASE_URL=https://pikguczsvikzragmrojz.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+STRIPE_SECRET_KEY=sk_test_xxxxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+RESEND_API_KEY=re_xxxxx
+EMAIL_FROM=noreply@advancia.us
+FRONTEND_URL=https://frontend-pink-nu-46.vercel.app
 ```
 
-### Step 2: Deploy Frontend
+---
+
+## 3. Frontend Deployment (Vercel) ✅ Deployed
+
+**Live**: https://frontend-pink-nu-46.vercel.app
+
+### Redeploy if needed
 
 ```bash
 cd frontend
 vercel --prod
 ```
 
-### Step 3: Add Environment Variables (in Vercel Dashboard)
+### Environment Variables (in Vercel Dashboard)
 
 ```env
-VITE_API_URL=https://pikguczsvikzragmrojz.supabase.co
-VITE_STRIPE_PUBLISHABLE_KEY=pk_live_xxxxx
+VITE_API_URL=https://advancia-api.onrender.com
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 VITE_SUPABASE_URL=https://pikguczsvikzragmrojz.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### Step 4: Custom Domain
+---
 
-1. Go to Vercel Dashboard → Settings → Domains
-2. Add `app.advancia.us`
-3. Update DNS:
+## 4. Stripe Webhook Configuration
 
-| Type | Name | Value |
-|------|------|-------|
-| CNAME | app | cname.vercel-dns.com |
+### Development (Local)
+
+```bash
+stripe listen --forward-to localhost:3000/stripe/webhook
+```
+
+### Production
+
+1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
+2. Add endpoint: `https://advancia-api.onrender.com/stripe/webhook`
+3. Select events:
+   - `payment_intent.succeeded`
+   - `payment_intent.payment_failed`
+   - `charge.refunded`
+   - `account.updated` (Connect)
 
 ---
 
-## 3. Backend (Local Development)
+## 5. Local Development
 
-### Start Development Server
+### Start Backend
 
 ```bash
-npm install
 npm run dev
+# → http://localhost:3000
 ```
 
-Server runs at `http://localhost:3000`
+### Start Frontend
 
-### Test Health
+```bash
+cd frontend
+npm run dev
+# → http://localhost:5173
+```
+
+### Health Check
 
 ```bash
 curl http://localhost:3000/health
@@ -97,77 +161,10 @@ curl http://localhost:3000/health
 
 ---
 
-## 4. Backend (Docker - Optional)
-
-### Build and Run
+## 6. Testing
 
 ```bash
-docker build -t advancia-api .
-docker run -p 3000:3000 --env-file .env advancia-api
-```
-
-### Docker Compose
-
-```bash
-docker-compose up -d
-```
-
----
-
-## 5. Stripe Webhook Configuration
-
-### Development (Local)
-
-```bash
-# Install Stripe CLI
-stripe login
-
-# Forward webhooks to local server
-stripe listen --forward-to localhost:3000/stripe/webhook
-```
-
-### Production
-
-1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
-2. Add endpoint: `https://your-api-url/stripe/webhook`
-3. Select events:
-   - `payment_intent.succeeded`
-   - `payment_intent.payment_failed`
-   - `charge.refunded`
-   - `invoice.payment_succeeded`
-
----
-
-## 6. Environment Variables
-
-### Required (.env)
-
-```env
-# Supabase
-SUPABASE_URL=https://pikguczsvikzragmrojz.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-# Stripe
-STRIPE_SECRET_KEY=sk_test_xxxxx
-STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
-STRIPE_WEBHOOK_SECRET=whsec_xxxxx
-
-# Email
-RESEND_API_KEY=re_xxxxx
-EMAIL_FROM=Advancia PayLedger <noreply@advancia.us>
-
-# Server
-PORT=3000
-FRONTEND_URL=http://localhost:5173
-```
-
----
-
-## 7. Testing
-
-```bash
-# Run all tests
+# Run all tests (131 passing)
 npm test
 
 # With coverage
@@ -176,18 +173,37 @@ npm run test:coverage
 
 ---
 
+## 7. Custom Domain (Optional)
+
+### Frontend (Vercel)
+
+1. Vercel Dashboard → Settings → Domains
+2. Add `app.advancia.us`
+3. DNS: `CNAME app → cname.vercel-dns.com`
+
+### Backend (Render)
+
+1. Render Dashboard → Settings → Custom Domains
+2. Add `api.advancia.us`
+3. DNS: Follow Render's instructions
+
+---
+
 ## 8. Post-Deployment Checklist
 
-- [ ] Supabase connected: `npm run test:connection`
-- [ ] 131 tests passing: `npm test`
-- [ ] Frontend deployed to Vercel
+- [x] Supabase connected
+- [x] 131 tests passing
+- [x] Frontend deployed to Vercel
+- [ ] Backend deployed to Render
 - [ ] Stripe webhook configured
-- [ ] Email domain verified (advancia.us)
+- [ ] Environment variables set
+- [ ] VITE_API_URL updated in Vercel
 
 ---
 
 ## Support
 
-- Supabase Docs: https://supabase.com/docs
+- Render Docs: https://render.com/docs
 - Vercel Docs: https://vercel.com/docs
+- Supabase Docs: https://supabase.com/docs
 - Stripe Docs: https://stripe.com/docs
