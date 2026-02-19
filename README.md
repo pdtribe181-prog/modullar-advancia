@@ -57,7 +57,6 @@ modullar-advancia/
 │   └── package.json
 ├── Dockerfile                  # Production container
 ├── docker-compose.yml          # Container orchestration
-├── cloudbuild.yaml             # Google Cloud Build
 └── package.json
 ```
 
@@ -172,11 +171,6 @@ docker-compose up -d
 ```bash
 cd frontend
 vercel --prod
-```
-
-### Google Cloud Run
-```bash
-gcloud run deploy healthcare-api --source .
 ```
 
 ## Rate Limiting
