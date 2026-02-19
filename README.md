@@ -33,7 +33,7 @@ PORT=3000
 
 ```
 modullar-advancia/
-├── migrations/           # SQL migration files (001-016)
+├── migrations/           # SQL migration files (001-018)
 ├── src/
 │   ├── lib/supabase.ts         # Supabase client
 │   ├── types/                  # TypeScript types
@@ -57,8 +57,7 @@ modullar-advancia/
 │   └── package.json
 ├── Dockerfile                  # Production container
 ├── docker-compose.yml          # Container orchestration
-├── vercel.json                 # Vercel deployment
-├── railway.toml                # Railway deployment
+├── cloudbuild.yaml             # Google Cloud Build
 └── package.json
 ```
 
@@ -169,14 +168,15 @@ docker run -p 3000:3000 --env-file .env healthcare-payment-api
 docker-compose up -d
 ```
 
-### Vercel
+### Vercel (Frontend)
 ```bash
+cd frontend
 vercel --prod
 ```
 
-### Railway
+### Google Cloud Run
 ```bash
-railway up
+gcloud run deploy healthcare-api --source .
 ```
 
 ## Rate Limiting
