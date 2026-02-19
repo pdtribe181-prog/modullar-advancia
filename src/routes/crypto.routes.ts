@@ -3,11 +3,14 @@
  * Handles cryptocurrency payments via Coinbase Commerce
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { cryptoService, CryptoWebhookEvent } from '../services/crypto.service.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { paymentLimiter, webhookLimiter } from '../middleware/rateLimit.middleware.js';
+import { createServiceClient } from '../lib/supabase.js';
 import { z } from 'zod';
+
+type AsyncRequestHandler = (req: Request | AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void>;
 
 const router = Router();
 
@@ -17,16 +20,16 @@ const createChargeSchema = z.object({
   currency: z.string().length(3).default('USD'),
   appointmentId: z.string().uuid().optional(),
   description: z.string().max(500).optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 // Helper for async error handling
-const asyncHandler = (fn: Function) => (req: Request, res: Response, next: Function) => {
+const asyncHandler = (fn: AsyncRequestHandler) => (req: Request, res: Response, next: NextFunction) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 // Validation middleware
-const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next: Function) => {
+const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
   try {
     req.body = schema.parse(req.body);
     next();
@@ -35,7 +38,7 @@ const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next
       res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: error.errors,
+        details: error.issues,
       });
       return;
     }
@@ -86,7 +89,7 @@ router.post(
     const userId = req.user!.sub;
 
     // Get patient profile
-    const { supabaseAdmin } = await import('../lib/supabase.js');
+    const supabaseAdmin = createServiceClient();
     const { data: patient } = await supabaseAdmin
       .from('patients')
       .select('id, provider_id')
@@ -268,7 +271,7 @@ router.get(
     const userId = req.user!.sub;
     const { limit = 20, offset = 0 } = req.query;
 
-    const { supabaseAdmin } = await import('../lib/supabase.js');
+    const supabaseAdmin = createServiceClient();
 
     // Get patient ID
     const { data: patient } = await supabaseAdmin
