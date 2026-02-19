@@ -20,11 +20,11 @@
 
 ## Live URLs
 
-| Service | URL |
-|---------|-----|
-| Frontend | https://frontend-pink-nu-46.vercel.app |
-| Backend | (Deploy to Render - see below) |
-| Database | https://pikguczsvikzragmrojz.supabase.co |
+| Service | URL | Status |
+|---------|-----|--------|
+| Frontend | https://frontend-pink-nu-46.vercel.app | ✅ Live |
+| Backend | https://modullar-advancia.onrender.com | ✅ Live |
+| Database | https://pikguczsvikzragmrojz.supabase.co | ✅ Connected |
 
 ---
 
@@ -108,7 +108,7 @@ vercel --prod
 ### Environment Variables (in Vercel Dashboard)
 
 ```env
-VITE_API_URL=https://advancia-api.onrender.com
+VITE_API_URL=https://modullar-advancia.onrender.com
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 VITE_SUPABASE_URL=https://pikguczsvikzragmrojz.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
@@ -127,7 +127,7 @@ stripe listen --forward-to localhost:3000/stripe/webhook
 ### Production
 
 1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
-2. Add endpoint: `https://advancia-api.onrender.com/stripe/webhook`
+2. Add endpoint: `https://modullar-advancia.onrender.com/stripe/webhook`
 3. Select events:
    - `payment_intent.succeeded`
    - `payment_intent.payment_failed`
@@ -194,10 +194,9 @@ npm run test:coverage
 - [x] Supabase connected
 - [x] 131 tests passing
 - [x] Frontend deployed to Vercel
-- [ ] Backend deployed to Render
+- [x] Backend deployed to Render
 - [ ] Stripe webhook configured
-- [ ] Environment variables set
-- [ ] VITE_API_URL updated in Vercel
+- [ ] VITE_API_URL set in Vercel
 
 ---
 
