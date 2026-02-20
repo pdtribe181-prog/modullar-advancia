@@ -1,5 +1,7 @@
 import { captureError } from '../lib/sentry';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 /**
  * Custom API error with typed details
  */

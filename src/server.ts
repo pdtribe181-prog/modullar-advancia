@@ -122,10 +122,10 @@ app.use('/api/v1', apiRouter);
 // Health check and other root-level routes
 app.get('/health', (req, res) => {
   const health = getMonitoringHealth();
-  if (!health.isHealthy) {
-    return res.status(503).json(health);
+  if (!health.enabled) {
+    return res.status(503).json({ ...health, status: 'unhealthy' });
   }
-  res.status(200).json(health);
+  res.status(200).json({ ...health, status: 'healthy' });
 });
 
 // API Documentation
@@ -168,35 +168,9 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// Auth routes (with stricter rate limiting)
-app.post(
-  '/auth/signup',
-  authLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { email, password, fullName, role } = req.body;
-    const data = await authService.signUp(email, password, fullName, role);
-    res.json({ success: true, data });
-  })
-);
-
-app.post(
-  '/auth/signin',
-  authLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-    const data = await authService.signIn(email, password);
-    res.json({ success: true, data });
-  })
-);
-
-app.post(
-  '/auth/signout',
-  authenticateToken,
-  asyncHandler(async (_req: Request, res: Response) => {
-    await authService.signOut();
-    res.json({ success: true, message: 'Signed out successfully' });
-  })
-);
+// Auth routes (REMOVED: duplicate weak routes — use /api/v1/auth/* instead)
+// The apiRouter versions in auth.routes.ts include validation, security logging,
+// user status checks, and MFA support that these duplicates lacked.
 
 // User profile routes
 app.get(
@@ -214,14 +188,22 @@ app.patch(
   authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
-    const profile = await apiServices.userProfilesService.update(user.id, req.body);
+    // Whitelist allowed fields to prevent mass assignment (e.g., role escalation)
+    const { full_name, phone, avatar_url, date_of_birth, address } = req.body;
+    const allowedUpdates = Object.fromEntries(
+      Object.entries({ full_name, phone, avatar_url, date_of_birth, address }).filter(
+        ([, v]) => v !== undefined
+      )
+    );
+    const profile = await apiServices.userProfilesService.update(user.id, allowedUpdates);
     res.json({ success: true, data: profile });
   })
 );
 
-// Provider routes
+// Provider routes (authenticated — protects provider data exposure)
 app.get(
   '/providers',
+  authenticateToken,
   asyncHandler(async (_req: Request, res: Response) => {
     const providers = await apiServices.providersService.getAll();
     res.json({ success: true, data: providers });
@@ -230,6 +212,7 @@ app.get(
 
 app.get(
   '/providers/:id',
+  authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
     const provider = await apiServices.providersService.getById(String(req.params.id));
     res.json({ success: true, data: provider });
@@ -238,6 +221,7 @@ app.get(
 
 app.get(
   '/providers/specialty/:specialty',
+  authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
     const providers = await apiServices.providersService.getBySpecialty(
       String(req.params.specialty)
@@ -246,13 +230,19 @@ app.get(
   })
 );
 
-// Patient routes (requires auth)
+// Patient routes (requires auth + IDOR protection)
 app.get(
   '/patients',
   authenticateToken,
-  asyncHandler(async (_req: Request, res: Response) => {
-    const patients = await apiServices.patientsService.getAll();
-    res.json({ success: true, data: patients });
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    // Admins can list all; others only see their own patient record
+    if (user.role === 'admin') {
+      const patients = await apiServices.patientsService.getAll();
+      return res.json({ success: true, data: patients });
+    }
+    const patient = await apiServices.patientsService.getById(user.id);
+    res.json({ success: true, data: patient ? [patient] : [] });
   })
 );
 
@@ -260,19 +250,30 @@ app.get(
   '/patients/:id',
   authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
-    const patient = await apiServices.patientsService.getById(String(req.params.id));
+    const { user } = req as AuthenticatedRequest;
+    const patientId = String(req.params.id);
+    // IDOR protection: users can only access their own patient record (admins/providers exempt)
+    if (user.role !== 'admin' && user.role !== 'provider' && user.id !== patientId) {
+      return res
+        .status(403)
+        .json({ success: false, error: 'Forbidden: cannot access other patient records' });
+    }
+    const patient = await apiServices.patientsService.getById(patientId);
     res.json({ success: true, data: patient });
   })
 );
 
-// Appointment routes
+// Appointment routes (with IDOR protection)
 app.get(
   '/appointments/patient/:patientId',
   authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
-    const appointments = await apiServices.appointmentsService.getByPatient(
-      String(req.params.patientId)
-    );
+    const { user } = req as AuthenticatedRequest;
+    const patientId = String(req.params.patientId);
+    if (user.role !== 'admin' && user.role !== 'provider' && user.id !== patientId) {
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+    const appointments = await apiServices.appointmentsService.getByPatient(patientId);
     res.json({ success: true, data: appointments });
   })
 );
@@ -281,9 +282,12 @@ app.get(
   '/appointments/provider/:providerId',
   authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
-    const appointments = await apiServices.appointmentsService.getByProvider(
-      String(req.params.providerId)
-    );
+    const { user } = req as AuthenticatedRequest;
+    const providerId = String(req.params.providerId);
+    if (user.role !== 'admin' && user.id !== providerId) {
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+    const appointments = await apiServices.appointmentsService.getByProvider(providerId);
     res.json({ success: true, data: appointments });
   })
 );
@@ -344,12 +348,17 @@ app.post(
   })
 );
 
-// Invoice routes
+// Invoice routes (with IDOR protection)
 app.get(
   '/invoices/patient/:patientId',
   authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
-    const invoices = await apiServices.invoicesService.getByPatient(String(req.params.patientId));
+    const { user } = req as AuthenticatedRequest;
+    const patientId = String(req.params.patientId);
+    if (user.role !== 'admin' && user.role !== 'provider' && user.id !== patientId) {
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+    const invoices = await apiServices.invoicesService.getByPatient(patientId);
     res.json({ success: true, data: invoices });
   })
 );
@@ -358,7 +367,12 @@ app.get(
   '/invoices/provider/:providerId',
   authenticateToken,
   asyncHandler(async (req: Request, res: Response) => {
-    const invoices = await apiServices.invoicesService.getByProvider(String(req.params.providerId));
+    const { user } = req as AuthenticatedRequest;
+    const providerId = String(req.params.providerId);
+    if (user.role !== 'admin' && user.id !== providerId) {
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+    const invoices = await apiServices.invoicesService.getByProvider(providerId);
     res.json({ success: true, data: invoices });
   })
 );

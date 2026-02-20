@@ -10,7 +10,11 @@ import { paymentLimiter, webhookLimiter } from '../middleware/rateLimit.middlewa
 import { createServiceClient } from '../lib/supabase.js';
 import { z } from 'zod';
 
-type AsyncRequestHandler = (req: Request | AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void>;
+type AsyncRequestHandler = (
+  req: Request | AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => Promise<void>;
 
 const router = Router();
 
@@ -24,9 +28,10 @@ const createChargeSchema = z.object({
 });
 
 // Helper for async error handling
-const asyncHandler = (fn: AsyncRequestHandler) => (req: Request, res: Response, next: NextFunction) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
-};
+const asyncHandler =
+  (fn: AsyncRequestHandler) => (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 
 // Validation middleware
 const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
@@ -233,7 +238,14 @@ router.post(
     }
 
     // Get raw body for signature verification
-    const rawBody = JSON.stringify(req.body);
+    // NOTE: req.body should be the raw buffer if express.raw() is used for this route.
+    // Using JSON.stringify(req.body) re-serializes and may alter byte sequence.
+    const rawBody =
+      typeof req.body === 'string'
+        ? req.body
+        : Buffer.isBuffer(req.body)
+          ? req.body.toString('utf8')
+          : JSON.stringify(req.body);
 
     // Verify signature
     const isValid = cryptoService.verifyWebhookSignature(rawBody, signature);
@@ -289,7 +301,11 @@ router.get(
     }
 
     // Get crypto transactions
-    const { data: transactions, error, count } = await supabaseAdmin
+    const {
+      data: transactions,
+      error,
+      count,
+    } = await supabaseAdmin
       .from('crypto_transactions')
       .select('*', { count: 'exact' })
       .eq('patient_id', patient.id)

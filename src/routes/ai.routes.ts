@@ -17,10 +17,11 @@ import { Router, Request, Response } from 'express';
 import { aiService } from '../services/ai.service.js';
 import { asyncHandler } from '../utils/errors.js';
 import { logger } from '../middleware/logging.middleware.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-// ── GET /ai/services — List all AI endpoints ──
+// ── GET /ai/services — List all AI endpoints (public info) ──
 router.get('/services', (_req: Request, res: Response) => {
   res.json({
     success: true,
@@ -52,6 +53,7 @@ router.get('/services', (_req: Request, res: Response) => {
 // ── POST /ai/chat — General AI Chat ──
 router.post(
   '/chat',
+  authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const { message, context } = req.body;
 
@@ -71,6 +73,7 @@ router.post(
 // ── POST /ai/medical-coding — Medical Billing Codes ──
 router.post(
   '/medical-coding',
+  authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const { procedure, diagnosis } = req.body;
 
@@ -93,6 +96,7 @@ router.post(
 // ── POST /ai/fraud-detection — Fraud Risk Analysis ──
 router.post(
   '/fraud-detection',
+  authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const { transaction } = req.body;
 
@@ -112,6 +116,7 @@ router.post(
 // ── POST /ai/patient-support — Patient Support ──
 router.post(
   '/patient-support',
+  authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const { query, patientId } = req.body;
 
@@ -131,6 +136,7 @@ router.post(
 // ── POST /ai/compliance-check — HIPAA Compliance ──
 router.post(
   '/compliance-check',
+  authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const { process: processName, data } = req.body;
 

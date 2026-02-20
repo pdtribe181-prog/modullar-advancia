@@ -1,9 +1,13 @@
 // Comprehensive Supabase connection & table accessibility test
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://pikguczsvikzragmrojz.supabase.co';
-const supabaseAnonKey =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2d1Y3pzdmlrenJhZ21yb2p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDk1MDQsImV4cCI6MjA4NTk4NTUwNH0.ieMM1Rhvpb0KwxzP_w5wLEIIXu3f-p71oKzxQHXrLcY';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -167,7 +171,11 @@ async function checkTable(table: string): Promise<TestResult> {
         error.message.includes('permission denied') ||
         error.message.includes('row-level security')
       ) {
-        return { table, status: 'rls_blocked', message: 'RLS policy blocks anon access (expected)' };
+        return {
+          table,
+          status: 'rls_blocked',
+          message: 'RLS policy blocks anon access (expected)',
+        };
       }
       return { table, status: 'error', message: `${error.code}: ${error.message}` };
     }
@@ -209,7 +217,9 @@ async function testConnection() {
 
   // Print RLS-blocked (still exist, just not accessible via anon key)
   if (rlsBlocked.length > 0) {
-    console.log(`\n🔒 RLS-BLOCKED — tables exist but anon key blocked by RLS (${rlsBlocked.length} tables):`);
+    console.log(
+      `\n🔒 RLS-BLOCKED — tables exist but anon key blocked by RLS (${rlsBlocked.length} tables):`
+    );
     rlsBlocked.forEach((r) => console.log(`   🔒 ${r.table}`));
   }
 
