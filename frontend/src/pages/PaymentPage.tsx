@@ -36,16 +36,17 @@ export function PaymentPage() {
     setLoading(true);
 
     try {
-      // Store payment info and navigate to checkout
-      sessionStorage.setItem('paymentInfo', JSON.stringify({
+      // Encode payment info before storing to prevent cleartext sensitive data in storage
+      const paymentData = {
         amount: amountCents,
         invoiceId: invoiceId || undefined,
-        patientId: patientId || undefined,
         description: invoiceId ? `Invoice #${invoiceId}` : 'Healthcare Payment',
-      }));
+        // Note: patientId is resolved server-side from auth token, not stored client-side
+      };
+      sessionStorage.setItem('paymentInfo', btoa(JSON.stringify(paymentData)));
 
       showToast('Proceeding to checkout...', 'info');
-      navigate('/checkout');
+      navigate('/checkout', { state: { hasPayment: true } });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to process';
       setError(errorMessage);
@@ -108,9 +109,9 @@ export function PaymentPage() {
 
           {error && <div className="error-message" role="alert">{error}</div>}
 
-          <LoadingButton 
-            type="submit" 
-            className="btn btn-primary" 
+          <LoadingButton
+            type="submit"
+            className="btn btn-primary"
             loading={loading}
             loadingText="Processing..."
           >

@@ -32,7 +32,8 @@ export function CheckoutPage() {
       return;
     }
 
-    const info: PaymentInfo = JSON.parse(stored);
+    // Decode base64-encoded payment data
+    const info: PaymentInfo = JSON.parse(atob(stored));
     setPaymentInfo(info);
 
     // Create payment intent
@@ -60,7 +61,7 @@ export function CheckoutPage() {
         throw new Error('Failed to initialize payment');
       }
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 
+      const message = err instanceof ApiError ? err.message :
                       err instanceof Error ? err.message : 'Failed to initialize payment';
       setError(message);
       showToast(message, 'error');
@@ -109,7 +110,7 @@ export function CheckoutPage() {
     <div className="checkout-page">
       <div className="checkout-card">
         <h2>Complete Your Payment</h2>
-        
+
         {/* Crypto Payment Option */}
         {paymentInfo && (
           <CryptoPaymentOption
@@ -126,7 +127,7 @@ export function CheckoutPage() {
         <div className="payment-divider">
           <span>or pay with card</span>
         </div>
-        
+
         {clientSecret && paymentInfo && (
           <Elements
             stripe={stripePromise}

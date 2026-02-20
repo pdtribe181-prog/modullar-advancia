@@ -38,6 +38,7 @@ export default tseslint.config(
       'migrations/',
       '*.sql',
       '*.js',
+      '*.cjs',
       '*.mjs',
       'jest.config.ts',
       'frontend/',

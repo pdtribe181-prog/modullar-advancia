@@ -6,10 +6,10 @@ This guide describes the two deployment environments used by Advancia PayLedger 
 
 ## Environments
 
-| Environment | Branch    | URL                                              | Protection |
-|-------------|-----------|--------------------------------------------------|------------|
-| `staging`   | `develop` | https://modullar-advancia-staging.onrender.com   | None       |
-| `production`| `main`    | https://modullar-advancia.onrender.com           | Required reviewers + wait timer |
+| Environment  | Branch    | URL                                                       | Protection                      |
+|--------------|-----------|-----------------------------------------------------------|---------------------------------|
+| `staging`    | `develop` | <https://modullar-advancia-staging.onrender.com>          | None                            |
+| `production` | `main`    | <https://modullar-advancia.onrender.com>                  | Required reviewers + wait timer |
 
 ---
 
@@ -40,23 +40,23 @@ Each environment can hold its own set of secrets, overriding repository-level se
 
 ### Staging secrets
 
-| Secret | Description |
-|--------|-------------|
-| `SUPABASE_URL` | Staging Supabase project URL |
-| `SUPABASE_ANON_KEY` | Staging Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Staging Supabase service role key |
-| `STRIPE_SECRET_KEY` | `sk_test_...` — Stripe test mode key |
-| `RENDER_STAGING_DEPLOY_HOOK_URL` | Render deploy hook for staging service |
+| Secret                           | Description                          |
+| -------------------------------- | ------------------------------------ |
+| `SUPABASE_URL`                   | Staging Supabase project URL         |
+| `SUPABASE_ANON_KEY`              | Staging Supabase anon key            |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Staging Supabase service role key    |
+| `STRIPE_SECRET_KEY`              | `sk_test_...` — Stripe test mode key |
+| `RENDER_STAGING_DEPLOY_HOOK_URL` | Render deploy hook for staging       |
 
 ### Production secrets
 
-| Secret | Description |
-|--------|-------------|
-| `SUPABASE_URL` | Production Supabase project URL |
-| `SUPABASE_ANON_KEY` | Production Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Production Supabase service role key |
-| `STRIPE_SECRET_KEY` | `sk_live_...` — Stripe live mode key |
-| `RENDER_DEPLOY_HOOK_URL` | Render deploy hook for production service |
+| Secret                      | Description                              |
+| --------------------------- | ---------------------------------------- |
+| `SUPABASE_URL`              | Production Supabase project URL          |
+| `SUPABASE_ANON_KEY`         | Production Supabase anon key             |
+| `SUPABASE_SERVICE_ROLE_KEY` | Production Supabase service role key     |
+| `STRIPE_SECRET_KEY`         | `sk_live_...` — Stripe live mode key     |
+| `RENDER_DEPLOY_HOOK_URL`    | Render deploy hook for production        |
 
 ---
 
@@ -71,7 +71,7 @@ Each environment can hold its own set of secrets, overriding repository-level se
 
 ## Workflow Trigger Summary
 
-```
+```text
 git push origin develop  →  deploy-staging   (automatic)
 git push origin main     →  deploy-production (with approval gate)
 workflow_dispatch        →  choose environment manually

@@ -49,18 +49,21 @@ export function AIChat({ className = '' }: AIChatProps) {
     setLoading(true);
 
     try {
-      // Try to call AI endpoint
+      // Call backend AI endpoint
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({
+          message: userMessage.content,
+          context: 'healthcare payments',
+        }),
       });
 
       let aiResponse = '';
 
       if (response.ok) {
         const data = await response.json();
-        aiResponse = data.response || data.message;
+        aiResponse = data.response || data.aiResponse || data.message || 'Thanks for reaching out!';
       } else {
         // Fallback to local responses
         aiResponse = generateLocalResponse(userMessage.content);

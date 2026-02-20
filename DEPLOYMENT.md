@@ -32,13 +32,17 @@
 ## 1. VPS Setup Instructions (IP: 76.13.77.8)
 
 ### Phase 1: Initial Server Setup
+
 1. SSH into the server: `ssh root@76.13.77.8`
 2. Update system: `apt update && apt upgrade -y`
 3. Install essentials:
+
    ```bash
    apt install -y curl git nginx ufw build-essential
    ```
+
 4. Install Node.js 20:
+
    ```bash
    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
    apt install -y nodejs
@@ -46,7 +50,9 @@
    ```
 
 ### Phase 2: Firewall & Security
+
 1. Configure UFW:
+
    ```bash
    ufw allow OpenSSH
    ufw allow 'Nginx Full'
@@ -54,24 +60,33 @@
    ```
 
 ### Phase 3: Application Setup
+
 1. Create directory:
+
    ```bash
    mkdir -p /var/www/advancia
    chown -R $USER:$USER /var/www/advancia
    ```
+
 2. Clone repo (first time manually):
+
    ```bash
    git clone https://github.com/pdtribe181-prog/modullar-advancia.git /var/www/advancia
    ```
+
 3. Set environment variables in `.env` on server.
 
 ### Phase 4: Nginx Configuration
+
 1. Copy local config to server:
+
    ```bash
    # From local machine
    scp config/nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
    ```
+
 2. Enable site:
+
    ```bash
    # On server
    ln -s /etc/nginx/sites-available/advancia /etc/nginx/sites-enabled/
@@ -206,12 +221,12 @@ npm run test:coverage
 
 The marketing site at `advancia.us` (built with Rocket.new) needs updated links:
 
-| Current Link           | Should Point To                          |
-| ---------------------- | ---------------------------------------- |
-| `/signup`              | `https://app.advancia.us/login?mode=signup` |
-| `/login`               | `https://app.advancia.us/login`             |
-| "Get Started" button   | `https://app.advancia.us`                   |
-| "Create Free Account"  | `https://app.advancia.us/login?mode=signup` |
+| Current Link          | Should Point To                             |
+| --------------------- | ------------------------------------------- |
+| `/signup`             | `https://app.advancia.us/login?mode=signup` |
+| `/login`              | `https://app.advancia.us/login`             |
+| "Get Started" button  | `https://app.advancia.us`                   |
+| "Create Free Account" | `https://app.advancia.us/login?mode=signup` |
 
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
 
@@ -238,13 +253,13 @@ The repository includes a comprehensive CI/CD pipeline (`.github/workflows/ci.ym
 
 Go to **Settings → Secrets and variables → Actions** and add:
 
-| Secret Name                | Description                               |
-| -------------------------- | ----------------------------------------- |
-| `SUPABASE_URL`             | `https://pikguczsvikzragmrojz.supabase.co` |
-| `SUPABASE_ANON_KEY`        | Your Supabase anon key                    |
-| `SUPABASE_SERVICE_ROLE_KEY`| Your Supabase service role key            |
-| `STRIPE_SECRET_KEY`        | Your Stripe secret key                    |
-| `STRIPE_PUBLISHABLE_KEY`   | Your Stripe publishable key               |
+| Secret Name | Description |
+| --- | --- |
+| `SUPABASE_URL` | `https://pikguczsvikzragmrojz.supabase.co` |
+| `SUPABASE_ANON_KEY` | Your Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
+| `STRIPE_SECRET_KEY` | Your Stripe secret key |
+| `STRIPE_PUBLISHABLE_KEY` | Your Stripe publishable key |
 
 ### Branch Protection (Recommended)
 
@@ -259,6 +274,7 @@ Go to **Settings → Secrets and variables → Actions** and add:
 ### Auto-Deploy
 
 Deployments are automatic on push to `main`:
+
 - **Render** - Backend auto-deploys via GitHub integration
 - **Vercel** - Frontend auto-deploys via GitHub integration
 

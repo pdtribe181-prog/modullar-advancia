@@ -9,8 +9,8 @@ All secrets are stored in GitHub. Go to **Settings → Secrets and variables →
 These are used by CI jobs that don't require environment-specific credentials.
 
 | Secret | Where to get it | Required |
-|--------|----------------|----------|
-| `CODECOV_TOKEN` | [codecov.io](https://codecov.io) → repo settings | Optional |
+| --- | --- | --- |
+| `CODECOV_TOKEN` | [codecov.io](https://codecov.io) repo settings | Optional |
 
 ---
 
@@ -19,10 +19,10 @@ These are used by CI jobs that don't require environment-specific credentials.
 Go to **Settings → Environments → staging → Add secret**:
 
 | Secret | Description | Example format |
-|--------|-------------|----------------|
+| --- | --- | --- |
 | `SUPABASE_URL` | Supabase project URL | `https://xxxx.supabase.co` |
 | `SUPABASE_ANON_KEY` | Public anon key | `eyJhbGci...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — keep private! | `eyJhbGci...` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key, keep private! | `eyJhbGci...` |
 | `STRIPE_SECRET_KEY` | Stripe **test** secret key | `sk_test_51...` |
 | `STRIPE_PUBLISHABLE_KEY` | Stripe **test** publishable key | `pk_test_51...` |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | `whsec_...` |
@@ -37,7 +37,7 @@ Go to **Settings → Environments → staging → Add secret**:
 Go to **Settings → Environments → production → Add secret**:
 
 | Secret | Description | Example format |
-|--------|-------------|----------------|
+| --- | --- | --- |
 | `SUPABASE_URL` | Production Supabase URL | `https://pikguczsvikzragmrojz.supabase.co` |
 | `SUPABASE_ANON_KEY` | Production anon key | `eyJhbGci...` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Production service role key | `eyJhbGci...` |

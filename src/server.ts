@@ -18,7 +18,8 @@ import providerRoutes from './routes/provider.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import databaseWebhookRoutes from './routes/database-webhook.routes.js';
 import cryptoRoutes from './routes/crypto.routes.js';
-import { apiLimiter, authLimiter } from './middleware/rateLimit.middleware.js';
+import aiRoutes from './routes/ai.routes.js';
+import { apiLimiter, authLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
 import {
   requestId,
@@ -127,6 +128,9 @@ app.use('/wallet', walletRoutes);
 
 // Crypto payment routes (Coinbase Commerce)
 app.use('/crypto', cryptoRoutes);
+
+// AI routes (healthcare AI services — from muchaeljohn739337-art)
+app.use('/ai', aiRoutes);
 
 // Database webhook routes (Supabase triggers)
 app.use('/webhooks/supabase', databaseWebhookRoutes);
@@ -294,6 +298,7 @@ app.get(
 app.post(
   '/appointments',
   authenticateToken,
+  apiLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const appointment = await apiServices.appointmentsService.create(req.body);
     res.status(201).json({ success: true, data: appointment });
@@ -314,23 +319,27 @@ app.patch(
 );
 
 // Transaction routes
-app.get(
-  '/transactions/patient/:patientId',
+app.post(
+  '/transactions/by-patient',
   authenticateToken,
+  apiLimiter,
   asyncHandler(async (req: Request, res: Response) => {
+    const { patientId } = req.body;
     const transactions = await apiServices.transactionsService.getByPatient(
-      String(req.params.patientId)
+      String(patientId)
     );
     res.json({ success: true, data: transactions });
   })
 );
 
-app.get(
-  '/transactions/provider/:providerId',
+app.post(
+  '/transactions/by-provider',
   authenticateToken,
+  apiLimiter,
   asyncHandler(async (req: Request, res: Response) => {
+    const { providerId } = req.body;
     const transactions = await apiServices.transactionsService.getByProvider(
-      String(req.params.providerId)
+      String(providerId)
     );
     res.json({ success: true, data: transactions });
   })
@@ -339,6 +348,7 @@ app.get(
 app.post(
   '/transactions',
   authenticateToken,
+  paymentLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const transaction = await apiServices.transactionsService.create(req.body);
     res.status(201).json({ success: true, data: transaction });

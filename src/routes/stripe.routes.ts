@@ -159,7 +159,7 @@ router.get('/connect/accounts/:accountId', authenticate, asyncHandler(async (req
   res.json({ success: true, data: account });
 }));
 
-router.post('/connect/accounts/:accountId/onboarding-link', authenticate, asyncHandler(async (req: Request, res: Response) => {
+router.post('/connect/accounts/:accountId/onboarding-link', authenticate, sensitiveLimiter, asyncHandler(async (req: Request, res: Response) => {
   const { returnUrl, refreshUrl } = req.body;
   const accountLink = await stripeServices.connect.createAccountLink(
     String(req.params.accountId),
@@ -309,7 +309,7 @@ router.get('/checkout/sessions/:id', authenticate, asyncHandler(async (req: Requ
 router.post('/invoices', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const { customerId, metadata, items } = req.body;
   const invoice = await stripeServices.invoices.create(customerId, metadata);
-  
+
   // Add line items if provided
   if (items && items.length > 0) {
     for (const item of items) {
@@ -321,7 +321,7 @@ router.post('/invoices', authenticate, asyncHandler(async (req: Request, res: Re
       );
     }
   }
-  
+
   res.json({ success: true, data: { id: invoice.id, status: invoice.status, amountDue: (invoice.amount_due || 0) / 100 } });
 }));
 
@@ -371,7 +371,7 @@ router.post('/disputes/:id/close', authenticate, asyncHandler(async (req: Reques
 router.get('/payment-history', authenticateWithProfile, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { limit = 20, starting_after, status } = req.query;
   const customerId = req.userProfile?.stripe_customer_id;
-  
+
   if (!customerId) {
     res.json({ success: true, data: { payments: [], has_more: false } });
     return;
@@ -381,11 +381,11 @@ router.get('/payment-history', authenticateWithProfile, asyncHandler(async (req:
     customer: customerId,
     limit: Math.min(Number(limit), 100),
   };
-  
+
   if (starting_after && typeof starting_after === 'string') params.starting_after = starting_after;
 
   const paymentIntents = await stripe.paymentIntents.list(params);
-  
+
   // Filter by status if provided
   let payments = paymentIntents.data;
   if (status && typeof status === 'string') {
@@ -415,7 +415,7 @@ router.get('/payment-history/:id', authenticateWithProfile, asyncHandler(async (
   const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
     expand: ['latest_charge', 'invoice'],
   }) as any;
-  
+
   // Verify ownership
   const customerId = req.userProfile?.stripe_customer_id;
   if (paymentIntent.customer !== customerId) {
@@ -423,7 +423,7 @@ router.get('/payment-history/:id', authenticateWithProfile, asyncHandler(async (
   }
 
   const charge = paymentIntent.latest_charge;
-  
+
   res.json({
     success: true,
     data: {

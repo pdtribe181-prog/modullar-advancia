@@ -8,11 +8,11 @@
 
 ## Live URLs
 
-| Service      | URL                                                              | Status  |
-| ------------ | ---------------------------------------------------------------- | ------- |
-| **App**      | <https://advanciapayledger.com>                                  | ⏳ Pending |
-| **API**      | <https://advanciapayledger.com/api>                              | ⏳ Pending |
-| **Brand**    | <https://advancia.us>                                            | ⏳ Pending |
+| Service  | URL                                      | Status     |
+| -------- | ---------------------------------------- | ---------- |
+| **App**  | <https://advanciapayledger.com>          | ⏳ Pending |
+| **API**  | <https://advanciapayledger.com/api>      | ⏳ Pending |
+| **Brand**| <https://advancia.us>                    | ⏳ Pending |
 
 ## Tech Stack
 

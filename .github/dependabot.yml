@@ -12,8 +12,6 @@ updates:
       time: '09:00'
       timezone: America/New_York
     open-pull-requests-limit: 10
-    reviewers:
-      - pdtribe181-prog
     labels:
       - dependencies
       - backend
@@ -43,8 +41,6 @@ updates:
       time: '09:00'
       timezone: America/New_York
     open-pull-requests-limit: 5
-    reviewers:
-      - pdtribe181-prog
     labels:
       - dependencies
       - frontend
@@ -65,8 +61,6 @@ updates:
       time: '09:00'
       timezone: America/New_York
     open-pull-requests-limit: 5
-    reviewers:
-      - pdtribe181-prog
     labels:
       - dependencies
       - github-actions
@@ -81,8 +75,6 @@ updates:
       day: monday
       time: '09:00'
       timezone: America/New_York
-    reviewers:
-      - pdtribe181-prog
     labels:
       - dependencies
       - docker

@@ -125,6 +125,7 @@ describe('auth.routes', () => {
     chain.select = jest.fn<any>().mockReturnValue(chain);
     chain.insert = jest.fn<any>().mockReturnValue(chain);
     chain.update = jest.fn<any>().mockReturnValue(chain);
+    chain.upsert = jest.fn<any>().mockReturnValue(chain);
     chain.eq = jest.fn<any>().mockReturnValue(chain);
     chain.single = jest.fn<any>().mockResolvedValue(result);
     chain.limit = jest.fn<any>().mockReturnValue(chain);

@@ -5,7 +5,7 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth.middleware.js';
 import { createServiceClient } from '../lib/supabase.js';
-import { authLimiter } from '../middleware/rateLimit.middleware.js';
+import { authLimiter, sensitiveLimiter } from '../middleware/rateLimit.middleware.js';
 import { validateBody, signinSchema, signupSchema } from '../middleware/validation.middleware.js';
 import { asyncHandler, AppError, getErrorMessage } from '../utils/errors.js';
 import { logSecurityEvent, logAndNotify, extractIPAddress } from '../services/security.service.js';
@@ -38,6 +38,7 @@ const refreshTokenSchema = z.object({
 router.get(
   '/profile',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
 
@@ -82,6 +83,7 @@ router.get(
 router.put(
   '/profile',
   authenticate,
+  sensitiveLimiter,
   validateBody(profileUpdateSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
@@ -165,7 +167,9 @@ router.post(
       if (profile?.status === 'pending') {
         // Sign out the user since they're not approved yet
         await supabase.auth.signOut();
-        throw AppError.forbidden('Your account is pending approval. Please wait for admin confirmation.');
+        throw AppError.forbidden(
+          'Your account is pending approval. Please wait for admin confirmation.'
+        );
       }
 
       if (profile?.status === 'suspended') {
@@ -233,9 +237,8 @@ router.post(
 
     // Create user profile with 'pending' status
     if (data.user) {
-      await supabase
-        .from('user_profiles')
-        .upsert({
+      await supabase.from('user_profiles').upsert(
+        {
           id: data.user.id,
           email: data.user.email,
           full_name: fullName,
@@ -243,7 +246,9 @@ router.post(
           status: 'pending', // New users need admin approval
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'id' });
+        },
+        { onConflict: 'id' }
+      );
     }
 
     res.json({
@@ -252,7 +257,8 @@ router.post(
         user: data.user,
         session: null, // Don't return session since user needs approval
       },
-      message: 'Registration successful. Your account is pending admin approval. You will be notified once approved.',
+      message:
+        'Registration successful. Your account is pending admin approval. You will be notified once approved.',
     });
   })
 );
@@ -263,6 +269,7 @@ router.post(
 router.post(
   '/logout',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
     const { error } = await supabase.auth.signOut();
 
@@ -279,6 +286,7 @@ router.post(
  */
 router.post(
   '/refresh',
+  authLimiter,
   validateBody(refreshTokenSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { refresh_token } = req.body;
@@ -301,15 +309,20 @@ router.post(
 /**
  * Get current session info
  */
-router.get('/session', authenticate, (req: AuthenticatedRequest, res: Response) => {
-  res.json({
-    success: true,
-    data: {
-      user: req.user,
-      authenticated: true,
-    },
-  });
-});
+router.get(
+  '/session',
+  authenticate,
+  sensitiveLimiter,
+  (req: AuthenticatedRequest, res: Response) => {
+    res.json({
+      success: true,
+      data: {
+        user: req.user,
+        authenticated: true,
+      },
+    });
+  }
+);
 
 // ============================================================
 // PHONE AUTHENTICATION ROUTES
@@ -469,6 +482,7 @@ router.post(
 router.put(
   '/phone',
   authenticate,
+  sensitiveLimiter,
   validateBody(phoneSignInSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { phone } = req.body;
@@ -512,6 +526,7 @@ const mfaUnenrollSchema = z.object({
 router.post(
   '/mfa/enroll',
   authenticate,
+  sensitiveLimiter,
   validateBody(mfaEnrollSchema),
   asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
     const { friendlyName = 'Authenticator App' } = _req.body;
@@ -542,6 +557,7 @@ router.post(
 router.post(
   '/mfa/verify',
   authenticate,
+  authLimiter,
   validateBody(mfaVerifySchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { factorId, code } = req.body;
@@ -599,6 +615,7 @@ router.post(
  */
 router.post(
   '/mfa/challenge',
+  authLimiter,
   validateBody(mfaVerifySchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { factorId, code } = req.body;
@@ -634,6 +651,7 @@ router.post(
 router.get(
   '/mfa/factors',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
     const { data, error } = await supabase.auth.mfa.listFactors();
 
@@ -658,6 +676,7 @@ router.get(
 router.delete(
   '/mfa/factors/:factorId',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const factorId = req.params.factorId as string;
     const userId = req.user!.id;
@@ -703,6 +722,7 @@ router.delete(
 router.get(
   '/mfa/assurance',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
     const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
@@ -762,6 +782,7 @@ router.post(
 router.put(
   '/email',
   authenticate,
+  sensitiveLimiter,
   validateBody(emailSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { email } = req.body;
@@ -818,6 +839,7 @@ const updatePasswordSchema = z.object({
 router.put(
   '/password',
   authenticate,
+  sensitiveLimiter,
   validateBody(updatePasswordSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { password } = req.body;
@@ -870,6 +892,7 @@ const linkIdentitySchema = z.object({
 router.get(
   '/identities',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = req.user!;
 
@@ -908,6 +931,7 @@ router.get(
 router.post(
   '/identities/link',
   authenticate,
+  sensitiveLimiter,
   validateBody(linkIdentitySchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { provider } = req.body;
@@ -945,6 +969,7 @@ const unlinkIdentitySchema = z.object({
 router.delete(
   '/identities/:identityId',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { identityId } = req.params;
 
@@ -997,6 +1022,7 @@ const recoveryPhoneSchema = z.object({
 router.post(
   '/recovery/phone',
   authenticate,
+  sensitiveLimiter,
   validateBody(recoveryPhoneSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { phone } = req.body;
@@ -1032,6 +1058,7 @@ router.post(
 router.post(
   '/recovery/phone/verify',
   authenticate,
+  authLimiter,
   validateBody(phoneVerifySchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { phone, token } = req.body;
@@ -1155,6 +1182,7 @@ const securityPreferencesSchema = z.object({
 router.get(
   '/security/preferences',
   authenticate,
+  sensitiveLimiter,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
 
@@ -1192,6 +1220,7 @@ router.get(
 router.put(
   '/security/preferences',
   authenticate,
+  sensitiveLimiter,
   validateBody(securityPreferencesSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;

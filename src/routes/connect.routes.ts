@@ -8,7 +8,7 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth.middleware.js';
 import { supabase } from '../lib/supabase.js';
-import { onboardingLimiter, apiLimiter } from '../middleware/rateLimit.middleware.js';
+import { onboardingLimiter, apiLimiter, sensitiveLimiter } from '../middleware/rateLimit.middleware.js';
 import { asyncHandler, AppError } from '../utils/errors.js';
 
 const router = Router();
@@ -187,6 +187,7 @@ router.post(
 router.get(
   '/dashboard',
   authenticateWithProfile,
+  sensitiveLimiter,
   requireRole('provider', 'admin'),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
