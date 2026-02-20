@@ -158,7 +158,7 @@ interface TestResult {
 
 async function checkTable(table: string): Promise<TestResult> {
   try {
-    const { data, error } = await supabase.from(table).select('*').limit(1);
+    const { error } = await supabase.from(table).select('*').limit(1);
 
     if (error) {
       // 42P01 = relation does not exist (table missing)

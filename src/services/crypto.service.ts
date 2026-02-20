@@ -7,6 +7,16 @@ import crypto from 'crypto';
 import { getEnv } from '../config/env.js';
 import { createServiceClient } from '../lib/supabase.js';
 
+/**
+ * Sanitize a value before writing it to a log.
+ * Strips newlines, carriage returns, and other control characters
+ * that could be used for log-injection / log-forging attacks.
+ */
+function sanitizeForLog(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  return value.replace(/[\r\n\t\x00-\x1f\x7f]/g, '_').slice(0, 200);
+}
+
 // Types
 export interface CreateCryptoChargeParams {
   amount: number; // in USD cents
@@ -199,7 +209,9 @@ class CryptoPaymentService {
   async processWebhookEvent(event: CryptoWebhookEvent): Promise<void> {
     const { type, data: charge } = event;
 
-    console.log(`[Crypto] Processing webhook event: ${type} for charge ${charge.code}`);
+    console.log(
+      `[Crypto] Processing webhook event: ${sanitizeForLog(type)} for charge ${sanitizeForLog(charge.code)}`
+    );
 
     switch (type) {
       case 'charge:confirmed':
@@ -218,7 +230,7 @@ class CryptoPaymentService {
         await this.handleChargeResolved(charge);
         break;
       default:
-        console.log(`[Crypto] Unhandled event type: ${type}`);
+        console.log(`[Crypto] Unhandled event type: ${sanitizeForLog(type)}`);
     }
   }
 
@@ -318,7 +330,7 @@ class CryptoPaymentService {
       });
     }
 
-    console.log(`[Crypto] Payment confirmed for charge ${charge.code}`);
+    console.log(`[Crypto] Payment confirmed for charge ${sanitizeForLog(charge.code)}`);
   }
 
   /**
@@ -330,7 +342,7 @@ class CryptoPaymentService {
       timeline: charge.timeline,
     });
 
-    console.log(`[Crypto] Payment failed for charge ${charge.code}`);
+    console.log(`[Crypto] Payment failed for charge ${sanitizeForLog(charge.code)}`);
   }
 
   /**
@@ -341,7 +353,7 @@ class CryptoPaymentService {
       delayed_at: new Date().toISOString(),
     });
 
-    console.log(`[Crypto] Payment delayed for charge ${charge.code}`);
+    console.log(`[Crypto] Payment delayed for charge ${sanitizeForLog(charge.code)}`);
   }
 
   /**
@@ -352,7 +364,7 @@ class CryptoPaymentService {
       pending_at: new Date().toISOString(),
     });
 
-    console.log(`[Crypto] Payment pending for charge ${charge.code}`);
+    console.log(`[Crypto] Payment pending for charge ${sanitizeForLog(charge.code)}`);
   }
 
   /**
@@ -363,7 +375,7 @@ class CryptoPaymentService {
       resolved_at: new Date().toISOString(),
     });
 
-    console.log(`[Crypto] Payment resolved for charge ${charge.code}`);
+    console.log(`[Crypto] Payment resolved for charge ${sanitizeForLog(charge.code)}`);
   }
 
   /**

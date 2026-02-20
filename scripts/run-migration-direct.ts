@@ -33,10 +33,18 @@ async function runMigration() {
   }
 
   const migrationPath = join(__dirname, '..', 'migrations', migrationFile);
-  
+
+  // Prevent path traversal — resolved path must stay inside migrations/
+  const migrationsDir = join(__dirname, '..', 'migrations');
+  const resolvedPath = join(migrationsDir, migrationFile);
+  if (!resolvedPath.startsWith(migrationsDir)) {
+    console.error('❌ Invalid migration file path (path traversal detected)');
+    process.exit(1);
+  }
+
   console.log(`\n📝 Running migration: ${migrationFile}`);
   console.log(`📦 Project: ${projectRef}`);
-  
+
   let sql: string;
   try {
     sql = readFileSync(migrationPath, 'utf-8');
@@ -68,14 +76,14 @@ async function runMigration() {
     }
 
     const result = await response.json();
-    
+
     if (result.error) {
       console.error('❌ Migration error:', result.error);
       process.exit(1);
     }
 
     console.log('✅ Migration completed successfully!');
-    
+
     if (Array.isArray(result) && result.length > 0) {
       console.log(`📊 Results: ${result.length} statement(s) executed`);
     }

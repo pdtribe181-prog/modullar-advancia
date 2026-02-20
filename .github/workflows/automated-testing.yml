@@ -1,5 +1,8 @@
 # Automated Testing — Full coverage matrix across Node versions
 # Runs on all PRs and push to main/develop
+#
+# Optional GitHub Secrets:
+#   CODECOV_TOKEN — Upload token for Codecov coverage reporting
 
 name: Automated Testing
 
@@ -81,7 +84,9 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
-        if: always()
+        if: always() && env.HAS_CODECOV_TOKEN == 'true'
+        env:
+          HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info

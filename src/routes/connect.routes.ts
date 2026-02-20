@@ -8,7 +8,7 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth.middleware.js';
 import { supabase } from '../lib/supabase.js';
-import { onboardingLimiter, apiLimiter, sensitiveLimiter } from '../middleware/rateLimit.middleware.js';
+import { onboardingLimiter, sensitiveLimiter } from '../middleware/rateLimit.middleware.js';
 import { asyncHandler, AppError } from '../utils/errors.js';
 
 const router = Router();

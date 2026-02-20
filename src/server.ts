@@ -8,7 +8,6 @@ import { parse } from 'yaml';
 import { validateEnv, getEnv } from './config/env.js';
 import { supabase } from './lib/supabase.js';
 import * as apiServices from './services/api.service.js';
-import { authService } from './services/auth.service.js';
 import stripeRoutes from './routes/stripe.routes.js';
 import connectRoutes from './routes/connect.routes.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -18,9 +17,15 @@ import providerRoutes from './routes/provider.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import databaseWebhookRoutes from './routes/database-webhook.routes.js';
 import cryptoRoutes from './routes/crypto.routes.js';
-import aiRoutes from './routes/ai.routes.js';
-import { apiLimiter, authLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
+import { apiLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
+import { z } from 'zod';
+import { validateParams, uuidSchema } from './middleware/validation.middleware.js';
+
+// Param validation schemas for inline routes
+const patientIdParams = z.object({ patientId: uuidSchema });
+const providerIdParams = z.object({ providerId: uuidSchema });
+const idParams = z.object({ id: uuidSchema });
 import {
   requestId,
   requestLogger,
@@ -114,7 +119,6 @@ apiRouter.use('/appointments', appointmentsRoutes);
 apiRouter.use('/provider', providerRoutes);
 apiRouter.use('/wallet', walletRoutes);
 apiRouter.use('/crypto', cryptoRoutes);
-apiRouter.use('/ai', aiRoutes);
 apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 
 app.use('/api/v1', apiRouter);
@@ -267,6 +271,7 @@ app.get(
 app.get(
   '/appointments/patient/:patientId',
   authenticateToken,
+  validateParams(patientIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const patientId = String(req.params.patientId);
@@ -281,6 +286,7 @@ app.get(
 app.get(
   '/appointments/provider/:providerId',
   authenticateToken,
+  validateParams(providerIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const providerId = String(req.params.providerId);
@@ -305,6 +311,7 @@ app.post(
 app.patch(
   '/appointments/:id/status',
   authenticateToken,
+  validateParams(idParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { status } = req.body;
     const appointment = await apiServices.appointmentsService.updateStatus(
@@ -352,6 +359,7 @@ app.post(
 app.get(
   '/invoices/patient/:patientId',
   authenticateToken,
+  validateParams(patientIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const patientId = String(req.params.patientId);
@@ -366,6 +374,7 @@ app.get(
 app.get(
   '/invoices/provider/:providerId',
   authenticateToken,
+  validateParams(providerIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const providerId = String(req.params.providerId);
@@ -389,6 +398,7 @@ app.post(
 app.patch(
   '/invoices/:id/status',
   authenticateToken,
+  validateParams(idParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { status } = req.body;
     const invoice = await apiServices.invoicesService.updateStatus(String(req.params.id), status);
@@ -410,6 +420,7 @@ app.get(
 app.patch(
   '/notifications/:id/read',
   authenticateToken,
+  validateParams(idParams),
   asyncHandler(async (req: Request, res: Response) => {
     const notification = await apiServices.notificationsService.markAsRead(String(req.params.id));
     res.json({ success: true, data: notification });
@@ -429,6 +440,7 @@ app.get(
 app.get(
   '/disputes/:id',
   authenticateToken,
+  validateParams(idParams),
   asyncHandler(async (req: Request, res: Response) => {
     const dispute = await apiServices.disputesService.getById(String(req.params.id));
     res.json({ success: true, data: dispute });
@@ -468,6 +480,7 @@ app.post(
 app.delete(
   '/webhooks/:id',
   authenticateToken,
+  validateParams(idParams),
   asyncHandler(async (req: Request, res: Response) => {
     await apiServices.webhooksService.delete(String(req.params.id));
     res.status(204).send();

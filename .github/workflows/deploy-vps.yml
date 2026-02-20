@@ -1,3 +1,10 @@
+# Deploy to VPS via SSH
+#
+# Required GitHub Secrets (configure in Settings → Secrets and variables → Actions):
+#   VPS_SSH_KEY  — Private SSH key for VPS access
+#   VPS_HOST     — VPS hostname or IP address
+#   VPS_USER     — SSH username on the VPS
+
 name: Deploy to VPS
 
 on:
@@ -6,13 +13,34 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Validate VPS secrets
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          MISSING=""
+          [ -z "$SSH_KEY" ] && MISSING="$MISSING VPS_SSH_KEY"
+          [ -z "$HOST" ]    && MISSING="$MISSING VPS_HOST"
+          [ -z "$USER" ]    && MISSING="$MISSING VPS_USER"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing required secrets:$MISSING"
+            echo "Add them in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -20,9 +48,33 @@ jobs:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
       - name: Add Host Key
-        run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Deploy to VPS
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-          "bash -s" < scripts/deploy-vps.sh
+          ssh "${VPS_USER}@${VPS_HOST}" "bash -s" < scripts/deploy-vps.sh
+
+      - name: Post-deploy health check
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          echo "Waiting 30 seconds for service to restart..."
+          sleep 30
+          ssh "${VPS_USER}@${VPS_HOST}" "curl -sf http://localhost:3000/health" \
+            && echo "VPS health check passed" \
+            || echo "::warning::VPS health check failed — verify manually"
+
+      - name: Deployment summary
+        run: |
+          echo "## VPS Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Actor** | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY

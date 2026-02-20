@@ -39,13 +39,13 @@ async function runSqlViaManagementApi(sql: string): Promise<{ data: any; error: 
   // Supabase Management API for running SQL
   // Requires SUPABASE_ACCESS_TOKEN (personal access token from dashboard)
   const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
-  
+
   if (!accessToken) {
-    return { 
-      data: null, 
-      error: { 
-        message: 'SUPABASE_ACCESS_TOKEN required for Management API. Get it from: https://supabase.com/dashboard/account/tokens' 
-      } 
+    return {
+      data: null,
+      error: {
+        message: 'SUPABASE_ACCESS_TOKEN required for Management API. Get it from: https://supabase.com/dashboard/account/tokens'
+      }
     };
   }
 
@@ -68,18 +68,24 @@ async function runSqlViaManagementApi(sql: string): Promise<{ data: any; error: 
 
 async function runMigration() {
   const migrationFile = process.argv[2];
-  
+
   if (!migrationFile) {
     console.error('Usage: npx tsx scripts/run-migration-rest.ts <migration-file.sql>');
     console.error('Example: npx tsx scripts/run-migration-rest.ts 022_vault_encryption.sql');
     process.exit(1);
   }
-  
+
   const migrationPath = join(__dirname, '..', 'migrations', migrationFile);
-  
-  console.log(`Running migration: ${migrationFile}`);
+
+  // Prevent path traversal — resolved path must stay inside migrations/
+  const migrationsDir = join(__dirname, '..', 'migrations');
+  const resolvedPath = join(migrationsDir, migrationFile);
+  if (!resolvedPath.startsWith(migrationsDir)) {
+    console.error('Invalid migration file path (path traversal detected)');
+    process.exit(1);
+  }
   console.log(`Project: ${projectRef}`);
-  
+
   let sql: string;
   try {
     sql = readFileSync(migrationPath, 'utf-8');

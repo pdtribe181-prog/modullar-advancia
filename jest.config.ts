@@ -14,6 +14,10 @@ export default {
         tsconfig: {
           target: 'ES2022',
           module: 'ESNext',
+          moduleResolution: 'bundler',
+        },
+        diagnostics: {
+          ignoreDiagnostics: [1378],
         },
       },
     ],

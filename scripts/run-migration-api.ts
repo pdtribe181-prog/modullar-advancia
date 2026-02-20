@@ -20,6 +20,14 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 async function runMigration() {
   const migrationFile = process.argv[2] || '026_schema_fixes.sql';
   const migrationPath = join(__dirname, '..', 'migrations', migrationFile);
+
+  // Prevent path traversal — resolved path must stay inside migrations/
+  const migrationsDir = join(__dirname, '..', 'migrations');
+  const resolvedPath = join(migrationsDir, migrationFile);
+  if (!resolvedPath.startsWith(migrationsDir)) {
+    console.error('❌ Invalid migration file path (path traversal detected)');
+    process.exit(1);
+  }
   
   console.log(`\n📝 Running migration: ${migrationFile}`);
   

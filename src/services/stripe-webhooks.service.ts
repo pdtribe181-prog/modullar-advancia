@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { createServiceClient } from '../lib/supabase.js';
-import { sendPaymentSuccessEmail, sendPaymentFailedEmail, sendRefundEmail } from './email.service.js';
+import { sendPaymentSuccessEmail, sendPaymentFailedEmail } from './email.service.js';
 import { logger } from '../middleware/logging.middleware.js';
 
 // Use service role client for webhook operations (bypasses RLS)
@@ -180,10 +180,7 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event): Promise<void> 
 
   // Update appointment if linked
   if (appointment_id) {
-    await supabase
-      .from('appointments')
-      .update({ payment_status: 'paid' })
-      .eq('id', appointment_id);
+    await supabase.from('appointments').update({ payment_status: 'paid' }).eq('id', appointment_id);
   }
 }
 
@@ -443,11 +440,19 @@ async function handleSubscriptionCreated(event: Stripe.Event): Promise<void> {
     stripe_subscription_id: subscription.id,
     status: 'active',
     billing_frequency: mapBillingInterval(subscription.items.data[0]?.price.recurring?.interval),
-    amount: subscription.items.data[0]?.price.unit_amount ? subscription.items.data[0].price.unit_amount / 100 : 0,
+    amount: subscription.items.data[0]?.price.unit_amount
+      ? subscription.items.data[0].price.unit_amount / 100
+      : 0,
     currency: subscription.currency.toUpperCase(),
-    current_period_start: (subscription as any).current_period_start ? new Date((subscription as any).current_period_start * 1000).toISOString() : null,
-    current_period_end: (subscription as any).current_period_end ? new Date((subscription as any).current_period_end * 1000).toISOString() : null,
-    trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+    current_period_start: (subscription as any).current_period_start
+      ? new Date((subscription as any).current_period_start * 1000).toISOString()
+      : null,
+    current_period_end: (subscription as any).current_period_end
+      ? new Date((subscription as any).current_period_end * 1000).toISOString()
+      : null,
+    trial_end: subscription.trial_end
+      ? new Date(subscription.trial_end * 1000).toISOString()
+      : null,
   });
 }
 
@@ -458,9 +463,15 @@ async function handleSubscriptionUpdated(event: Stripe.Event): Promise<void> {
     .from('recurring_billing')
     .update({
       status: mapSubscriptionStatus(subscription.status),
-      current_period_start: (subscription as any).current_period_start ? new Date((subscription as any).current_period_start * 1000).toISOString() : null,
-      current_period_end: (subscription as any).current_period_end ? new Date((subscription as any).current_period_end * 1000).toISOString() : null,
-      cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+      current_period_start: (subscription as any).current_period_start
+        ? new Date((subscription as any).current_period_start * 1000).toISOString()
+        : null,
+      current_period_end: (subscription as any).current_period_end
+        ? new Date((subscription as any).current_period_end * 1000).toISOString()
+        : null,
+      cancel_at: subscription.cancel_at
+        ? new Date(subscription.cancel_at * 1000).toISOString()
+        : null,
       updated_at: new Date().toISOString(),
     })
     .eq('stripe_subscription_id', subscription.id);
@@ -592,7 +603,9 @@ async function handleInvoiceUpcoming(event: Stripe.Event): Promise<void> {
       'payment_alert',
       'Upcoming Payment',
       `You have an upcoming payment of $${((invoice.amount_due || 0) / 100).toFixed(2)} on ${
-        invoice.due_date ? new Date(invoice.due_date * 1000).toLocaleDateString() : 'your next billing date'
+        invoice.due_date
+          ? new Date(invoice.due_date * 1000).toLocaleDateString()
+          : 'your next billing date'
       }.`
     );
   }
@@ -607,7 +620,8 @@ async function handleConnectAccountUpdated(event: Stripe.Event): Promise<void> {
   const providerId = account.metadata?.provider_id;
 
   if (providerId) {
-    const isOnboarded = account.details_submitted && account.charges_enabled && account.payouts_enabled;
+    const isOnboarded =
+      account.details_submitted && account.charges_enabled && account.payouts_enabled;
 
     await supabase
       .from('providers')

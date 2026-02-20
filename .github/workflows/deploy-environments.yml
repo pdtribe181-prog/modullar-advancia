@@ -1,5 +1,13 @@
 # Multi-Environment Deployment
 # Deploys to staging (develop branch) and production (main branch + manual)
+#
+# Required GitHub Secrets (configure in Settings → Secrets and variables → Actions):
+#   RENDER_STAGING_DEPLOY_HOOK_URL  — Render deploy-hook URL for staging service
+#   RENDER_DEPLOY_HOOK_URL          — Render deploy-hook URL for production service
+#
+# Required GitHub Environments (configure in Settings → Environments):
+#   staging    — https://modullar-advancia-staging.onrender.com
+#   production — https://modullar-advancia.onrender.com
 
 name: Deploy Environments
 
@@ -37,9 +45,7 @@ jobs:
     if: |
       (github.ref == 'refs/heads/develop' && github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging')
-    environment:
-      name: staging
-      url: https://modullar-advancia-staging.onrender.com
+    environment: staging
 
     steps:
       - uses: actions/checkout@v4
@@ -55,10 +61,21 @@ jobs:
           npm ci
           npm run build
 
-      - name: Trigger Render staging deploy
+      - name: Validate deploy hook secret
+        env:
+          HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}")
+          if [ -z "$HOOK_URL" ]; then
+            echo "::error::RENDER_STAGING_DEPLOY_HOOK_URL secret is not configured."
+            echo "Add it in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - name: Trigger Render staging deploy
+        env:
+          HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$HOOK_URL")
           HTTP_STATUS=$(echo "$RESPONSE" | tail -1)
           if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
             echo "Deploy hook failed with status $HTTP_STATUS"
@@ -85,10 +102,13 @@ jobs:
 
       - name: Notify staging deployed
         run: |
-          echo "✅ Staging deployment successful"
-          echo "URL: https://modullar-advancia-staging.onrender.com"
-          echo "Commit: ${{ github.sha }}"
-          echo "Deployed by: ${{ github.actor }}"
+          echo "## Staging Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          echo "| **URL** | https://modullar-advancia-staging.onrender.com |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Actor** | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
 
   # ─────────────────────────────────────────────────────────────────────────
   # Production deploy — triggered by push to main or manual
@@ -99,9 +119,7 @@ jobs:
     if: |
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')
-    environment:
-      name: production
-      url: https://modullar-advancia.onrender.com
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -126,10 +144,21 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: test-service-key
           JWT_SECRET: test-jwt-secret-min-32-chars-long-enough
 
-      - name: Trigger Render production deploy
+      - name: Validate deploy hook secret
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          if [ -z "$HOOK_URL" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_URL secret is not configured."
+            echo "Add it in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - name: Trigger Render production deploy
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$HOOK_URL")
           HTTP_STATUS=$(echo "$RESPONSE" | tail -1)
           if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
             echo "Deploy hook failed with status $HTTP_STATUS"
