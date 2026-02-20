@@ -69,18 +69,7 @@ export function AdminConsole() {
       setDashboardData(response.data);
     } catch (err) {
       console.error('Dashboard fetch error:', err);
-      // Use mock data for demo
-      setDashboardData({
-        overview: {
-          totalUsers: 156,
-          pendingUsers: 12,
-          activeUsers: 142,
-          totalTransactions: 1847,
-          totalRevenue: 284500,
-        },
-        recentTransactions: [],
-        onlineUsers: [],
-      });
+      setDashboardData(null);
     } finally {
       setLoading(false);
     }
@@ -92,29 +81,8 @@ export function AdminConsole() {
       const response = await api.get<{ data: User[] }>('/admin/users');
       setUsers(response.data);
     } catch (err) {
-      // Mock data
-      setUsers([
-        {
-          id: '1',
-          email: 'john@example.com',
-          full_name: 'John Doe',
-          phone: '+1234567890',
-          role: 'patient',
-          status: 'pending',
-          last_login: null,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          email: 'jane@example.com',
-          full_name: 'Jane Smith',
-          phone: '+1987654321',
-          role: 'patient',
-          status: 'active',
-          last_login: new Date().toISOString(),
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-        },
-      ]);
+      console.error('Users fetch error:', err);
+      setUsers([]);
     }
   }, []);
 
@@ -427,26 +395,17 @@ export function AdminConsole() {
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Recent Transactions</h3>
-          <p style={{ color: '#6b7280' }}>Transaction monitoring and management coming soon...</p>
-        </div>
+        <TransactionsTab formatCurrency={formatCurrency} formatDate={formatDate} />
       )}
 
       {/* Webhooks Tab */}
       {activeTab === 'webhooks' && (
-        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Webhook Events</h3>
-          <p style={{ color: '#6b7280' }}>Stripe webhook event logs coming soon...</p>
-        </div>
+        <WebhooksTab formatDate={formatDate} />
       )}
 
       {/* Logs Tab */}
       {activeTab === 'logs' && (
-        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Audit Logs</h3>
-          <p style={{ color: '#6b7280' }}>Compliance and security audit logs coming soon...</p>
-        </div>
+        <AuditLogsTab formatDate={formatDate} />
       )}
 
       {/* Confirm Dialog */}
@@ -468,6 +427,165 @@ export function AdminConsole() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+// Transactions Tab Component
+function TransactionsTab({ formatCurrency, formatDate }: { formatCurrency: (cents: number) => string; formatDate: (d: string) => string }) {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await api.get<{ data: Transaction[] }>('/admin/transactions');
+        setTransactions(response.data || []);
+      } catch (err) {
+        setError('Failed to load transactions');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return <div style={{ padding: '24px', textAlign: 'center' }}><Spinner size={32} /></div>;
+  if (error) return <div style={{ padding: '24px', color: '#ef4444' }}>{error}</div>;
+
+  return (
+    <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: '#f9fafb' }}>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>ID</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>User</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Amount</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.length === 0 ? (
+            <tr><td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>No transactions found</td></tr>
+          ) : transactions.map(tx => (
+            <tr key={tx.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+              <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px' }}>{tx.id.slice(0, 8)}...</td>
+              <td style={{ padding: '16px', fontSize: '14px' }}>{tx.user_email}</td>
+              <td style={{ padding: '16px', fontWeight: '600' }}>{formatCurrency(tx.amount)}</td>
+              <td style={{ padding: '16px' }}>
+                <span style={{ padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '600', background: tx.status === 'completed' ? '#d1fae5' : tx.status === 'pending' ? '#fef3c7' : '#fee2e2', color: tx.status === 'completed' ? '#065f46' : tx.status === 'pending' ? '#92400e' : '#991b1b' }}>{tx.status}</span>
+              </td>
+              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>{formatDate(tx.created_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Webhooks Tab Component
+function WebhooksTab({ formatDate }: { formatDate: (d: string) => string }) {
+  interface WebhookEvent { id: string; event_type: string; status: string; created_at: string; }
+  const [events, setEvents] = useState<WebhookEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await api.get<{ data: WebhookEvent[] }>('/admin/webhooks');
+        setEvents(response.data || []);
+      } catch (err) {
+        setError('Failed to load webhook events');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return <div style={{ padding: '24px', textAlign: 'center' }}><Spinner size={32} /></div>;
+  if (error) return <div style={{ padding: '24px', color: '#ef4444' }}>{error}</div>;
+
+  return (
+    <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: '#f9fafb' }}>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Event Type</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {events.length === 0 ? (
+            <tr><td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>No webhook events found</td></tr>
+          ) : events.map(evt => (
+            <tr key={evt.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+              <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px' }}>{evt.event_type}</td>
+              <td style={{ padding: '16px' }}>
+                <span style={{ padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '600', background: evt.status === 'processed' ? '#d1fae5' : '#fef3c7', color: evt.status === 'processed' ? '#065f46' : '#92400e' }}>{evt.status}</span>
+              </td>
+              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>{formatDate(evt.created_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Audit Logs Tab Component
+function AuditLogsTab({ formatDate }: { formatDate: (d: string) => string }) {
+  interface AuditLog { id: string; action: string; actor_email: string; details: string; created_at: string; }
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await api.get<{ data: AuditLog[] }>('/admin/audit-log');
+        setLogs(response.data || []);
+      } catch (err) {
+        setError('Failed to load audit logs');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return <div style={{ padding: '24px', textAlign: 'center' }}><Spinner size={32} /></div>;
+  if (error) return <div style={{ padding: '24px', color: '#ef4444' }}>{error}</div>;
+
+  return (
+    <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: '#f9fafb' }}>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Action</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actor</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Details</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {logs.length === 0 ? (
+            <tr><td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>No audit logs found</td></tr>
+          ) : logs.map(log => (
+            <tr key={log.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+              <td style={{ padding: '16px', fontWeight: '500' }}>{log.action}</td>
+              <td style={{ padding: '16px', fontSize: '14px' }}>{log.actor_email}</td>
+              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.details}</td>
+              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>{formatDate(log.created_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -99,7 +99,7 @@ export function Home() {
             </Link>
           </div>
 
-          {/* Stats */}
+          {/* Features Summary */}
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -107,10 +107,10 @@ export function Home() {
             marginTop: '60px',
             flexWrap: 'wrap',
           }}>
-            <StatItem value="$2.5M+" label="Volume Processed" />
-            <StatItem value="10K+" label="Active Users" />
-            <StatItem value="99.9%" label="Uptime" />
-            <StatItem value="5 ⭐" label="Rating" />
+            <StatItem value="Crypto" label="Payments" />
+            <StatItem value="HIPAA" label="Compliant" />
+            <StatItem value="24/7" label="Uptime" />
+            <StatItem value="Secure" label="Platform" />
           </div>
         </div>
       </section>
@@ -165,12 +165,6 @@ export function Home() {
               title="MedBed Booking"
               description="Book cutting-edge regenerative therapy sessions directly through the platform."
               gradient="linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
-            />
-            <FeatureCard
-              icon="🤖"
-              title="AI Assistant"
-              description="24/7 AI-powered support for payments, bookings, and account management."
-              gradient="linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
             />
             <FeatureCard
               icon="📱"

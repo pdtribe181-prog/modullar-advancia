@@ -1,9 +1,5 @@
 import { Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
-import { Suspense, lazy } from 'react';
-
-// Lazy load AI Chat
-const AIChat = lazy(() => import('./AIChat'));
 
 export function Layout() {
   const { user, logout } = useAuth();
@@ -31,7 +27,6 @@ export function Layout() {
             {user ? (
               <>
                 <Link to="/dashboard" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>Dashboard</Link>
-                <Link to="/booking/medbed" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>MedBed</Link>
                 <Link to="/wallet" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>Wallet</Link>
                 {user.role === 'admin' && (
                   <Link to="/admin" style={{
@@ -94,10 +89,6 @@ export function Layout() {
         </div>
       </footer>
 
-      {/* AI Chat Assistant */}
-      <Suspense fallback={null}>
-        <AIChat />
-      </Suspense>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useAuth } from '../providers/AuthProvider';
 import { api } from '../services/api';
 import { LoadingButton } from '../components/Spinner';
 
-type WalletType = 'ethereum' | 'solana' | 'polygon' | 'base' | 'arbitrum';
+type WalletType = 'ethereum' | 'polygon' | 'base' | 'arbitrum';
 
 interface LinkedWallet {
   id: string;
@@ -31,7 +31,6 @@ interface WalletListResponse {
 // Network configurations
 const NETWORKS: Record<WalletType, { name: string; icon: string; color: string }> = {
   ethereum: { name: 'Ethereum', icon: '⟠', color: '#627EEA' },
-  solana: { name: 'Solana', icon: '◎', color: '#9945FF' },
   polygon: { name: 'Polygon', icon: '⬡', color: '#8247E5' },
   base: { name: 'Base', icon: '🔵', color: '#0052FF' },
   arbitrum: { name: 'Arbitrum', icon: '🔷', color: '#28A0F0' },
@@ -47,7 +46,7 @@ export function WalletConnect() {
   const [walletAddress, setWalletAddress] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -71,15 +70,15 @@ export function WalletConnect() {
   }, [isAuthenticated, navigate, loadWallets]);
 
   // Check if MetaMask or other wallet is available
-  const hasWeb3Wallet = typeof window !== 'undefined' && 
+  const hasWeb3Wallet = typeof window !== 'undefined' &&
     (window as unknown as { ethereum?: unknown }).ethereum;
 
   const connectMetaMask = async () => {
-    const ethereum = (window as unknown as { ethereum?: { 
+    const ethereum = (window as unknown as { ethereum?: {
       request: (args: { method: string; params?: unknown[] }) => Promise<string[]>;
       selectedAddress?: string;
     }}).ethereum;
-    
+
     if (!ethereum) {
       setError('MetaMask not detected. Please install MetaMask extension.');
       return null;
@@ -95,10 +94,10 @@ export function WalletConnect() {
   };
 
   const signMessage = async (message: string): Promise<string | null> => {
-    const ethereum = (window as unknown as { ethereum?: { 
+    const ethereum = (window as unknown as { ethereum?: {
       request: (args: { method: string; params?: unknown[] }) => Promise<string>;
     }}).ethereum;
-    
+
     if (!ethereum || !walletAddress) return null;
 
     try {
@@ -137,10 +136,6 @@ export function WalletConnect() {
           id: challengeResponse.data.challengeId,
           message: challengeResponse.data.message,
         });
-      } else if (selectedNetwork === 'solana') {
-        // For Solana, prompt manual entry (or integrate Phantom later)
-        setError('Solana wallet connection requires manual address entry. Please paste your wallet address.');
-        setConnecting(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start connection');
@@ -209,7 +204,7 @@ export function WalletConnect() {
     setError('');
   };
 
-  const shortenAddress = (address: string) => 
+  const shortenAddress = (address: string) =>
     `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   if (loading) {
@@ -242,8 +237,8 @@ export function WalletConnect() {
               return (
                 <div key={wallet.id} className="wallet-item">
                   <div className="wallet-info">
-                    <div 
-                      className="wallet-icon" 
+                    <div
+                      className="wallet-icon"
                       style={{ background: network.color, color: 'white' }}
                     >
                       {network.icon}
@@ -287,7 +282,7 @@ export function WalletConnect() {
         {!challenge ? (
           <div style={{ marginTop: '24px' }}>
             <h3>Connect New Wallet</h3>
-            
+
             <div className="form-group">
               <label htmlFor="network">Select Network</label>
               <select
@@ -336,9 +331,9 @@ export function WalletConnect() {
 
             {!hasWeb3Wallet && (
               <p style={{ marginTop: '12px', fontSize: '0.875rem', color: 'var(--secondary)' }}>
-                <a 
-                  href="https://metamask.io/download/" 
-                  target="_blank" 
+                <a
+                  href="https://metamask.io/download/"
+                  target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: 'var(--primary)' }}
                 >
@@ -356,9 +351,9 @@ export function WalletConnect() {
               Sign the message with your wallet to prove ownership.
             </p>
 
-            <div style={{ 
-              background: 'var(--light)', 
-              padding: '16px', 
+            <div style={{
+              background: 'var(--light)',
+              padding: '16px',
               borderRadius: 'var(--radius)',
               marginBottom: '16px'
             }}>

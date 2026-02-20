@@ -47,6 +47,10 @@ export default function ProviderDashboard() {
   const [earnings, setEarnings] = useState<Earnings | null>(null);
   const [activeTab, setActiveTab] = useState<'appointments' | 'profile' | 'earnings'>('appointments');
   const [loading, setLoading] = useState(true);
+  const [showNotesModal, setShowNotesModal] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState<string | null>(null);
+  const [notesInput, setNotesInput] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -100,10 +104,11 @@ export default function ProviderDashboard() {
   }
 
   async function handleComplete(id: string) {
-    const notes = prompt('Enter any notes for this appointment:');
     try {
-      await api.post(`/provider/appointments/${id}/complete`, { notes });
+      await api.post(`/provider/appointments/${id}/complete`, { notes: notesInput });
       showToast('Appointment marked as complete', 'success');
+      setShowNotesModal(null);
+      setNotesInput('');
       loadAppointments();
       loadEarnings();
     } catch (err) {
@@ -114,11 +119,12 @@ export default function ProviderDashboard() {
   }
 
   async function handleCancel(id: string) {
-    const reason = prompt('Enter reason for cancellation:');
-    if (!reason) return;
+    if (!cancelReason.trim()) return;
     try {
-      await api.post(`/provider/appointments/${id}/cancel`, { reason });
+      await api.post(`/provider/appointments/${id}/cancel`, { reason: cancelReason });
       showToast('Appointment cancelled', 'success');
+      setShowCancelModal(null);
+      setCancelReason('');
       loadAppointments();
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to cancel';
@@ -265,13 +271,13 @@ export default function ProviderDashboard() {
                           {['scheduled', 'confirmed'].includes(apt.status) && (
                             <>
                               <button
-                                onClick={() => handleComplete(apt.id)}
+                                onClick={() => setShowNotesModal(apt.id)}
                                 className="text-blue-600 hover:text-blue-800"
                               >
                                 Complete
                               </button>
                               <button
-                                onClick={() => handleCancel(apt.id)}
+                                onClick={() => setShowCancelModal(apt.id)}
                                 className="text-red-600 hover:text-red-800"
                               >
                                 Cancel
@@ -284,6 +290,49 @@ export default function ProviderDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Complete Appointment Modal */}
+          {showNotesModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: 'white', borderRadius: '12px', padding: '24px', maxWidth: '420px', width: '100%' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Complete Appointment</h3>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>Notes (optional)</label>
+                <textarea
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                  placeholder="Enter any notes for this appointment..."
+                  rows={4}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '16px', resize: 'vertical' }}
+                />
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  <button onClick={() => { setShowNotesModal(null); setNotesInput(''); }} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={() => handleComplete(showNotesModal)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer', fontWeight: '500' }}>Mark Complete</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Cancel Appointment Modal */}
+          {showCancelModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: 'white', borderRadius: '12px', padding: '24px', maxWidth: '420px', width: '100%' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#dc2626' }}>Cancel Appointment</h3>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>Reason for cancellation *</label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Enter reason for cancellation..."
+                  rows={3}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '16px', resize: 'vertical' }}
+                  required
+                />
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  <button onClick={() => { setShowCancelModal(null); setCancelReason(''); }} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>Back</button>
+                  <button onClick={() => handleCancel(showCancelModal)} disabled={!cancelReason.trim()} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: cancelReason.trim() ? '#dc2626' : '#d1d5db', color: 'white', cursor: cancelReason.trim() ? 'pointer' : 'not-allowed', fontWeight: '500' }}>Cancel Appointment</button>
+                </div>
+              </div>
             </div>
           )}
         </div>

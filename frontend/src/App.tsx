@@ -22,9 +22,6 @@ const WalletConnect = lazy(() => import('./pages/WalletConnect').then(m => ({ de
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings').then(m => ({ default: m.SecuritySettings })));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Add MedBed Booking Page
-const MedBedBooking = lazy(() => import('./pages/MedBedBooking').then(m => ({ default: m.MedBedBooking })));
-
 // Add Admin Console
 const AdminConsole = lazy(() => import('./pages/AdminConsole'));
 
@@ -71,14 +68,7 @@ export default function App() {
             }
           />
           <Route
-            path="booking/medbed"
-            element={
-              <ProtectedRoute>
-                <MedBedBooking />
-              </ProtectedRoute>
-            }
-          />
-          <Route
+
             path="provider"
             element={
               <ProtectedRoute>

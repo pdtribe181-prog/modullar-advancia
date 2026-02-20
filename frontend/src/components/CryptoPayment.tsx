@@ -70,7 +70,7 @@ export function CryptoPaymentOption({ amount, appointmentId, onSuccess, onError 
   const handleCryptoPayment = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('token');
       if (!token) {
         onError('Please log in to make a payment');
         return;
