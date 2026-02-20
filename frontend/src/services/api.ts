@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { captureError } from '../lib/sentry';
 
 /**
  * Custom API error with typed details
@@ -81,13 +81,13 @@ function calculateRetryDelay(
 ): number {
   // Exponential backoff: 2^attempt * baseDelay
   let delay = Math.min(Math.pow(2, attempt) * baseDelay, maxDelay);
-  
+
   // Add jitter (±25%) to prevent thundering herd
   if (jitter) {
     const jitterFactor = 0.75 + Math.random() * 0.5; // 0.75 to 1.25
     delay = Math.round(delay * jitterFactor);
   }
-  
+
   return delay;
 }
 
@@ -95,13 +95,13 @@ function calculateRetryDelay(
  * Sleep for specified duration
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 class ApiService {
   private token: string | null = null;
   private defaultTimeout = 30000; // 30 seconds
-  
+
   // Default retry config (only for safe methods)
   private defaultRetryConfig: Required<RetryConfig> = {
     maxRetries: 3,
@@ -135,12 +135,11 @@ class ApiService {
   private async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { timeout = this.defaultTimeout, retry = {}, ...fetchOptions } = options;
     const method = (fetchOptions.method || 'GET').toUpperCase();
-    
+
     // Merge retry config
-    const retryConfig: Required<RetryConfig> | null = retry === false 
-      ? null 
-      : { ...this.defaultRetryConfig, ...retry };
-    
+    const retryConfig: Required<RetryConfig> | null =
+      retry === false ? null : { ...this.defaultRetryConfig, ...retry };
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...fetchOptions.headers,
@@ -169,7 +168,7 @@ class ApiService {
         if (response.status === 429) {
           const retryAfter = response.headers.get('Retry-After');
           const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 5000;
-          
+
           if (retryConfig && this.shouldRetry(method, 429, attempt, retryConfig)) {
             retryConfig.onRetry(
               new ApiError('Rate limited', 429, 'RATE_LIMITED'),
@@ -180,7 +179,7 @@ class ApiService {
             attempt++;
             continue;
           }
-          
+
           throw new ApiError(
             `Rate limited. Please wait ${Math.ceil(waitTime / 1000)} seconds.`,
             429,
@@ -198,15 +197,24 @@ class ApiService {
         }
 
         if (!response.ok) {
-          const errorData = data as { error?: string; message?: string; code?: string; details?: unknown };
+          const errorData = typeof data === 'object' && data !== null ? data : { message: data };
           const error = new ApiError(
-            errorData?.error || errorData?.message || `Request failed with status ${response.status}`,
+            (errorData as any).message || `HTTP error! status: ${response.status}`,
             response.status,
-            errorData?.code,
-            errorData?.details
+            (errorData as any).code,
+            errorData
           );
 
-          // Retry on server errors
+          // Capture the error in Sentry
+          captureError(error, {
+            extra: {
+              path,
+              status: response.status,
+              responseBody: errorData,
+            },
+          });
+
+          // Retry logic
           if (retryConfig && this.shouldRetry(method, response.status, attempt, retryConfig)) {
             const delay = calculateRetryDelay(
               attempt,
@@ -230,7 +238,7 @@ class ApiService {
         // Handle abort/timeout
         if (error instanceof DOMException && error.name === 'AbortError') {
           const timeoutError = new ApiError('Request timed out', 0, 'TIMEOUT');
-          
+
           // Retry on timeout
           if (retryConfig && this.shouldRetry(method, 0, attempt, retryConfig)) {
             const delay = calculateRetryDelay(
@@ -244,28 +252,44 @@ class ApiService {
             attempt++;
             continue;
           }
-          
+
           throw timeoutError;
         }
 
         // Handle network errors
         if (error instanceof TypeError && error.message.includes('fetch')) {
-          const networkError = new ApiError('Network error. Please check your connection.', 0, 'NETWORK_ERROR');
-          
-          // Retry on network errors
+          const networkError = new ApiError(
+            'Network error or server is unreachable.',
+            0, // Use 0 for network errors
+            'NETWORK_ERROR',
+            { originalError: error }
+          );
+
+          // Capture network errors in Sentry
+          captureError(networkError, {
+            extra: {
+              path,
+              originalError: error,
+            },
+          });
+
+          // Retry logic for network errors
           if (retryConfig && this.shouldRetry(method, 0, attempt, retryConfig)) {
-            const delay = calculateRetryDelay(
-              attempt,
-              retryConfig.baseDelay,
-              retryConfig.maxDelay,
-              retryConfig.jitter
+            const delay = Math.min(
+              calculateRetryDelay(
+                attempt,
+                retryConfig.baseDelay,
+                retryConfig.maxDelay,
+                retryConfig.jitter
+              ),
+              retryConfig.maxDelay
             );
             retryConfig.onRetry(networkError, attempt, delay);
             await sleep(delay);
             attempt++;
             continue;
           }
-          
+
           throw networkError;
         }
 

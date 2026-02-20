@@ -7,9 +7,6 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': 'http://localhost:3000',
-      '/stripe': 'http://localhost:3000',
-      '/connect': 'http://localhost:3000',
-      '/admin': 'http://localhost:3000',
     },
   },
 });

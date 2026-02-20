@@ -6,6 +6,7 @@
  */
 
 import { logger } from '../middleware/logging.middleware.js';
+import { icd10Codes, defaultFraudResponse } from '../config/ai-knowledge-base.js';
 
 // ── Types ──
 
@@ -129,22 +130,7 @@ function generateHealthcareResponse(systemContext: string, userQuery: string): s
     query.includes('fraud') ||
     query.includes('risk')
   ) {
-    return JSON.stringify(
-      {
-        riskLevel: 'LOW',
-        riskScore: 15,
-        analysis: 'Transaction appears consistent with normal healthcare billing patterns.',
-        flags: [],
-        recommendations: [
-          'Transaction within normal parameters',
-          'Provider billing history consistent',
-          'No geographic anomalies detected',
-          'Amount within expected range for procedure type',
-        ],
-      },
-      null,
-      2
-    );
+    return JSON.stringify(defaultFraudResponse, null, 2);
   }
 
   // Compliance check
@@ -230,19 +216,8 @@ function getCPTCode(procedure: string): string {
 }
 
 function getICD10Code(diagnosis: string): string {
-  const codes: Record<string, string> = {
-    'annual physical': 'Z00.00',
-    hypertension: 'I10',
-    diabetes: 'E11.9',
-    'chest pain': 'R07.9',
-    headache: 'R51.9',
-    'back pain': 'M54.5',
-    anxiety: 'F41.9',
-    depression: 'F32.9',
-    asthma: 'J45.909',
-  };
-  const key = Object.keys(codes).find((k) => diagnosis.toLowerCase().includes(k));
-  return key ? codes[key] : 'Z00.00';
+  const key = Object.keys(icd10Codes).find((k) => diagnosis.toLowerCase().includes(k));
+  return key ? icd10Codes[key] : 'Z00.00';
 }
 
 // ── Exported Service Functions ──

@@ -104,36 +104,29 @@ app.use((req, res, next) => {
   }
 });
 
-// Stripe routes
-logger.info('Stripe routes loaded', { count: stripeRoutes?.stack?.length || 0 });
-app.use('/stripe', stripeRoutes);
+// API Routes
+const apiRouter = express.Router();
+apiRouter.use('/stripe', stripeRoutes);
+apiRouter.use('/connect', connectRoutes);
+apiRouter.use('/admin', adminRoutes);
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/appointments', appointmentsRoutes);
+apiRouter.use('/provider', providerRoutes);
+apiRouter.use('/wallet', walletRoutes);
+apiRouter.use('/crypto', cryptoRoutes);
+apiRouter.use('/ai', aiRoutes);
+apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 
-// Provider Connect routes (onboarding, payouts)
-app.use('/connect', connectRoutes);
+app.use('/api/v1', apiRouter);
 
-// Admin dashboard routes
-app.use('/admin', adminRoutes);
-
-// Auth routes (login, register, profile)
-app.use('/auth', authRoutes);
-
-// Appointments routes (booking, scheduling)
-app.use('/appointments', appointmentsRoutes);
-
-// Provider dashboard routes
-app.use('/provider', providerRoutes);
-
-// Wallet routes (Web3 wallet linking & crypto payouts)
-app.use('/wallet', walletRoutes);
-
-// Crypto payment routes (Coinbase Commerce)
-app.use('/crypto', cryptoRoutes);
-
-// AI routes (healthcare AI services — from muchaeljohn739337-art)
-app.use('/ai', aiRoutes);
-
-// Database webhook routes (Supabase triggers)
-app.use('/webhooks/supabase', databaseWebhookRoutes);
+// Health check and other root-level routes
+app.get('/health', (req, res) => {
+  const health = getMonitoringHealth();
+  if (!health.isHealthy) {
+    return res.status(503).json(health);
+  }
+  res.status(200).json(health);
+});
 
 // API Documentation
 if (swaggerDocument) {
@@ -325,9 +318,7 @@ app.post(
   apiLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { patientId } = req.body;
-    const transactions = await apiServices.transactionsService.getByPatient(
-      String(patientId)
-    );
+    const transactions = await apiServices.transactionsService.getByPatient(String(patientId));
     res.json({ success: true, data: transactions });
   })
 );
@@ -338,9 +329,7 @@ app.post(
   apiLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { providerId } = req.body;
-    const transactions = await apiServices.transactionsService.getByProvider(
-      String(providerId)
-    );
+    const transactions = await apiServices.transactionsService.getByProvider(String(providerId));
     res.json({ success: true, data: transactions });
   })
 );
