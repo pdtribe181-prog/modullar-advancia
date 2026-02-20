@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, ApiError } from '../services/api';
-import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 
 interface Facility {
@@ -10,12 +8,7 @@ interface Facility {
   type: 'medbed' | 'chamber';
   description: string;
   hourly_rate: number;
-  image_url: string; // Placeholder for now
-}
-
-interface TimeSlot {
-  time: string;
-  available: boolean;
+  image_url: string;
 }
 
 export function MedBedBooking() {
@@ -23,7 +16,7 @@ export function MedBedBooking() {
   const { showToast } = useToast();
 
   // State
-  const [facilities, setFacilities] = useState<Facility[]>([
+  const [facilities] = useState<Facility[]>([
     {
       id: 'mb-001',
       name: 'Quantum MedBed Unit Alpha',

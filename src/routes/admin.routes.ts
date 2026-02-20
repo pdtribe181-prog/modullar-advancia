@@ -57,6 +57,19 @@ const idParamsSchema = z.object({
   id: z.string().uuid('Invalid ID'),
 });
 
+const usersQuerySchema = z.object({
+  status: z.enum(['pending', 'active', 'suspended', 'all']).default('all'),
+  role: z.string().optional(),
+  search: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+const updateUserStatusSchema = z.object({
+  status: z.enum(['pending', 'active', 'suspended']),
+  reason: z.string().max(500).optional(),
+});
+
 // All admin routes require authentication and admin role
 router.use(authenticate);
 router.use(requireAdmin);
@@ -102,18 +115,160 @@ router.get('/dashboard', asyncHandler(async (req: AuthenticatedRequest, res: Res
 }));
 
 /**
+ * User Management
+ * GET /admin/users
+ */
+router.get('/users', validateQuery(usersQuerySchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { status, role, search, page, limit } = req.query as unknown as z.infer<typeof usersQuerySchema>;
+
+  let query = supabase
+    .from('user_profiles')
+    .select('id, email, full_name, phone, role, status, last_login, created_at, updated_at', { count: 'exact' });
+
+  // Apply filters
+  if (status && status !== 'all') {
+    query = query.eq('status', status);
+  }
+  if (role) {
+    query = query.eq('role', role);
+  }
+  if (search) {
+    query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
+  }
+
+  const offset = (page - 1) * limit;
+
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    throw AppError.internal(error.message);
+  }
+
+  res.json({
+    success: true,
+    data: data || [],
+    pagination: {
+      page,
+      limit,
+      total: count || 0,
+      totalPages: Math.ceil((count || 0) / limit)
+    }
+  });
+}));
+
+/**
+ * Get Single User
+ * GET /admin/users/:id
+ */
+router.get('/users/:id', validateParams(idParamsSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+
+  const { data: user, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    throw AppError.notFound('User not found');
+  }
+
+  res.json({
+    success: true,
+    data: user
+  });
+}));
+
+/**
+ * Update User Status (Approve/Suspend)
+ * PUT /admin/users/:id/status
+ */
+router.put('/users/:id/status', validateParams(idParamsSchema), validateBody(updateUserStatusSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const { status, reason } = req.body;
+  const adminId = req.user?.id;
+
+  // Update user status
+  const { data: user, error } = await supabase
+    .from('user_profiles')
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw AppError.internal(error.message);
+  }
+
+  // Log the action
+  await supabase.from('compliance_logs').insert({
+    user_id: adminId,
+    action: `user_status_${status}`,
+    entity_type: 'user',
+    entity_id: id,
+    details: {
+      new_status: status,
+      reason: reason || null,
+      target_email: user.email,
+    },
+  });
+
+  logger.info('User status updated', {
+    adminId,
+    userId: id,
+    newStatus: status,
+    reason,
+  });
+
+  res.json({
+    success: true,
+    message: `User ${status === 'active' ? 'approved' : status}`,
+    data: user
+  });
+}));
+
+/**
+ * Get Online Users (users who logged in within last 15 minutes)
+ * GET /admin/users/online
+ */
+router.get('/users/online', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('id, email, full_name, role, last_login')
+    .gte('last_login', fifteenMinutesAgo)
+    .order('last_login', { ascending: false });
+
+  if (error) {
+    throw AppError.internal(error.message);
+  }
+
+  res.json({
+    success: true,
+    data: data || [],
+    count: data?.length || 0
+  });
+}));
+
+/**
  * Transaction Management
  * GET /admin/transactions
  */
 router.get('/transactions', validateQuery(transactionQuerySchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { 
-    status, 
-    provider_id, 
+  const {
+    status,
+    provider_id,
     patient_id,
     start_date,
     end_date,
-    page, 
-    limit 
+    page,
+    limit
   } = req.query as unknown as z.infer<typeof transactionQuerySchema>;
 
   let query = supabase

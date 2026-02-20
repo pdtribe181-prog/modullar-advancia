@@ -154,8 +154,32 @@ router.post(
       throw AppError.unauthorized(error.message);
     }
 
-    // Log successful login
+    // Check user status - must be approved to login
     if (data.user) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('status, role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profile?.status === 'pending') {
+        // Sign out the user since they're not approved yet
+        await supabase.auth.signOut();
+        throw AppError.forbidden('Your account is pending approval. Please wait for admin confirmation.');
+      }
+
+      if (profile?.status === 'suspended') {
+        await supabase.auth.signOut();
+        throw AppError.forbidden('Your account has been suspended. Please contact support.');
+      }
+
+      // Update last_login timestamp
+      await supabase
+        .from('user_profiles')
+        .update({ last_login: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('id', data.user.id);
+
+      // Log successful login
       await logAndNotify(
         {
           userId: data.user.id,
@@ -184,6 +208,7 @@ router.post(
 
 /**
  * Register new user
+ * New users start with 'pending' status and must be approved by admin
  */
 router.post(
   '/register',
@@ -206,13 +231,28 @@ router.post(
       throw AppError.badRequest(error.message);
     }
 
+    // Create user profile with 'pending' status
+    if (data.user) {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          id: data.user.id,
+          email: data.user.email,
+          full_name: fullName,
+          role: 'patient',
+          status: 'pending', // New users need admin approval
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+    }
+
     res.json({
       success: true,
       data: {
         user: data.user,
-        session: data.session,
+        session: null, // Don't return session since user needs approval
       },
-      message: 'Check your email for verification link',
+      message: 'Registration successful. Your account is pending admin approval. You will be notified once approved.',
     });
   })
 );

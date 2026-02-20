@@ -25,6 +25,9 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 // Add MedBed Booking Page
 const MedBedBooking = lazy(() => import('./pages/MedBedBooking').then(m => ({ default: m.MedBedBooking })));
 
+// Add Admin Console
+const AdminConsole = lazy(() => import('./pages/AdminConsole'));
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -104,6 +107,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <WalletConnect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin"
+            element={
+              <ProtectedRoute>
+                <AdminConsole />
               </ProtectedRoute>
             }
           />
