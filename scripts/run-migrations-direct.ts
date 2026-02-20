@@ -45,8 +45,9 @@ async function runAllMigrations() {
   // Dynamic import to allow graceful failure if postgres not installed
   let sql: any;
   try {
-    const postgresModule = await import('postgres');
-    sql = postgresModule.default;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const postgresModule = require('postgres');
+    sql = postgresModule.default ?? postgresModule;
   } catch (err) {
     console.error(
       '❌ Error: postgres package not found!\n',

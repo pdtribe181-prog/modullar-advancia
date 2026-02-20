@@ -117,9 +117,11 @@ async function auditDatabase() {
     console.log(`\n${'='.repeat(80)}`);
     console.log(`\n🔧 FUNCTIONS & PROCEDURES\n`);
 
-    const { data: functions } = await supabase.rpc('get_functions_info').catch(() => ({
-      data: null,
-    }));
+    const functionsResult = await supabase.rpc('get_functions_info').then(
+      (res) => res,
+      () => ({ data: null, error: null })
+    );
+    const { data: functions } = functionsResult;
 
     if (!functions) {
       console.log('   ⚠️  Function list unavailable via RPC');
