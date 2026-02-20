@@ -1,0 +1,38 @@
+📋 QUICK COPY-PASTE GUIDE
+
+⚙️ FILES TO EXECUTE (in this exact order):
+
+1️⃣  migrations/012_seed_data.sql
+2️⃣  migrations/013_fix_function_search_path.sql
+3️⃣  migrations/014_storage_and_missing_features.sql
+4️⃣  migrations/015_stripe_integration.sql
+5️⃣  migrations/016_security_fixes.sql
+6️⃣  migrations/017_fix_permissive_rls.sql
+7️⃣  migrations/018_fix_all_rls_policies.sql
+8️⃣  migrations/019_crypto_payments.sql
+9️⃣  migrations/019_fix_security_definer_views.sql
+🔟  migrations/020_fix_security_linter_issues.sql
+1️⃣1️⃣  migrations/021_wallet_integration.sql
+1️⃣2️⃣  migrations/022_vault_encryption.sql
+1️⃣3️⃣  migrations/023_cron_jobs.sql
+1️⃣4️⃣  migrations/024b_additional_tables_clean.sql
+1️⃣5️⃣  migrations/024_additional_tables.sql
+1️⃣6️⃣  migrations/025_security_preferences.sql
+1️⃣7️⃣  migrations/026_schema_fixes.sql
+1️⃣8️⃣  migrations/027_email_templates_seed.sql
+1️⃣9️⃣  migrations/028_medbed_features.sql
+2️⃣0️⃣  migrations/029_user_status_approval.sql
+2️⃣1️⃣  migrations/030_performance_indexes.sql
+
+🔗 SUPABASE SQL EDITOR:
+https://supabase.com/dashboard/project/pikguczsvikzragmrojz/sql/new
+
+✅ WORKFLOW FOR EACH:
+1. Open: c:\Users\mucha.DESKTOP-H7T9NPM\modullar-advancia\[file above]
+2. Select All (Ctrl+A) → Copy (Ctrl+C)
+3. Paste into SQL Editor (Ctrl+V)
+4. Click "Run"
+5. ✓ Verify green checkmark in Results
+6. Next file
+
+⏱️  ETA: 30-40 minutes for all 21 migrations
