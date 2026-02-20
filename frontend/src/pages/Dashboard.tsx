@@ -3,6 +3,14 @@ import { useAuth } from '../providers/AuthProvider';
 import { api } from '../services/api';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
+import { OnboardingChecklist } from '../components/dashboard/OnboardingChecklist';
+import { UpgradePrompt } from '../components/dashboard/UpgradePrompt';
+import { TeamWidget } from '../components/dashboard/TeamWidget';
+import { AnalyticsWidget } from '../components/dashboard/AnalyticsWidget';
+import { SystemStatusIndicator } from '../components/dashboard/OperationalControls';
+import { AnnouncementsBanner, FeedbackPrompt, UsageTrends } from '../components/dashboard/RetentionBanner';
+import { RealtimeIndicator, PerformanceMetrics, BackgroundJobs } from '../components/dashboard/PerformanceIndicators';
+import type { Announcement, SystemStatus, UsageMetrics } from '../components/dashboard/shared';
 
 interface Transaction {
   id: string;
@@ -28,6 +36,32 @@ export function Dashboard() {
   const [showSendModal, setShowSendModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
+
+  // ── Mock data for new dashboard widgets ─────────────────
+  const [announcements] = useState<Announcement[]>([
+    { id: 'ann-1', type: 'info', title: 'Scheduled Maintenance', message: 'System maintenance on Saturday 2–4 AM UTC.', date: new Date().toISOString() },
+    { id: 'ann-2', type: 'success', title: 'New Feature', message: 'Crypto conversions are now available for all plans.', date: new Date().toISOString(), actionUrl: '/wallet', actionLabel: 'Try it' },
+  ]);
+
+  const [systemStatus] = useState<SystemStatus>({
+    api: 'operational',
+    database: 'operational',
+    payments: 'operational',
+    lastChecked: new Date().toISOString(),
+  });
+
+  const [usageMetrics] = useState<UsageMetrics>({
+    apiCalls: { current: 12450, limit: 50000, history: [1200, 1100, 1350, 1800, 2000, 1700, 1950, 1350] },
+    storage: { current: 256, limit: 1024, history: [220, 225, 230, 240, 245, 250, 253, 256] },
+    bandwidth: { current: 4.2, limit: 10, history: [0.4, 0.5, 0.6, 0.5, 0.7, 0.6, 0.5, 0.4] },
+    transactions: { current: 847, limit: 5000, history: [80, 95, 110, 120, 130, 105, 115, 92] },
+  });
+
+  const [backgroundJobs] = useState([
+    { id: 'job-1', name: 'Daily Report Generation', status: 'completed' as const, lastRun: new Date(Date.now() - 3600000).toISOString(), nextRun: new Date(Date.now() + 82800000).toISOString() },
+    { id: 'job-2', name: 'Transaction Reconciliation', status: 'running' as const, progress: 67, lastRun: new Date(Date.now() - 7200000).toISOString() },
+    { id: 'job-3', name: 'Compliance Audit Scan', status: 'scheduled' as const, nextRun: new Date(Date.now() + 14400000).toISOString() },
+  ]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -100,15 +134,27 @@ export function Dashboard() {
 
   return (
     <div className="dashboard-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
-      {/* Header */}
-      <div className="dashboard-header" style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e' }}>
-          Welcome back, {user?.email?.split('@')[0]}
-        </h1>
-        <p style={{ color: '#6b7280', marginTop: '8px' }}>
-          Manage your wallet, payments, and healthcare services
-        </p>
+      {/* Performance Metrics Bar */}
+      <PerformanceMetrics />
+
+      {/* Header + Realtime Indicator */}
+      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e' }}>
+            Welcome back, {user?.email?.split('@')[0]}
+          </h1>
+          <p style={{ color: '#6b7280', marginTop: '8px' }}>
+            Manage your wallet, payments, and healthcare services
+          </p>
+        </div>
+        <RealtimeIndicator />
       </div>
+
+      {/* Announcements */}
+      <AnnouncementsBanner announcements={announcements} />
+
+      {/* Onboarding Checklist (auto-hides when completed/dismissed) */}
+      <OnboardingChecklist />
 
       {/* Balance Card - Web3 Style */}
       <div style={{
@@ -249,6 +295,29 @@ export function Dashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Secondary Dashboard Sections ─────────────────── */}
+
+      {/* Analytics + Usage Trends Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', marginTop: '24px' }}>
+        <AnalyticsWidget />
+        <UsageTrends metrics={usageMetrics} />
+      </div>
+
+      {/* Team + System Status Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', marginTop: '24px' }}>
+        <TeamWidget />
+        <div>
+          <SystemStatusIndicator status={systemStatus} />
+          <BackgroundJobs jobs={backgroundJobs} />
+        </div>
+      </div>
+
+      {/* Conversion / Retention Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', marginTop: '24px' }}>
+        <UpgradePrompt />
+        <FeedbackPrompt />
       </div>
 
       {/* Modals */}
