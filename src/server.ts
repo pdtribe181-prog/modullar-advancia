@@ -124,17 +124,19 @@ apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 
 app.use('/api/v1', apiRouter);
 
+const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
+  try {
+    // Lightweight auth check to verify Supabase connectivity without table access.
+    const { error } = await supabase.auth.getSession();
+    return error ? 'error' : 'connected';
+  } catch {
+    return 'error';
+  }
+};
+
 // Health check
 app.get('/health', async (_req, res) => {
-  let dbStatus = 'unknown';
-  try {
-    // Use a lightweight auth check to verify Supabase connectivity
-    // This doesn't require table-level permissions
-    const { error } = await supabase.auth.getSession();
-    dbStatus = error ? 'error' : 'connected';
-  } catch {
-    dbStatus = 'error';
-  }
+  const dbStatus = await getDatabaseStatus();
   const monitoring = getMonitoringHealth();
 
   const isHealthy = dbStatus === 'connected';
