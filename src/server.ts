@@ -126,7 +126,7 @@ app.use('/api/v1', apiRouter);
 
 // Health check
 app.get('/health', async (_req, res) => {
-  let dbStatus = 'unknown';
+  let dbStatus: string;
   try {
     // Use a lightweight auth check to verify Supabase connectivity
     // This doesn't require table-level permissions
