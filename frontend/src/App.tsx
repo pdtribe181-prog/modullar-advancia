@@ -6,12 +6,18 @@ import { LoadingOverlay } from './components/Spinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './providers/AuthProvider';
 import type { ReactNode } from 'react';
+import { CookieConsent } from './components/CookieConsent';
 
 // Eager load the home and login pages for fast initial render
-import { Home } from './pages/Home';
+import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login';
 
 // Lazy load other pages for better code splitting
+const Features = lazy(() => import('./pages/Features').then(m => ({ default: m.Features })));
+const Policy = lazy(() => import('./pages/Policy').then(m => ({ default: m.Policy })));
+const Subscriptions = lazy(() => import('./pages/Subscriptions').then(m => ({ default: m.Subscriptions })));
+const CryptoWallet = lazy(() => import('./pages/CryptoWallet').then(m => ({ default: m.CryptoWallet })));
+const FAQ = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ })));
 const PaymentPage = lazy(() => import('./pages/PaymentPage').then(m => ({ default: m.PaymentPage })));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -49,7 +55,12 @@ export default function App() {
       <Suspense fallback={<LoadingOverlay message="Loading page..." />}>
         <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
+          <Route index element={<LandingPage />} />
+          <Route path="features" element={<Features />} />
+          <Route path="policy" element={<Policy />} />
+          <Route path="subscriptions" element={<Subscriptions />} />
+          <Route path="wallet-tools" element={<CryptoWallet />} />
+          <Route path="faq" element={<FAQ />} />
           <Route path="login" element={<Login />} />
           <Route path="payment" element={<PaymentPage />} />
           <Route path="payment/success" element={<PaymentSuccess />} />
@@ -132,7 +143,8 @@ export default function App() {
           {/* 404 catch-all route */}
           <Route path="*" element={<NotFound />} />
         </Route>
-      </Routes>
+        </Routes>
+        <CookieConsent />
       </Suspense>
     </ErrorBoundary>
   );

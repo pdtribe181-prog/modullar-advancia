@@ -20,11 +20,11 @@ async function runSqlViaRest(sql: string): Promise<{ data: any; error: any }> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'apikey': supabaseServiceKey,
-      'Authorization': `Bearer ${supabaseServiceKey}`,
-      'Prefer': 'return=representation'
+      apikey: supabaseServiceKey,
+      Authorization: `Bearer ${supabaseServiceKey}`,
+      Prefer: 'return=representation',
     },
-    body: JSON.stringify({ sql_query: sql })
+    body: JSON.stringify({ sql_query: sql }),
   });
 
   if (!response.ok) {
@@ -44,19 +44,23 @@ async function runSqlViaManagementApi(sql: string): Promise<{ data: any; error: 
     return {
       data: null,
       error: {
-        message: 'SUPABASE_ACCESS_TOKEN required for Management API. Get it from: https://supabase.com/dashboard/account/tokens'
-      }
+        message:
+          'SUPABASE_ACCESS_TOKEN required for Management API. Get it from: https://supabase.com/dashboard/account/tokens',
+      },
     };
   }
 
-  const response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
-    },
-    body: JSON.stringify({ query: sql })
-  });
+  const response = await fetch(
+    `https://api.supabase.com/v1/projects/${projectRef}/database/query`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ query: sql }),
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -110,7 +114,7 @@ async function runMigration() {
 
   console.log('\n✓ Migration completed successfully!');
   if (data) {
-    console.log('Result:', JSON.stringify(data, null, 2).substring(0, 500));
+    console.log('Result:', JSON.stringify(data, null, 2));
   }
 }
 

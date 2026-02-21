@@ -1,0 +1,58 @@
+
+> modullar-advancia@1.0.0 test
+> node --experimental-vm-modules node_modules/jest/bin/jest.js
+
+(node:23564) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/__tests__/validation.test.ts (28.984 s)
+(node:28088) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/__tests__/auth.middleware.test.ts (29.676 s)
+(node:29508) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/__tests__/env.config.test.ts (29.854 s)
+PASS src/__tests__/auth.service.test.ts
+(node:28948) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/__tests__/sms.service.test.ts
+(node:25784) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/__tests__/email.service.test.ts
+(node:564) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/__tests__/wallet.routes.test.ts (31.774 s)
+PASS src/__tests__/security.service.test.ts
+PASS src/__tests__/security.middleware.test.ts
+  ΓùÅ Console
+
+    console.warn
+      {"level":"warn","timestamp":"2026-02-21T13:57:42.246Z","message":"CORS blocked origin","origin":"https://malicious-site.com"}
+
+      35 |
+      36 |   warn: (message: string, meta?: Record<string, any>) => {
+    > 37 |     console.warn(JSON.stringify({
+         |             ^
+      38 |       level: 'warn',
+      39 |       timestamp: new Date().toISOString(),
+      40 |       message,
+
+      at Object.warn (src/middleware/logging.middleware.ts:37:13)
+      at Object.origin (src/middleware/security.middleware.ts:112:16)
+      at Object.<anonymous> (src/__tests__/security.middleware.test.ts:109:14)
+
+PASS src/__tests__/stripe.routes.test.ts (31.949 s)
+(node:10256) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/__tests__/stripe.service.test.ts
+PASS src/__tests__/auth.routes.test.ts (32.915 s)
+PASS src/__tests__/rateLimit.middleware.test.ts (33.4 s)
+PASS src/__tests__/errors.test.ts
+PASS src/__tests__/wallet.service.test.ts
+PASS src/__tests__/logger.test.ts
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Test Suites: 16 passed, 16 total
+Tests:       378 passed, 378 total
+Snapshots:   0 total
+Time:        36.988 s, estimated 45 s
+Ran all test suites.

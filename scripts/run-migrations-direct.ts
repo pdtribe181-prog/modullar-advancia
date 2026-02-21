@@ -45,8 +45,7 @@ async function runAllMigrations() {
   // Dynamic import to allow graceful failure if postgres not installed
   let sql: any;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const postgresModule = require('postgres');
+    const postgresModule = await import('postgres');
     sql = postgresModule.default ?? postgresModule;
   } catch (err) {
     console.error(
@@ -113,6 +112,7 @@ async function runAllMigrations() {
         console.log(`   ✅ Migration succeeded`);
         filesSucceeded++;
       } catch (err: any) {
+        console.error(err);
         const errorMsg = err.message?.substring(0, 150) || 'Unknown error';
         console.error(`   ❌ Migration failed`);
         console.error(`   → ${errorMsg}\n`);

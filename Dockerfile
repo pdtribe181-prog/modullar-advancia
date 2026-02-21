@@ -1,5 +1,5 @@
 # Production Dockerfile for Healthcare Payment API
-FROM node:25-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Production dependencies stage
-FROM node:25-alpine AS deps
+FROM node:22-alpine AS deps
 
 WORKDIR /app
 
@@ -26,13 +26,13 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # Production stage
-FROM node:25-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S expressjs -u 1001
+  adduser -S expressjs -u 1001
 
 # Copy built files and production deps
 COPY --from=builder /app/dist ./dist

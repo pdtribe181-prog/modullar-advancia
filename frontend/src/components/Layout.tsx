@@ -83,6 +83,13 @@ export function Layout() {
           <p style={{ marginBottom: '12px' }}>
             <span style={{ fontSize: '20px' }}>💎</span> Advancia PayLedger
           </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '16px' }}>
+            <Link to="/features" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Features</Link>
+            <Link to="/policy" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/subscriptions" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Subscriptions</Link>
+            <Link to="/faq" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>FAQ</Link>
+            <Link to="/wallet-tools" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Crypto Wallet</Link>
+          </div>
           <p style={{ fontSize: '14px', opacity: 0.7 }}>
             &copy; 2026 Advancia PayLedger. Web3 Healthcare Payments. HIPAA Compliant.
           </p>

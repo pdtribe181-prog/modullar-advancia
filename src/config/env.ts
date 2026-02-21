@@ -37,6 +37,11 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().url().optional(),
   SENTRY_ENVIRONMENT: z.string().optional(),
 
+  // Redis / Upstash (optional – gracefully falls back to in-memory)
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  REDIS_URL: z.string().optional(),
+
   // Crypto Payments (Coinbase Commerce - optional)
   COINBASE_COMMERCE_API_KEY: z.string().optional(),
   COINBASE_COMMERCE_WEBHOOK_SECRET: z.string().optional(),

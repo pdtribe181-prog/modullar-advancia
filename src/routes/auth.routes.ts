@@ -9,6 +9,7 @@ import { authLimiter, sensitiveLimiter } from '../middleware/rateLimit.middlewar
 import { validateBody, signinSchema, signupSchema } from '../middleware/validation.middleware.js';
 import { asyncHandler, AppError, getErrorMessage } from '../utils/errors.js';
 import { logSecurityEvent, logAndNotify, extractIPAddress } from '../services/security.service.js';
+import { generateCsrfToken } from '../middleware/csrf.middleware.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -27,6 +28,18 @@ const profileUpdateSchema = z.object({
 const refreshTokenSchema = z.object({
   refresh_token: z.string().min(1, 'Refresh token required'),
 });
+
+// ------------------------------------------------------------------
+// GET /auth/csrf-token — obtain a CSRF token for state-changing requests
+// ------------------------------------------------------------------
+router.get(
+  '/csrf-token',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = await generateCsrfToken(req, res);
+    res.json({ success: true, csrfToken: token });
+  })
+);
 
 // ============================================================
 // PROFILE ROUTES

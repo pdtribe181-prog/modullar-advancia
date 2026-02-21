@@ -20,12 +20,8 @@ jest.unstable_mockModule('../lib/supabase', () => ({
 }));
 
 // Dynamic import after mocks are set up
-const {
-  authenticate,
-  authenticateWithProfile,
-  requireRole,
-  optionalAuth,
-} = await import('../middleware/auth.middleware');
+const { authenticate, authenticateWithProfile, requireRole, optionalAuth } =
+  await import('../middleware/auth.middleware');
 
 type AuthenticatedRequest = Request & { user?: any; userProfile?: any };
 
@@ -224,8 +220,6 @@ describe('Auth Middleware', () => {
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           error: 'Insufficient permissions',
-          required: ['admin'],
-          current: 'none',
         })
       );
     });
@@ -241,8 +235,6 @@ describe('Auth Middleware', () => {
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           error: 'Insufficient permissions',
-          required: ['admin', 'provider'],
-          current: 'patient',
         })
       );
     });
@@ -267,7 +259,9 @@ describe('Auth Middleware', () => {
       await middleware(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
       expect(mockFrom).toHaveBeenCalledWith('user_profiles');
-      expect(mockSelectMock).toHaveBeenCalledWith('*');
+      expect(mockSelectMock).toHaveBeenCalledWith(
+        'id, role, full_name, stripe_customer_id, status'
+      );
       expect(mockEqMock).toHaveBeenCalledWith('id', 'user-123');
       expect(mockNext).toHaveBeenCalled();
     });

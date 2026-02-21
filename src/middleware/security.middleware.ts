@@ -1,19 +1,34 @@
 import helmet from 'helmet';
-import { Express } from 'express';
+import { Express, Request, Response, NextFunction } from 'express';
 import { logger } from './logging.middleware.js';
+import crypto from 'crypto';
 
 /**
  * Configure security headers using Helmet
  * https://helmetjs.github.io/
  */
 export function configureSecurityHeaders(app: Express) {
+  // Generate a unique nonce per request for inline scripts
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+    next();
+  });
+
   app.use(
     helmet({
       // Content Security Policy
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", 'js.stripe.com'],
+          // Use nonce instead of unsafe-inline for scripts
+          scriptSrc: [
+            "'self'",
+            'js.stripe.com',
+            // The nonce is injected per-request via res.locals.cspNonce
+            ((_req: Request, res: Response) =>
+              `'nonce-${(res as any).locals.cspNonce}'`) as unknown as string,
+          ],
+          // Stripe elements require unsafe-inline for styles — acceptable tradeoff
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
           connectSrc: ["'self'", 'api.stripe.com', '*.supabase.co'],
@@ -100,7 +115,7 @@ export function getCorsConfig() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
     exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
     maxAge: 86400, // 24 hours
   };

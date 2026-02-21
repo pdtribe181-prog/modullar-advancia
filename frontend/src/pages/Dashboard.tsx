@@ -16,6 +16,17 @@ export function Dashboard() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showBalance, setShowBalance] = useState(true);
+
+  // Mock Aggregated Balance Data
+  const aggregatedBalance = {
+    totalUSD: 12450.75,
+    assets: [
+      { symbol: 'ETH', amount: 3.5, valueUSD: 8750.00 },
+      { symbol: 'BTC', amount: 0.05, valueUSD: 3200.00 },
+      { symbol: 'USDC', amount: 500.75, valueUSD: 500.75 }
+    ]
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -87,6 +98,36 @@ export function Dashboard() {
       </div>
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        {/* Balance & Aggregator Card */}
+        <div className="dashboard-card" style={{ background: 'linear-gradient(135deg, #00A699, #007A70)', color: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>Total Balance</h3>
+            <button
+              onClick={() => setShowBalance(!showBalance)}
+              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
+              title={showBalance ? "Hide Balance" : "Show Balance"}
+            >
+              {showBalance ? '👁️' : '🔒'}
+            </button>
+          </div>
+
+          <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '1.5rem' }}>
+            {showBalance ? `$${aggregatedBalance.totalUSD.toLocaleString()}` : '••••••••'}
+          </div>
+
+          <div>
+            <h4 style={{ fontSize: '14px', opacity: 0.8, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Asset Breakdown</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {aggregatedBalance.assets.map(asset => (
+                <div key={asset.symbol} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span>{asset.symbol}</span>
+                  <span>{showBalance ? `${asset.amount} ($${asset.valueUSD.toLocaleString()})` : '••••'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Quick Actions */}
         <div className="dashboard-card" style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px' }}>Quick Actions</h3>

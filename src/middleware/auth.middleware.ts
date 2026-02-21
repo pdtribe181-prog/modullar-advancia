@@ -29,16 +29,19 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing authorization header' });
   }
 
   const token = authHeader.split(' ')[1];
-  
+
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
     if (error || !user) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
@@ -60,24 +63,27 @@ export const authenticateWithProfile = async (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing authorization header' });
   }
 
   const token = authHeader.split(' ')[1];
-  
+
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
     if (error || !user) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    // Fetch user profile with role
+    // Fetch user profile with role – select only needed columns
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('*')
+      .select('id, role, full_name, stripe_customer_id, status')
       .eq('id', user.id)
       .single();
 
@@ -99,25 +105,22 @@ export const authenticateWithProfile = async (
  */
 export const requireRole = (...allowedRoles: string[]) => {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    // If profile not loaded, fetch it
+    // If profile not loaded, fetch it – select only needed columns
     if (!req.userProfile && req.user) {
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('id, role, full_name, stripe_customer_id, status')
         .eq('id', req.user.id)
         .single();
-      
+
       req.userProfile = profile || undefined;
     }
 
     const userRole = req.userProfile?.role;
-    
+
     if (!userRole || !allowedRoles.includes(userRole)) {
-      return res.status(403).json({ 
-        error: 'Insufficient permissions',
-        required: allowedRoles,
-        current: userRole || 'none'
-      });
+      // Do NOT leak role info (current role or required roles) to the client
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     next();
@@ -134,12 +137,14 @@ export const optionalAuth = async (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
-  
+
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
-    
+
     try {
-      const { data: { user } } = await supabase.auth.getUser(token);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(token);
       if (user) {
         req.user = user;
       }

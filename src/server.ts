@@ -17,8 +17,11 @@ import providerRoutes from './routes/provider.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import databaseWebhookRoutes from './routes/database-webhook.routes.js';
 import cryptoRoutes from './routes/crypto.routes.js';
+import medBedRoutes from './routes/medbed.routes.js';
 import { apiLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
+import { getRedisKind, redisHelpers } from './lib/redis.js';
+import { csrfProtection } from './middleware/csrf.middleware.js';
 import { z } from 'zod';
 import { validateParams, uuidSchema } from './middleware/validation.middleware.js';
 
@@ -108,6 +111,10 @@ app.use((req, res, next) => {
   }
 });
 
+// CSRF protection for state-changing requests (POST/PUT/PATCH/DELETE)
+// Webhooks are excluded — they use their own signature verification
+app.use('/api/v1', csrfProtection);
+
 // API Routes
 const apiRouter = express.Router();
 apiRouter.use('/stripe', stripeRoutes);
@@ -118,6 +125,7 @@ apiRouter.use('/appointments', appointmentsRoutes);
 apiRouter.use('/provider', providerRoutes);
 apiRouter.use('/wallet', walletRoutes);
 apiRouter.use('/crypto', cryptoRoutes);
+apiRouter.use('/medbeds', medBedRoutes);
 apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 
 app.use('/api/v1', apiRouter);
@@ -138,12 +146,15 @@ const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
 app.get('/health', async (_req, res) => {
   const dbStatus = await getDatabaseStatus();
   const monitoring = getMonitoringHealth();
+  const redisHealthy = await redisHelpers.isHealthy();
+  const redisKind = getRedisKind();
 
   const isHealthy = dbStatus === 'connected';
   res.status(isHealthy ? 200 : 503).json({
     status: isHealthy ? 'healthy' : 'unhealthy',
     timestamp: new Date().toISOString(),
     database: dbStatus,
+    redis: { status: redisHealthy ? 'connected' : 'disconnected', kind: redisKind },
     monitoring: monitoring.enabled ? 'enabled' : 'disabled',
     version: process.env.npm_package_version || '1.0.0',
   });

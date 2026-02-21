@@ -1,7 +1,8 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { type Store } from 'express-rate-limit';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { createRequire } from 'module';
 import { getEnv, Env } from '../config/env.js';
+import { getRedisKind, getRedisClient } from '../lib/redis.js';
 
 const require = createRequire(import.meta.url);
 const { ipKeyGenerator } = require('express-rate-limit') as {
@@ -10,8 +11,8 @@ const { ipKeyGenerator } = require('express-rate-limit') as {
 
 /**
  * Rate limiting middleware for API protection
- * Uses in-memory store by default (use Redis for production clusters)
- * All limits are configurable via environment variables
+ * Uses Redis store when available (Upstash / ioredis), falls back to in-memory.
+ * All limits are configurable via environment variables.
  */
 
 // Cache env config once validated
@@ -22,6 +23,35 @@ const getConfig = (): Env => {
   }
   return envConfig;
 };
+
+// Lazily create a Redis store for express-rate-limit when ioredis is available
+let _redisStore: Store | null | undefined; // undefined = not yet attempted
+async function getRedisStore(): Promise<Store | undefined> {
+  if (_redisStore !== undefined) return _redisStore ?? undefined;
+
+  try {
+    const kind = getRedisKind();
+    if (kind === 'ioredis') {
+      // rate-limit-redis requires an ioredis instance
+      const { default: RedisStore } = await import('rate-limit-redis');
+      const client = getRedisClient();
+      await client.connect?.();
+      _redisStore = new RedisStore({
+        // @ts-expect-error sendCommand type mismatch between ioredis and rate-limit-redis
+        sendCommand: (...args: string[]) => client.call(...args),
+        prefix: 'rl:',
+      });
+      console.log('[RateLimit] Using Redis store');
+      return _redisStore;
+    }
+    // For Upstash or memory, fall through to the default MemoryStore
+    _redisStore = null;
+    return undefined;
+  } catch {
+    _redisStore = null;
+    return undefined;
+  }
+}
 
 // Factory functions that create limiters with config
 function createApiLimiter() {
