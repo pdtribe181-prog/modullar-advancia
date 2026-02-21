@@ -13,7 +13,7 @@ warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
 fail()    { echo -e "${RED}[FAIL]${NC}  $*"; }
 
 # ── Endpoints to check ────────────────────────────────────────────────────────
-PROD_BASE="https://modullar-advancia.onrender.com"
+PROD_BASE="https://api.advanciapayledger.com"
 STG_BASE="https://modullar-advancia-staging.onrender.com"
 FRONTEND_URL="https://app.advanciapayledger.com"
 

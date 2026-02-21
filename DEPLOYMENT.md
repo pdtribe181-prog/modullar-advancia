@@ -111,7 +111,7 @@ vercel --prod
 ### Environment Variables (in Vercel Dashboard)
 
 ```env
-VITE_API_URL=https://modullar-advancia.onrender.com
+VITE_API_URL=https://api.advanciapayledger.com/api/v1
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 VITE_SUPABASE_URL=https://pikguczsvikzragmrojz.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
