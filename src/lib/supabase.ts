@@ -12,7 +12,13 @@ let _serviceClient: SupabaseClient | null = null;
 export function getSupabaseClient(): SupabaseClient {
   if (!_supabase) {
     const env = getEnv();
-    _supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+    _supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
+    });
   }
   return _supabase;
 }

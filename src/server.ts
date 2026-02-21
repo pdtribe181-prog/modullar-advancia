@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import { readFileSync } from 'fs';
 import { parse } from 'yaml';
 import { validateEnv, getEnv } from './config/env.js';
-import { supabase } from './lib/supabase.js';
+import { supabase, createServiceClient } from './lib/supabase.js';
 import * as apiServices from './services/api.service.js';
 import stripeRoutes from './routes/stripe.routes.js';
 import connectRoutes from './routes/connect.routes.js';
@@ -126,8 +126,10 @@ app.use('/api/v1', apiRouter);
 
 const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
   try {
-    // Lightweight auth check to verify Supabase connectivity without table access.
-    const { error } = await supabase.auth.getSession();
+    // Use service role to perform a real, lightweight PostgREST query.
+    // This avoids false negatives from auth/session storage in Node environments.
+    const admin = createServiceClient();
+    const { error } = await admin.from('user_profiles').select('id').limit(1);
     return error ? 'error' : 'connected';
   } catch {
     return 'error';
