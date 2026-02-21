@@ -28,7 +28,7 @@ jobs:
       id-token: write  # for provenance attestation
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # ── Set up QEMU for multi-platform builds ──
       - name: Set up QEMU
