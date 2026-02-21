@@ -46,7 +46,7 @@ fi
 # ── Config ─────────────────────────────────────────────────────────────────────
 if [[ "$ENVIRONMENT" == "production" ]]; then
   DEPLOY_HOOK_URL="${RENDER_DEPLOY_HOOK_URL:-}"
-  APP_URL="https://modullar-advancia.onrender.com"
+  APP_URL="https://api.advanciapayledger.com"
   HEALTH_URL="${APP_URL}/health"
   TARGET_BRANCH="main"
 else
