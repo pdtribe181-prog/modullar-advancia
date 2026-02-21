@@ -24,7 +24,7 @@ If you discover a security vulnerability, please report it responsibly:
 
 - All secrets (API keys, database credentials, tokens) are stored in environment variables.
 - `.env`, `.env.production`, and `.env*.local` files are excluded from version control via `.gitignore`.
-- Production secrets are managed via cloud provider secret managers (e.g., Google Cloud Secret Manager, Vercel Environment Variables).
+- Production secrets are managed via environment variables on Render (backend) and Hostinger Horizons (frontend).
 - **Never** commit real API keys, tokens, or passwords to source code.
 
 ### Authentication & Authorization
