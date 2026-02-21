@@ -1,6 +1,12 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { createRequire } from 'module';
 import { getEnv, Env } from '../config/env.js';
+
+const require = createRequire(import.meta.url);
+const { ipKeyGenerator } = require('express-rate-limit') as {
+  ipKeyGenerator: (ip: string, ipv6Subnet?: number) => string;
+};
 
 /**
  * Rate limiting middleware for API protection
@@ -26,8 +32,11 @@ function createApiLimiter() {
     message: { error: 'Too many requests, please try again later' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req: Request) => (req as any).user?.id || req.ip || 'unknown',
-    validate: { ipv6SubnetOrKeyGenerator: false, creationStack: false },
+    keyGenerator: (req: Request) => {
+      const userId = (req as any).user?.id as string | undefined;
+      return userId || ipKeyGenerator(req.ip || 'unknown');
+    },
+    validate: { creationStack: false },
   });
 }
 
@@ -52,8 +61,11 @@ function createPaymentLimiter() {
     message: { error: 'Too many payment requests, please slow down' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req: Request) => (req as any).user?.id || req.ip || 'unknown',
-    validate: { ipv6SubnetOrKeyGenerator: false, creationStack: false },
+    keyGenerator: (req: Request) => {
+      const userId = (req as any).user?.id as string | undefined;
+      return userId || ipKeyGenerator(req.ip || 'unknown');
+    },
+    validate: { creationStack: false },
   });
 }
 
@@ -65,8 +77,11 @@ function createSensitiveLimiter() {
     message: { error: 'Rate limit exceeded for sensitive operations' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req: Request) => (req as any).user?.id || req.ip || 'unknown',
-    validate: { ipv6SubnetOrKeyGenerator: false, creationStack: false },
+    keyGenerator: (req: Request) => {
+      const userId = (req as any).user?.id as string | undefined;
+      return userId || ipKeyGenerator(req.ip || 'unknown');
+    },
+    validate: { creationStack: false },
   });
 }
 

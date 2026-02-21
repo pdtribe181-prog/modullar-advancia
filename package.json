@@ -14,7 +14,7 @@
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "npx playwright test --headed",
-    "test:e2e:api": "npx playwright test e2e/api.spec.ts",
+    "test:e2e:api": "npx playwright test --config playwright.api.config.ts",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:connection": "tsx test-connection.ts",
