@@ -97,9 +97,7 @@ configureSecurityHeaders(app);
 app.use(cors(getCorsConfig()));
 
 // Apply rate limiting to all API routes
-app.use('/api', apiLimiter);
-app.use('/stripe', apiLimiter);
-app.use('/connect', apiLimiter);
+app.use('/api/v1', apiLimiter);
 
 // Use raw body for Stripe webhook, JSON for everything else
 app.use((req, res, next) => {
