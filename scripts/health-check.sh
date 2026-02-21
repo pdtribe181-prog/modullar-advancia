@@ -15,7 +15,7 @@ fail()    { echo -e "${RED}[FAIL]${NC}  $*"; }
 # ── Endpoints to check ────────────────────────────────────────────────────────
 PROD_BASE="https://modullar-advancia.onrender.com"
 STG_BASE="https://modullar-advancia-staging.onrender.com"
-FRONTEND_URL="https://app.advancia.us"
+FRONTEND_URL="https://app.advanciapayledger.com"
 
 TARGET="${1:-all}"
 OVERALL_OK=0

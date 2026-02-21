@@ -11,7 +11,7 @@
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do NOT** open a public GitHub issue.
-2. Email **<security@advancia.us>** with:
+2. Email **<security@advanciapayledger.com>** with:
    - A description of the vulnerability
    - Steps to reproduce
    - Potential impact assessment

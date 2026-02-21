@@ -53,9 +53,9 @@ export function getCorsConfig() {
       allowedOrigins.push(process.env.FRONTEND_URL);
     }
     allowedOrigins.push(
-      'https://advancia.us',
-      'https://www.advancia.us',
-      'https://app.advancia.us'
+      'https://advanciapayledger.com',
+      'https://www.advanciapayledger.com',
+      'https://app.advanciapayledger.com'
     );
   } else {
     // Development: allow localhost origins
@@ -67,7 +67,10 @@ export function getCorsConfig() {
   }
 
   return {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
       // Allow requests with no origin in development (mobile apps, Postman, etc.)
       // In production, require an origin header for browser-based requests
       if (!origin) {

@@ -12,7 +12,7 @@
 | -------- | ---------------------------------------- | ---------- |
 | **App**  | <https://advanciapayledger.com>          | ⏳ Pending |
 | **API**  | <https://advanciapayledger.com/api>      | ⏳ Pending |
-| **Brand**| <https://advancia.us>                    | ⏳ Pending |
+| **Brand**| <https://advanciapayledger.com>          | ⏳ Pending |
 
 ## Tech Stack
 

@@ -100,8 +100,8 @@ STRIPE_SECRET_KEY=
 STRIPE_PUBLISHABLE_KEY=
 STRIPE_WEBHOOK_SECRET=
 RESEND_API_KEY=
-FRONTEND_URL=https://app.advancia.us
-APP_URL=https://api.advancia.us
+FRONTEND_URL=https://app.advanciapayledger.com
+APP_URL=https://api.advanciapayledger.com
 TRUST_PROXY=true
 ENVEOF
         echo "⚠️  IMPORTANT: Edit /var/www/advancia/.env with your actual values!"
@@ -128,9 +128,9 @@ echo "════════════════════════�
 echo ""
 echo "Next steps:"
 echo "  1. Edit .env:     nano /var/www/advancia/.env"
-echo "  2. Point DNS:     A record for api.advancia.us → $(curl -s ifconfig.me)"
-echo "                    A record for app.advancia.us → $(curl -s ifconfig.me)"
-echo "  3. Get SSL:       certbot --nginx -d api.advancia.us -d app.advancia.us"
+echo "  2. Point DNS:     A record for api.advanciapayledger.com → $(curl -s ifconfig.me)"
+echo "                    A record for app.advanciapayledger.com → $(curl -s ifconfig.me)"
+echo "  3. Get SSL:       certbot --nginx -d api.advanciapayledger.com -d app.advanciapayledger.com"
 echo "  4. Restart PM2:   cd /var/www/advancia && pm2 reload ecosystem.config.cjs"
 echo "  5. Check health:  curl http://localhost:3000/health"
 echo ""

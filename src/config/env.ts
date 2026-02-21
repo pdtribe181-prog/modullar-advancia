@@ -26,7 +26,7 @@ const envSchema = z.object({
 
   // Email (optional - gracefully degrade)
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default('Advancia PayLedger <noreply@advancia.us>'),
+  EMAIL_FROM: z.string().default('Advancia PayLedger <noreply@advanciapayledger.com>'),
 
   // SMS (Twilio - optional)
   TWILIO_ACCOUNT_SID: z.string().optional(),

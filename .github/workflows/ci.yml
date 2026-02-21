@@ -101,7 +101,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_API_URL: https://api.advancia.us
+          VITE_API_URL: https://api.advanciapayledger.com
           VITE_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
 
   security-scan:

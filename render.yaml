@@ -30,7 +30,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
-        value: noreply@advancia.us
+        value: noreply@advanciapayledger.com
       - key: FRONTEND_URL
         sync: false
       - key: SENTRY_DSN

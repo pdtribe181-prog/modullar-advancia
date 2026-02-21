@@ -24,7 +24,7 @@
 | -------- | ------------------------------------------ | ------------ |
 | App      | <https://advanciapayledger.com>            | ⏳ Pending   |
 | API      | <https://advanciapayledger.com/api>        | ⏳ Pending   |
-| Brand    | <https://advancia.us>                      | ⏳ Pending   |
+| Brand    | <https://advanciapayledger.com>            | ⏳ Pending   |
 | Database | <https://pikguczsvikzragmrojz.supabase.co> | ✅ Connected |
 
 ---
@@ -99,7 +99,7 @@
 
 ## 2. CI/CD Pipeline
 
-**Live**: <https://app.advancia.us>
+**Live**: <https://app.advanciapayledger.com>
 
 ### Redeploy if needed
 
@@ -181,13 +181,13 @@ npm run test:coverage
 ### Frontend (Vercel)
 
 1. Vercel Dashboard → Settings → Domains
-2. Add `app.advancia.us`
+2. Add `app.advanciapayledger.com`
 3. DNS: `CNAME app → cname.vercel-dns.com`
 
 ### Backend (Render)
 
 1. Render Dashboard → Settings → Custom Domains
-2. Add `api.advancia.us`
+2. Add `api.advanciapayledger.com`
 3. DNS: Follow Render's instructions
 
 ---
@@ -219,14 +219,14 @@ npm run test:coverage
 
 ## 10. Landing Page Integration
 
-The marketing site at `advancia.us` (built with Rocket.new) needs updated links:
+The marketing site at `advanciapayledger.com` (built with Rocket.new) needs updated links:
 
 | Current Link          | Should Point To                             |
 | --------------------- | ------------------------------------------- |
-| `/signup`             | `https://app.advancia.us/login?mode=signup` |
-| `/login`              | `https://app.advancia.us/login`             |
-| "Get Started" button  | `https://app.advancia.us`                   |
-| "Create Free Account" | `https://app.advancia.us/login?mode=signup` |
+| `/signup`             | `https://app.advanciapayledger.com/login?mode=signup` |
+| `/login`              | `https://app.advanciapayledger.com/login`             |
+| "Get Started" button  | `https://app.advanciapayledger.com`                   |
+| "Create Free Account" | `https://app.advanciapayledger.com/login?mode=signup` |
 
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
 

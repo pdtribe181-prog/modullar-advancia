@@ -105,7 +105,7 @@ describe('Security Middleware', () => {
       const config = getFreshConfig();
       const callback = jest.fn();
 
-      config.origin('https://advancia.us', callback);
+      config.origin('https://advanciapayledger.com', callback);
 
       expect(callback).toHaveBeenCalledWith(null, true);
     });
@@ -118,7 +118,7 @@ describe('Security Middleware', () => {
       const config = getFreshConfig();
       const callback = jest.fn();
 
-      config.origin('https://www.advancia.us', callback);
+      config.origin('https://www.advanciapayledger.com', callback);
 
       expect(callback).toHaveBeenCalledWith(null, true);
     });
@@ -131,7 +131,7 @@ describe('Security Middleware', () => {
       const config = getFreshConfig();
       const callback = jest.fn();
 
-      config.origin('https://app.advancia.us', callback);
+      config.origin('https://app.advanciapayledger.com', callback);
 
       expect(callback).toHaveBeenCalledWith(null, true);
     });
