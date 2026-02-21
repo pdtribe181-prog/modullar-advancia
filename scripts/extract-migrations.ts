@@ -3,7 +3,7 @@
  * Creates clean SQL-only files ready to paste into Supabase SQL Editor
  */
 
-import { readdirSync, readFileSync, writeFileSync } from 'fs';
+import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -16,18 +16,14 @@ async function extractMigrationSQL() {
 
   // Create output directory
   try {
-    // Make directory if it doesn't exist
-    const fs = await import('fs');
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
+    if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
   } catch (err) {
     console.error('Failed to create output directory:', err);
   }
 
   const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith('.sql') && parseInt(f.split('_')[0]) >= 12)
-    .sort((a, b) => {
+    .filter((f: string) => f.endsWith('.sql') && parseInt(f.split('_')[0]) >= 12)
+    .sort((a: string, b: string) => {
       const numA = parseInt(a.split('_')[0]);
       const numB = parseInt(b.split('_')[0]);
       return numA - numB;
@@ -36,7 +32,7 @@ async function extractMigrationSQL() {
   console.log('\n🚀 EXTRACTING SQL FROM MIGRATIONS\n');
   console.log(`📁 Output directory: ${outputDir}\n`);
 
-  files.forEach((file, idx) => {
+  files.forEach((file: string, idx: number) => {
     console.log(`\n${idx + 1}. Processing: ${file}`);
 
     const inputPath = join(migrationsDir, file);
@@ -72,7 +68,7 @@ async function extractMigrationSQL() {
   console.log(`      e) Verify green checkmark ✓ in Results\n`);
 
   console.log(`📌 FILE EXECUTION ORDER:\n`);
-  files.forEach((file, idx) => {
+  files.forEach((file: string, idx: number) => {
     console.log(`   ${String(idx + 1).padStart(2)}. ${file}`);
   });
 

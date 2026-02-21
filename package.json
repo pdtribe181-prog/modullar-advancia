@@ -37,6 +37,9 @@
     "supabase",
     "compliance"
   ],
+  "engines": {
+    "node": "20.x"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
