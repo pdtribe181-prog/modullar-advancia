@@ -6,6 +6,13 @@ import type { User } from '@supabase/supabase-js';
  */
 export interface AuthenticatedRequest extends Request {
   user: User;
+  userProfile?: {
+    id: string;
+    role: string;
+    full_name?: string;
+    stripe_customer_id?: string;
+    [key: string]: any;
+  };
   requestId?: string;
 }
 

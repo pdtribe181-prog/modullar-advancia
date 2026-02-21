@@ -57,6 +57,7 @@ export default function ProviderDashboard() {
     loadProvider();
     loadAppointments();
     loadEarnings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadProvider() {
@@ -78,7 +79,7 @@ export default function ProviderDashboard() {
       const data = await api.get<{ appointments: Appointment[] }>('/provider/appointments?upcoming=true');
       setAppointments(data.appointments);
     } catch (err) {
-      console.error('Failed to load appointments');
+      if (import.meta.env.DEV) console.error('Failed to load appointments');
     }
   }
 
@@ -87,7 +88,7 @@ export default function ProviderDashboard() {
       const data = await api.get<Earnings>('/provider/earnings?period=30');
       setEarnings(data);
     } catch (err) {
-      console.error('Failed to load earnings');
+      if (import.meta.env.DEV) console.error('Failed to load earnings');
     }
   }
 
@@ -385,6 +386,7 @@ export default function ProviderDashboard() {
 }
 
 function ProviderProfile({ provider, onUpdate }: { provider: Provider; onUpdate: () => void }) {
+  const { showToast } = useToast();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     businessName: provider.business_name,
@@ -404,7 +406,7 @@ function ProviderProfile({ provider, onUpdate }: { provider: Provider; onUpdate:
       setEditing(false);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'An error occurred';
-      alert(message);
+      showToast(message, 'error');
     } finally {
       setSaving(false);
     }

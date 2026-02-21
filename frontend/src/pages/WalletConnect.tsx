@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { api } from '../services/api';
 import { LoadingButton } from '../components/Spinner';
+import { useConfirm } from '../components/ConfirmDialog';
 
 type WalletType = 'ethereum' | 'polygon' | 'base' | 'arbitrum';
 
@@ -49,6 +50,7 @@ export function WalletConnect() {
 
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const confirmDialog = useConfirm();
 
   const loadWallets = useCallback(async () => {
     try {
@@ -186,7 +188,13 @@ export function WalletConnect() {
   };
 
   const handleRemoveWallet = async (walletId: string) => {
-    if (!confirm('Are you sure you want to remove this wallet?')) return;
+    const confirmed = await confirmDialog({
+      title: 'Remove Wallet',
+      message: 'Are you sure you want to remove this wallet?',
+      variant: 'danger',
+      confirmText: 'Remove',
+    });
+    if (!confirmed) return;
 
     try {
       await api.delete(`/wallet/${walletId}`);

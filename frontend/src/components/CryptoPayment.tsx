@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoadingButton } from './Spinner';
+import { api } from '../services/api';
 
 interface CryptoPaymentProps {
   amount: number;
@@ -44,53 +45,31 @@ interface CryptoChargeResponse {
 export function CryptoPaymentOption({ amount, appointmentId, onSuccess, onError }: CryptoPaymentProps) {
   const [loading, setLoading] = useState(false);
   const [cryptoEnabled, setCryptoEnabled] = useState<boolean | null>(null);
-  const [checkingStatus, setCheckingStatus] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-  // Check if crypto payments are enabled
-  const checkStatus = async () => {
-    setCheckingStatus(true);
-    try {
-      const response = await fetch(`${API_URL}/crypto/status`);
-      const data: CryptoStatusResponse = await response.json();
-      setCryptoEnabled(data.success && data.data.enabled);
-    } catch {
-      setCryptoEnabled(false);
-    } finally {
-      setCheckingStatus(false);
-    }
-  };
-
-  // Initialize status check on first render
-  if (cryptoEnabled === null && !checkingStatus) {
+  // Check if crypto payments are enabled — inside useEffect, not during render
+  useEffect(() => {
+    let cancelled = false;
+    const checkStatus = async () => {
+      try {
+        const data = await api.get<CryptoStatusResponse>('/crypto/status');
+        if (!cancelled) setCryptoEnabled(data.success && data.data.enabled);
+      } catch {
+        if (!cancelled) setCryptoEnabled(false);
+      }
+    };
     checkStatus();
-  }
+    return () => { cancelled = true; };
+  }, []);
 
   const handleCryptoPayment = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        onError('Please log in to make a payment');
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/crypto/charges`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          amount,
-          currency: 'USD',
-          appointmentId,
-          description: `Healthcare payment - ${new Date().toLocaleDateString()}`,
-        }),
+      const data = await api.post<CryptoChargeResponse>('/crypto/charges', {
+        amount,
+        currency: 'USD',
+        appointmentId,
+        description: `Healthcare payment - ${new Date().toLocaleDateString()}`,
       });
-
-      const data: CryptoChargeResponse = await response.json();
 
       if (data.success && data.data.hostedUrl) {
         onSuccess(data.data.hostedUrl);

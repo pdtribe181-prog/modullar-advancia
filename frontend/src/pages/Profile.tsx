@@ -28,6 +28,7 @@ export default function Profile() {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProfile = async () => {
@@ -100,7 +101,7 @@ export default function Profile() {
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">Account Information</h2>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">

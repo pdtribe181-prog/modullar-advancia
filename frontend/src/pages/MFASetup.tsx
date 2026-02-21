@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { LoadingButton } from '../components/Spinner';
+import { useConfirm } from '../components/ConfirmDialog';
 
 interface MFAFactor {
   id: string;
@@ -29,9 +30,10 @@ export function MFASetup() {
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   const { enrollMFA, verifyMFA, listMFAFactors, unenrollMFA, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const confirmDialog = useConfirm();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -69,7 +71,7 @@ export function MFASetup() {
   const handleVerifyEnrollment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enrollment) return;
-    
+
     if (!verificationCode || verificationCode.length !== 6) {
       setError('Please enter a 6-digit code');
       return;
@@ -92,8 +94,14 @@ export function MFASetup() {
   };
 
   const handleRemoveFactor = async (factorId: string) => {
-    if (!confirm('Are you sure you want to remove this MFA factor?')) return;
-    
+    const confirmed = await confirmDialog({
+      title: 'Remove MFA Factor',
+      message: 'Are you sure you want to remove this MFA factor?',
+      variant: 'danger',
+      confirmText: 'Remove',
+    });
+    if (!confirmed) return;
+
     setError('');
     setLoading(true);
     try {
@@ -164,7 +172,7 @@ export function MFASetup() {
               <p style={{ marginBottom: '16px', color: 'var(--secondary)' }}>
                 Use an app like Google Authenticator, Authy, or 1Password to generate verification codes.
               </p>
-              
+
               <div className="form-group">
                 <label htmlFor="friendlyName">Device Name (optional)</label>
                 <input
@@ -197,8 +205,8 @@ export function MFASetup() {
             </p>
 
             <div className="mfa-qr-container">
-              <img 
-                src={enrollment.totp.qr_code} 
+              <img
+                src={enrollment.totp.qr_code}
                 alt="QR Code for authenticator app"
               />
               <p style={{ marginBottom: '8px', fontSize: '0.875rem' }}>

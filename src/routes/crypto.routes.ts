@@ -91,7 +91,7 @@ router.post(
     }
 
     const { amount, currency, appointmentId, description, metadata } = req.body;
-    const userId = req.user!.sub;
+    const userId = req.user!.id;
 
     // Get patient profile
     const supabaseAdmin = createServiceClient();
@@ -280,7 +280,7 @@ router.get(
   '/transactions',
   authenticate,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user!.sub;
+    const userId = req.user!.id;
     const { limit = 20, offset = 0 } = req.query;
 
     const supabaseAdmin = createServiceClient();

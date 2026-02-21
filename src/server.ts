@@ -34,6 +34,7 @@ import {
   logger,
 } from './middleware/logging.middleware.js';
 import type { AuthenticatedRequest } from './types/express.types.js';
+import type { AuthenticatedRequest as AuthReqWithProfile } from './middleware/auth.middleware.js';
 import { getErrorMessage, sendErrorResponse, asyncHandler } from './utils/errors.js';
 import type { OpenAPIV3 } from 'openapi-types';
 import {
@@ -102,7 +103,7 @@ app.use('/connect', apiLimiter);
 
 // Use raw body for Stripe webhook, JSON for everything else
 app.use((req, res, next) => {
-  if (req.path === '/stripe/webhook') {
+  if (req.path === '/api/v1/stripe/webhook') {
     express.raw({ type: 'application/json' })(req, res, next);
   } else {
     express.json()(req, res, next);
@@ -123,13 +124,27 @@ apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 
 app.use('/api/v1', apiRouter);
 
-// Health check and other root-level routes
-app.get('/health', (req, res) => {
-  const health = getMonitoringHealth();
-  if (!health.enabled) {
-    return res.status(503).json({ ...health, status: 'unhealthy' });
+// Health check
+app.get('/health', async (_req, res) => {
+  let dbStatus = 'unknown';
+  try {
+    // Use a lightweight auth check to verify Supabase connectivity
+    // This doesn't require table-level permissions
+    const { error } = await supabase.auth.getSession();
+    dbStatus = error ? 'error' : 'connected';
+  } catch {
+    dbStatus = 'error';
   }
-  res.status(200).json({ ...health, status: 'healthy' });
+  const monitoring = getMonitoringHealth();
+
+  const isHealthy = dbStatus === 'connected';
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'unhealthy',
+    timestamp: new Date().toISOString(),
+    database: dbStatus,
+    monitoring: monitoring.enabled ? 'enabled' : 'disabled',
+    version: process.env.npm_package_version || '1.0.0',
+  });
 });
 
 // API Documentation
@@ -137,7 +152,7 @@ if (swaggerDocument) {
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 }
 
-// Auth middleware
+// Auth middleware — fetches user + profile for role-based checks
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
@@ -154,23 +169,18 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
     return res.status(401).json({ success: false, error: 'Invalid token' });
   }
 
-  (req as AuthenticatedRequest).user = user;
+  // Fetch user profile for role information
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  const authedReq = req as AuthenticatedRequest;
+  authedReq.user = user;
+  authedReq.userProfile = profile ?? undefined;
   next();
 };
-
-// Health check
-app.get('/health', async (req, res) => {
-  const { data: dbCheck } = await supabase.from('user_profiles').select('id').limit(1);
-  const monitoring = getMonitoringHealth();
-
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    database: dbCheck !== null ? 'connected' : 'error',
-    monitoring: monitoring.enabled ? 'enabled' : 'disabled',
-    version: process.env.npm_package_version || '1.0.0',
-  });
-});
 
 // Auth routes (REMOVED: duplicate weak routes — use /api/v1/auth/* instead)
 // The apiRouter versions in auth.routes.ts include validation, security logging,
@@ -241,7 +251,8 @@ app.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     // Admins can list all; others only see their own patient record
-    if (user.role === 'admin') {
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole === 'admin') {
       const patients = await apiServices.patientsService.getAll();
       return res.json({ success: true, data: patients });
     }
@@ -257,7 +268,8 @@ app.get(
     const { user } = req as AuthenticatedRequest;
     const patientId = String(req.params.id);
     // IDOR protection: users can only access their own patient record (admins/providers exempt)
-    if (user.role !== 'admin' && user.role !== 'provider' && user.id !== patientId) {
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
       return res
         .status(403)
         .json({ success: false, error: 'Forbidden: cannot access other patient records' });
@@ -275,7 +287,8 @@ app.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const patientId = String(req.params.patientId);
-    if (user.role !== 'admin' && user.role !== 'provider' && user.id !== patientId) {
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
       return res.status(403).json({ success: false, error: 'Forbidden' });
     }
     const appointments = await apiServices.appointmentsService.getByPatient(patientId);
@@ -290,7 +303,8 @@ app.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const providerId = String(req.params.providerId);
-    if (user.role !== 'admin' && user.id !== providerId) {
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole !== 'admin' && user.id !== providerId) {
       return res.status(403).json({ success: false, error: 'Forbidden' });
     }
     const appointments = await apiServices.appointmentsService.getByProvider(providerId);
@@ -363,7 +377,8 @@ app.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const patientId = String(req.params.patientId);
-    if (user.role !== 'admin' && user.role !== 'provider' && user.id !== patientId) {
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
       return res.status(403).json({ success: false, error: 'Forbidden' });
     }
     const invoices = await apiServices.invoicesService.getByPatient(patientId);
@@ -378,7 +393,8 @@ app.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req as AuthenticatedRequest;
     const providerId = String(req.params.providerId);
-    if (user.role !== 'admin' && user.id !== providerId) {
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole !== 'admin' && user.id !== providerId) {
       return res.status(403).json({ success: false, error: 'Forbidden' });
     }
     const invoices = await apiServices.invoicesService.getByProvider(providerId);

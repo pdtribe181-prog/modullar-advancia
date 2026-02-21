@@ -41,11 +41,11 @@ export default function PaymentHistory() {
     try {
       const params = new URLSearchParams();
       if (startingAfter) params.append('starting_after', startingAfter);
-      
+
       const response = await api.get<PaymentHistoryResponse>(
         `/stripe/payment-history?${params.toString()}`
       );
-      
+
       if (startingAfter) {
         setPayments(prev => [...prev, ...response.payments]);
       } else {
@@ -64,6 +64,7 @@ export default function PaymentHistory() {
 
   useEffect(() => {
     fetchPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadMore = () => {
@@ -178,7 +179,7 @@ export default function PaymentHistory() {
               ))}
             </tbody>
           </table>
-          
+
           {hasMore && (
             <div className="px-6 py-4 border-t border-gray-200">
               <LoadingButton

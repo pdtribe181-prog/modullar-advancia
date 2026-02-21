@@ -4,6 +4,7 @@ import { useAuth } from '../providers/AuthProvider';
 import { api, ApiError } from '../services/api';
 import { Spinner, LoadingButton } from '../components/Spinner';
 import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmDialog';
 
 interface SecurityPreferences {
   emailNotifications: boolean;
@@ -46,7 +47,8 @@ interface RecoveryStatus {
 export function SecuritySettings() {
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
-  
+  const confirmDialog = useConfirm();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [preferences, setPreferences] = useState<SecurityPreferences>({
@@ -77,12 +79,12 @@ export function SecuritySettings() {
         api.get<{ identities: LinkedIdentity[] }>('/auth/identities').catch(() => ({ identities: [] })),
         api.get<SecurityEvent[]>('/auth/security/events').catch(() => []),
       ]);
-      
+
       setPreferences(prefsResponse.preferences);
       setIdentities(identitiesResponse.identities);
       setSecurityEvents(Array.isArray(eventsResponse) ? eventsResponse : []);
     } catch (err) {
-      console.error('Failed to load security data:', err);
+      if (import.meta.env.DEV) console.error('Failed to load security data:', err);
     } finally {
       setLoading(false);
     }
@@ -120,8 +122,14 @@ export function SecuritySettings() {
   };
 
   const handleUnlinkIdentity = async (identityId: string) => {
-    if (!confirm('Are you sure you want to unlink this account?')) return;
-    
+    const confirmed = await confirmDialog({
+      title: 'Unlink Account',
+      message: 'Are you sure you want to unlink this account?',
+      variant: 'warning',
+      confirmText: 'Unlink',
+    });
+    if (!confirmed) return;
+
     try {
       await api.delete(`/auth/identities/${identityId}`);
       showToast('Account unlinked', 'success');
@@ -213,14 +221,14 @@ export function SecuritySettings() {
 
       {/* Quick Links */}
       <div className="mb-6 flex gap-4">
-        <Link 
-          to="/security/mfa" 
+        <Link
+          to="/security/mfa"
           className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
         >
           🔐 Manage 2FA
         </Link>
-        <Link 
-          to="/profile" 
+        <Link
+          to="/profile"
           className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
         >
           👤 Profile Settings
@@ -258,7 +266,7 @@ export function SecuritySettings() {
             <p className="text-gray-600 mb-6">
               Choose how you want to be notified about security events
             </p>
-            
+
             <div className="space-y-4">
               {/* Notification Channels */}
               <div className="border-b pb-4 mb-4">
@@ -394,8 +402,8 @@ export function SecuritySettings() {
                       onClick={() => !isLinked && handleLinkIdentity(provider)}
                       disabled={isLinked}
                       className={`flex items-center gap-3 p-4 border rounded-lg ${
-                        isLinked 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        isLinked
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'hover:bg-gray-50'
                       }`}
                     >

@@ -19,6 +19,7 @@ export function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchDashboardData = async () => {
@@ -30,7 +31,7 @@ export function Dashboard() {
         setTransactions(txResponse.data || []);
       }
     } catch {
-      console.log('Dashboard data not available');
+      // Dashboard data unavailable — silently handled
     } finally {
       setLoading(false);
     }

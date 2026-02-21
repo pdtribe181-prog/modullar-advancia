@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { PaymentForm } from '../components/PaymentForm';
 import { CryptoPaymentOption } from '../components/CryptoPayment';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { api, ApiError } from '../services/api';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+import { stripePromise } from '../lib/stripe';
 
 interface PaymentInfo {
   amount: number;
@@ -40,7 +38,7 @@ export function CheckoutPage() {
     createPaymentIntent(info);
   }, [navigate]);
 
-  const createPaymentIntent = async (info: PaymentInfo) => {
+  const createPaymentIntent = useCallback(async (info: PaymentInfo) => {
     try {
       const response = await api.post<{ success: boolean; data: { client_secret: string } }>(
         '/stripe/payment-intents',
@@ -68,7 +66,7 @@ export function CheckoutPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   const handleSuccess = () => {
     sessionStorage.removeItem('paymentInfo');
@@ -116,9 +114,8 @@ export function CheckoutPage() {
           <CryptoPaymentOption
             amount={paymentInfo.amount}
             appointmentId={paymentInfo.invoiceId}
-            onSuccess={(url) => {
+            onSuccess={(_url) => {
               showToast('Redirecting to crypto checkout...', 'info');
-              console.log('Crypto payment URL:', url);
             }}
             onError={handleError}
           />

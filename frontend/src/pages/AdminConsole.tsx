@@ -68,7 +68,7 @@ export function AdminConsole() {
       const response = await api.get<{ data: DashboardData }>('/admin/dashboard');
       setDashboardData(response.data);
     } catch (err) {
-      console.error('Dashboard fetch error:', err);
+      if (import.meta.env.DEV) console.error('Dashboard fetch error:', err);
       setDashboardData(null);
     } finally {
       setLoading(false);
@@ -81,7 +81,7 @@ export function AdminConsole() {
       const response = await api.get<{ data: User[] }>('/admin/users');
       setUsers(response.data);
     } catch (err) {
-      console.error('Users fetch error:', err);
+      if (import.meta.env.DEV) console.error('Users fetch error:', err);
       setUsers([]);
     }
   }, []);
@@ -444,7 +444,7 @@ function TransactionsTab({ formatCurrency, formatDate }: { formatCurrency: (cent
         setTransactions(response.data || []);
       } catch (err) {
         setError('Failed to load transactions');
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
       } finally {
         setLoading(false);
       }
@@ -500,7 +500,7 @@ function WebhooksTab({ formatDate }: { formatDate: (d: string) => string }) {
         setEvents(response.data || []);
       } catch (err) {
         setError('Failed to load webhook events');
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
       } finally {
         setLoading(false);
       }
@@ -552,7 +552,7 @@ function AuditLogsTab({ formatDate }: { formatDate: (d: string) => string }) {
         setLogs(response.data || []);
       } catch (err) {
         setError('Failed to load audit logs');
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
       } finally {
         setLoading(false);
       }

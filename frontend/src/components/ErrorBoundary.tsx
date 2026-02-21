@@ -22,15 +22,14 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+    if (import.meta.env.DEV) console.error('ErrorBoundary caught an error:', error, errorInfo);
+
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
-    
+
     // Log to analytics if enabled
     if (import.meta.env.VITE_ENABLE_ANALYTICS === 'true') {
       // Future: Send to error tracking service (Sentry, etc.)
-      console.log('Error logged to analytics');
     }
   }
 
@@ -60,8 +59,8 @@ export class ErrorBoundary extends Component<Props, State> {
               <button style={styles.button} onClick={this.handleRetry}>
                 Try Again
               </button>
-              <button 
-                style={{ ...styles.button, ...styles.secondaryButton }} 
+              <button
+                style={{ ...styles.button, ...styles.secondaryButton }}
                 onClick={() => window.location.href = '/'}
               >
                 Go Home
@@ -157,9 +156,9 @@ interface ErrorFallbackProps {
   onRetry?: () => void;
 }
 
-export function ErrorFallback({ 
-  message = 'This section failed to load', 
-  onRetry 
+export function ErrorFallback({
+  message = 'This section failed to load',
+  onRetry
 }: ErrorFallbackProps) {
   return (
     <div style={{

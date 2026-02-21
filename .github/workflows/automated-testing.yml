@@ -84,11 +84,8 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
-        if: always() && env.HAS_CODECOV_TOKEN == 'true'
-        env:
-          HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: always()
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           flags: backend
           name: backend-coverage

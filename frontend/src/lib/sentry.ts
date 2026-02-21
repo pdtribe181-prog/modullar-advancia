@@ -21,7 +21,7 @@ interface SentryConfig {
 // Initialize Sentry
 export function initSentry(config: SentryConfig): void {
   if (!config.dsn) {
-    console.warn('Sentry DSN not configured - error tracking disabled');
+    if (import.meta.env.DEV) console.warn('Sentry DSN not configured - error tracking disabled');
     return;
   }
 
@@ -77,7 +77,7 @@ export function initSentry(config: SentryConfig): void {
     ],
   });
 
-  console.log('Sentry initialized for frontend');
+  if (import.meta.env.DEV) console.log('Sentry initialized for frontend');
 }
 
 // Error boundary wrapper component

@@ -1,9 +1,11 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingOverlay } from './components/Spinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { useAuth } from './providers/AuthProvider';
+import type { ReactNode } from 'react';
 
 // Eager load the home and login pages for fast initial render
 import { Home } from './pages/Home';
@@ -22,8 +24,24 @@ const WalletConnect = lazy(() => import('./pages/WalletConnect').then(m => ({ de
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings').then(m => ({ default: m.SecuritySettings })));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Add Admin Console
+// Admin Console
 const AdminConsole = lazy(() => import('./pages/AdminConsole'));
+
+// Missing redirect target pages
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
+const AuthCallback = lazy(() => import('./pages/AuthCallback').then(m => ({ default: m.AuthCallback })));
+
+/**
+ * Role-based route guard — redirects to dashboard if user lacks required role.
+ */
+function RoleGuard({ children, allowedRoles }: { children: ReactNode; allowedRoles: string[] }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingOverlay message="Checking permissions..." />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!allowedRoles.includes(user.role)) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
@@ -34,7 +52,10 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="payment" element={<PaymentPage />} />
+          <Route path="payment/success" element={<PaymentSuccess />} />
           <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="auth/callback" element={<AuthCallback />} />
           <Route
             path="dashboard"
             element={
@@ -103,9 +124,9 @@ export default function App() {
           <Route
             path="admin"
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['admin']}>
                 <AdminConsole />
-              </ProtectedRoute>
+              </RoleGuard>
             }
           />
           {/* 404 catch-all route */}

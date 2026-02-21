@@ -27,6 +27,7 @@ function createApiLimiter() {
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: Request) => (req as any).user?.id || req.ip || 'unknown',
+    validate: { ipv6SubnetOrKeyGenerator: false, creationStack: false },
   });
 }
 
@@ -39,6 +40,7 @@ function createAuthLimiter() {
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true,
+    validate: { creationStack: false },
   });
 }
 
@@ -51,6 +53,7 @@ function createPaymentLimiter() {
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: Request) => (req as any).user?.id || req.ip || 'unknown',
+    validate: { ipv6SubnetOrKeyGenerator: false, creationStack: false },
   });
 }
 
@@ -63,6 +66,7 @@ function createSensitiveLimiter() {
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: Request) => (req as any).user?.id || req.ip || 'unknown',
+    validate: { ipv6SubnetOrKeyGenerator: false, creationStack: false },
   });
 }
 
@@ -74,6 +78,7 @@ function createWebhookLimiter() {
     message: { error: 'Webhook rate limit exceeded' },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { creationStack: false },
   });
 }
 
@@ -85,6 +90,7 @@ function createOnboardingLimiter() {
     message: { error: 'Too many onboarding attempts, please try again later' },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { creationStack: false },
   });
 }
 

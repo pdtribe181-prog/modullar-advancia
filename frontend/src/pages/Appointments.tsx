@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { api, ApiError } from '../services/api';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmDialog';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+import { stripePromise } from '../lib/stripe';
 
 interface Provider {
   id: string;
@@ -56,6 +54,7 @@ export default function Appointments() {
   useEffect(() => {
     loadProviders();
     loadAppointments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadProviders() {
@@ -65,7 +64,7 @@ export default function Appointments() {
       setProviders(data.providers);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load providers';
-      console.error('Failed to load providers:', err);
+      if (import.meta.env.DEV) console.error('Failed to load providers:', err);
       showToast(message, 'error');
     } finally {
       setLoadingProviders(false);
@@ -79,7 +78,7 @@ export default function Appointments() {
       setAppointments(data.appointments);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load appointments';
-      console.error('Failed to load appointments:', err);
+      if (import.meta.env.DEV) console.error('Failed to load appointments:', err);
       showToast(message, 'error');
     } finally {
       setLoadingAppointments(false);
@@ -154,7 +153,7 @@ export default function Appointments() {
       cancelText: 'Keep Appointment',
       variant: 'danger',
     });
-    
+
     if (!confirmed) return;
 
     try {
