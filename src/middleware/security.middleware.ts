@@ -47,6 +47,11 @@ export function configureSecurityHeaders(app: Express) {
 export function getCorsConfig() {
   const allowedOrigins: string[] = [];
 
+  const envOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   if (process.env.NODE_ENV === 'production') {
     // Production: only allow known production origins
     if (process.env.FRONTEND_URL) {
@@ -57,6 +62,8 @@ export function getCorsConfig() {
       'https://www.advanciapayledger.com',
       'https://app.advanciapayledger.com'
     );
+
+    allowedOrigins.push(...envOrigins);
   } else {
     // Development: allow localhost origins
     allowedOrigins.push(
@@ -64,6 +71,8 @@ export function getCorsConfig() {
       'http://localhost:3001',
       'http://localhost:5173' // Vite dev server
     );
+
+    allowedOrigins.push(...envOrigins);
   }
 
   return {

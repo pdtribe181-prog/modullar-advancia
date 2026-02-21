@@ -87,6 +87,20 @@ describe('Security Middleware', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
+    it('should allow origins listed in CORS_ORIGINS', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.CORS_ORIGINS = 'https://preview.vercel.app, https://foo.example.com';
+
+      jest.resetModules();
+      const { getCorsConfig: getFreshConfig } = await import('../middleware/security.middleware');
+      const config = getFreshConfig();
+      const callback = jest.fn();
+
+      config.origin('https://preview.vercel.app', callback);
+
+      expect(callback).toHaveBeenCalledWith(null, true);
+    });
+
     it('should reject unknown origins in development', () => {
       process.env.NODE_ENV = 'development';
       const config = getCorsConfig();

@@ -29,6 +29,7 @@ describe('Environment Configuration', () => {
       .string()
       .url('FRONTEND_URL must be a valid URL')
       .default('http://localhost:3001'),
+    CORS_ORIGINS: z.string().optional(),
     RATE_LIMIT_API_WINDOW_MS: z.coerce
       .number()
       .int()
