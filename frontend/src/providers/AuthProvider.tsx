@@ -8,16 +8,33 @@ interface User {
   role: string;
 }
 
-interface AuthResponse {
-  data: {
-    token: string;
-    user: User;
-    expiresAt?: number; // Unix timestamp
-  };
-}
+type ApiEnvelope<T> = {
+  success: boolean;
+  data: T;
+  message?: string;
+};
 
-interface ProfileResponse {
-  data: User;
+type SupabaseSession = {
+  access_token: string;
+  expires_at?: number; // seconds since epoch
+};
+
+type AuthApiData = {
+  user: unknown;
+  session: SupabaseSession | null;
+};
+
+type ProfileResponse = ApiEnvelope<User>;
+
+function extractTokenAndExpiry(session: SupabaseSession | null): { token: string; expiresAt?: number } {
+  if (!session?.access_token) {
+    throw new Error('Authentication succeeded but no session token was returned');
+  }
+
+  return {
+    token: session.access_token,
+    expiresAt: session.expires_at ? session.expires_at * 1000 : undefined,
+  };
 }
 
 interface MFAFactor {
@@ -134,13 +151,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Set auth data
   const setAuth = useCallback((newToken: string, userData: User, expiresAt?: number) => {
     const expiry = expiresAt || getTokenExpiry(newToken);
-    
+
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
     if (expiry) {
       localStorage.setItem(TOKEN_EXPIRY_KEY, expiry.toString());
     }
-    
+
     api.setToken(newToken);
     setToken(newToken);
     setTokenExpiry(expiry);
@@ -235,15 +252,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearAuth]);
 
   const login = async (email: string, password: string) => {
-    const response = await api.post<AuthResponse>('/auth/signin', { email, password });
-    const { token: newToken, user: userData, expiresAt } = response.data;
-    setAuth(newToken, userData, expiresAt);
+    const authRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/login', { email, password });
+    const { token: newToken, expiresAt } = extractTokenAndExpiry(authRes.data.session);
+
+    api.setToken(newToken);
+    const profileRes = await api.get<ProfileResponse>('/profile');
+    setAuth(newToken, profileRes.data, expiresAt);
   };
 
   const signup = async (email: string, password: string, role = 'patient') => {
-    const response = await api.post<AuthResponse>('/auth/signup', { email, password, role });
-    const { token: newToken, user: userData, expiresAt } = response.data;
-    setAuth(newToken, userData, expiresAt);
+    const registerRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/register', {
+      email,
+      password,
+      role,
+    });
+
+    // The backend may intentionally return no session until admin approval.
+    if (!registerRes.data.session?.access_token) {
+      throw new Error(registerRes.message || 'Registration successful. Your account is pending approval.');
+    }
+
+    const { token: newToken, expiresAt } = extractTokenAndExpiry(registerRes.data.session);
+    api.setToken(newToken);
+    const profileRes = await api.get<ProfileResponse>('/profile');
+    setAuth(newToken, profileRes.data, expiresAt);
   };
 
   const logout = useCallback(() => {
@@ -261,9 +293,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const verifyPhoneOtp = async (phone: string, code: string) => {
-    const response = await api.post<AuthResponse>('/auth/phone/verify', { phone, token: code });
-    const { token: newToken, user: userData, expiresAt } = response.data;
-    setAuth(newToken, userData, expiresAt);
+    const authRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/phone/verify', { phone, token: code });
+    const { token: newToken, expiresAt } = extractTokenAndExpiry(authRes.data.session);
+
+    api.setToken(newToken);
+    const profileRes = await api.get<ProfileResponse>('/profile');
+    setAuth(newToken, profileRes.data, expiresAt);
     setMfaRequired(false);
     setMfaFactorId(null);
   };
@@ -286,9 +321,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const challengeMFA = async (factorId: string, code: string) => {
-    const response = await api.post<AuthResponse>('/auth/mfa/challenge', { factorId, code });
-    const { token: newToken, user: userData, expiresAt } = response.data;
-    setAuth(newToken, userData, expiresAt);
+    const authRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/mfa/challenge', { factorId, code });
+    const { token: newToken, expiresAt } = extractTokenAndExpiry(authRes.data.session);
+
+    api.setToken(newToken);
+    const profileRes = await api.get<ProfileResponse>('/profile');
+    setAuth(newToken, profileRes.data, expiresAt);
     setMfaRequired(false);
     setMfaFactorId(null);
   };
@@ -305,15 +343,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!token && !!user && !isTokenExpired(tokenExpiry);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      token, 
-      loading, 
+    <AuthContext.Provider value={{
+      user,
+      token,
+      loading,
       isAuthenticated,
       mfaRequired,
       mfaFactorId,
-      login, 
-      signup, 
+      login,
+      signup,
       logout,
       refreshSession,
       // Phone auth

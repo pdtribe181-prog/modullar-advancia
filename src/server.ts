@@ -115,6 +115,36 @@ app.use((req, res, next) => {
 // Webhooks are excluded — they use their own signature verification
 app.use('/api/v1', csrfProtection);
 
+// Auth middleware — fetches user + profile for role-based checks
+const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: 'Missing authorization header' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(token);
+
+  if (error || !user) {
+    return res.status(401).json({ success: false, error: 'Invalid token' });
+  }
+
+  // Fetch user profile for role information
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  const authedReq = req as AuthenticatedRequest;
+  authedReq.user = user;
+  authedReq.userProfile = profile ?? undefined;
+  next();
+};
+
 // API Routes
 const apiRouter = express.Router();
 apiRouter.use('/stripe', stripeRoutes);
@@ -129,6 +159,35 @@ apiRouter.use('/medbeds', medBedRoutes);
 apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 
 app.use('/api/v1', apiRouter);
+
+// Profile routes (authenticated)
+// Expose under /api/v1 so frontend can call '/profile' when VITE_API_URL includes '/api/v1'.
+apiRouter.get(
+  '/profile',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const profile = await apiServices.userProfilesService.getById(user.id);
+    res.json({ success: true, data: profile });
+  })
+);
+
+apiRouter.patch(
+  '/profile',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    // Whitelist allowed fields to prevent mass assignment (e.g., role escalation)
+    const { full_name, phone, avatar_url, date_of_birth, address } = req.body;
+    const allowedUpdates = Object.fromEntries(
+      Object.entries({ full_name, phone, avatar_url, date_of_birth, address }).filter(
+        ([, v]) => v !== undefined
+      )
+    );
+    const profile = await apiServices.userProfilesService.update(user.id, allowedUpdates);
+    res.json({ success: true, data: profile });
+  })
+);
 
 const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
   try {
@@ -164,36 +223,6 @@ app.get('/health', async (_req, res) => {
 if (swaggerDocument) {
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 }
-
-// Auth middleware — fetches user + profile for role-based checks
-const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, error: 'Missing authorization header' });
-  }
-
-  const token = authHeader.split(' ')[1];
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(token);
-
-  if (error || !user) {
-    return res.status(401).json({ success: false, error: 'Invalid token' });
-  }
-
-  // Fetch user profile for role information
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  const authedReq = req as AuthenticatedRequest;
-  authedReq.user = user;
-  authedReq.userProfile = profile ?? undefined;
-  next();
-};
 
 // Auth routes (REMOVED: duplicate weak routes — use /api/v1/auth/* instead)
 // The apiRouter versions in auth.routes.ts include validation, security logging,
