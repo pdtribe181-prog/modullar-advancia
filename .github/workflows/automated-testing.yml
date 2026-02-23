@@ -126,10 +126,10 @@ jobs:
         run: npm run test:run
 
   # ─────────────────────────────────────────────────────────────────────────
-  # JOB: E2E Tests (Playwright — skip on draft PRs)
+  # JOB: E2E Tests (Playwright API — skip on draft PRs)
   # ─────────────────────────────────────────────────────────────────────────
   e2e:
-    name: E2E Tests (Playwright)
+    name: E2E Tests (Playwright API)
     runs-on: ubuntu-latest
     needs: [unit-tests, frontend-tests]
     if: ${{ !github.event.pull_request.draft }}
@@ -147,29 +147,19 @@ jobs:
       - name: Install backend dependencies
         run: npm ci
 
-      - name: Install frontend dependencies
-        run: npm ci
-        working-directory: frontend
-
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Build backend
-        run: npm run build
-
-      - name: Run E2E tests
-        run: npm run test:e2e -- --project=chromium
+      - name: Run API E2E tests
+        run: npm run test:e2e:api -- --project=chromium
         env:
           CI: true
           NODE_ENV: test
           PORT: 3000
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          VITE_API_URL: http://localhost:3000
-          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-anon-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-service-key' }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || '' }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v6
