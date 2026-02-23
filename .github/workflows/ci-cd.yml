@@ -1,6 +1,7 @@
 # CI/CD Pipeline — Advancia PayLedger
 # Full pipeline: lint → test → build → deploy
-# Runs on push to main/develop and all pull requests
+# Manual-only (workflow_dispatch) to avoid duplicating PR CI.
+# Use for ad-hoc full pipeline runs and future deploy steps.
 #
 # Required GitHub Secrets (for deploy jobs):
 #   RENDER_DEPLOY_HOOK_URL          — Render deploy-hook URL for production
