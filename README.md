@@ -2,8 +2,9 @@
 
 > Healthcare payment and compliance management platform
 
-[![Deploy to VPS](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/deploy-vps.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/deploy-vps.yml)
-[![Automated Testing](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/automated-testing.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/automated-testing.yml)
+[![CI Pipeline](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/ci.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/ci.yml)
+[![Automated Testing (Extended)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/automated-testing.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/automated-testing.yml)
+[![Playwright Nightly](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/playwright-nightly.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/playwright-nightly.yml)
 [![Security Scan](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/security-scan.yml/badge.svg)](https://github.com/pdtribe181-prog/modullar-advancia/actions/workflows/security-scan.yml)
 
 ## Live URLs
@@ -27,6 +28,8 @@
 
 ## Quick Start
 
+More detailed setup (including WSL2): see [DEV_SETUP.md](./DEV_SETUP.md).
+
 ```bash
 # Clone and install
 git clone https://github.com/pdtribe181-prog/modullar-advancia.git
@@ -38,12 +41,12 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Start backend
-npm run dev           # API at http://localhost:3000
+npm run dev           # API at http://127.0.0.1:3000
 
 # Start frontend (new terminal)
 cd frontend
 npm install
-npm run dev           # App at http://localhost:5173
+npm run dev           # App at http://127.0.0.1:5173
 ```
 
 ## Environment Variables
