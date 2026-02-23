@@ -13,6 +13,10 @@ on:
     # Every Monday at 02:30 UTC
     - cron: '30 2 * * 1'
 
+permissions:
+  contents: read
+  actions: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
