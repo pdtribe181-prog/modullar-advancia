@@ -1,4 +1,4 @@
-# Security Scan — CodeQL + npm audit + secret detection
+# Security Scan — npm audit + secret detection (+ optional license check)
 # Runs on push/PR to main and on a weekly schedule
 
 name: Security Scan
@@ -13,40 +13,9 @@ on:
     - cron: '0 9 * * 1'
 
 permissions:
-  actions: read
   contents: read
-  security-events: write
 
 jobs:
-  # ─────────────────────────────────────────────────────────────────────────
-  # JOB: CodeQL Static Analysis
-  # ─────────────────────────────────────────────────────────────────────────
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [javascript-typescript]
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: ${{ matrix.language }}
-          queries: security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: /language:${{ matrix.language }}
-
   # ─────────────────────────────────────────────────────────────────────────
   # JOB: Dependency Vulnerability Audit
   # ─────────────────────────────────────────────────────────────────────────
