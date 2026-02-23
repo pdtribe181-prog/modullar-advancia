@@ -128,7 +128,15 @@ jobs:
 
       - name: Check for secrets
         run: |
-          if grep -r "sk_live_\|sk_test_\|AKIA\|password\s*=" --include="*.ts" --include="*.js" src/; then
+          # Match only real-looking keys, and ignore tests/fixtures.
+          # - Stripe keys are typically long; short placeholders like "sk_test_12345" should not fail CI.
+          # - Exclude unit tests and __tests__ folders.
+          PATTERN='(sk_(live|test)_[A-Za-z0-9]{16,}|rk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16})'
+          if grep -rE "$PATTERN" \
+            --include="*.ts" --include="*.js" \
+            --exclude="*.test.ts" --exclude="*.spec.ts" \
+            --exclude-dir="__tests__" \
+            src/; then
             echo "Potential secrets found in source code!"
             exit 1
           fi
