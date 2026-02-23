@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const API_ROOT = process.env.API_BASE_URL || 'http://localhost:3000';
+const API_ROOT = process.env.API_BASE_URL || 'http://127.0.0.1:3000';
 const API_V1 = `${API_ROOT}/api/v1`;
 
 const hasSupabaseEnv = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);

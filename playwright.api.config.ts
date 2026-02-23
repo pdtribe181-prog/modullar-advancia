@@ -1,5 +1,8 @@
 /// <reference types="node" />
+import dotenv from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
+
+dotenv.config();
 
 export default defineConfig({
   testDir: './e2e',
@@ -39,7 +42,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     // Use /docs for readiness so local runs don't require a healthy DB connection.
-    url: 'http://localhost:3000/docs/',
+    url: 'http://127.0.0.1:3000/docs/',
     reuseExistingServer: !process.env.CI,
     timeout: 180000,
     cwd: '.',

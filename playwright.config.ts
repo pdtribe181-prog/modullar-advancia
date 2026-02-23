@@ -1,5 +1,8 @@
 /// <reference types="node" />
+import dotenv from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
+
+dotenv.config();
 
 export default defineConfig({
   testDir: './e2e',
@@ -13,7 +16,7 @@ export default defineConfig({
     ...(process.env.CI ? [['github', {}] as const] : []),
   ],
   use: {
-    baseURL: process.env.TEST_BASE_URL || 'http://localhost:5173',
+    baseURL: process.env.TEST_BASE_URL || 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
@@ -39,14 +42,14 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run dev',
-      url: 'http://localhost:3000/health',
+      url: 'http://127.0.0.1:3000/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
       cwd: '.',
     },
     {
       command: 'npm run dev',
-      url: 'http://localhost:5173',
+      url: 'http://127.0.0.1:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
       cwd: './frontend',
