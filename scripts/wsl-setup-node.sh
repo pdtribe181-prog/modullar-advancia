@@ -15,9 +15,30 @@ echo "- Repo: ${REPO_DIR}"
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 if need_cmd apt-get; then
-  echo "Installing base packages (curl, ca-certificates, git, build-essential) if missing..."
-  sudo apt-get update -y >/dev/null
-  sudo apt-get install -y curl ca-certificates git build-essential >/dev/null
+  missing_cmds=()
+  for c in curl git make gcc g++; do
+    if ! need_cmd "$c"; then
+      missing_cmds+=("$c")
+    fi
+  done
+
+  if [ "${#missing_cmds[@]}" -gt 0 ]; then
+    echo "Missing prerequisites: ${missing_cmds[*]}"
+    if need_cmd sudo && sudo -n true 2>/dev/null; then
+      echo "Installing base packages via sudo (non-interactive)..."
+      sudo apt-get update -y >/dev/null
+      sudo apt-get install -y curl ca-certificates git build-essential >/dev/null
+    elif [ -t 1 ] && need_cmd sudo; then
+      echo "Installing base packages via sudo (interactive)..."
+      sudo apt-get update -y
+      sudo apt-get install -y curl ca-certificates git build-essential
+    else
+      echo "ERROR: Can't install missing packages non-interactively (sudo password required)." >&2
+      echo "Open an Ubuntu WSL terminal and run:" >&2
+      echo "  sudo apt-get update -y && sudo apt-get install -y curl ca-certificates git build-essential" >&2
+      exit 1
+    fi
+  fi
 fi
 
 NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
