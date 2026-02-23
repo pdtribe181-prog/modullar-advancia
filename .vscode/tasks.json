@@ -1,0 +1,115 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: dev",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "group": "build",
+      "detail": "Start development server with hot reload"
+    },
+    {
+      "label": "npm: build",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$tsc"],
+      "detail": "Build TypeScript to JavaScript"
+    },
+    {
+      "label": "npm: test",
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Run Jest tests"
+    },
+    {
+      "label": "npm: lint",
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Run ESLint"
+    },
+    {
+      "label": "npm: lint:fix",
+      "type": "npm",
+      "script": "lint:fix",
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Run ESLint with auto-fix"
+    },
+    {
+      "label": "npm: typecheck",
+      "type": "npm",
+      "script": "typecheck",
+      "problemMatcher": ["$tsc"],
+      "detail": "Type check without emitting"
+    },
+    {
+      "label": "npm: format",
+      "type": "npm",
+      "script": "format",
+      "problemMatcher": [],
+      "detail": "Format code with Prettier"
+    },
+    {
+      "label": "Docker: Build",
+      "type": "shell",
+      "command": "docker build -t healthcare-payment-api .",
+      "problemMatcher": [],
+      "detail": "Build Docker image"
+    },
+    {
+      "label": "Docker: Run",
+      "type": "shell",
+      "command": "docker run -p 3000:3000 --env-file .env healthcare-payment-api",
+      "problemMatcher": [],
+      "detail": "Run Docker container"
+    },
+    {
+      "label": "Run Migration",
+      "type": "shell",
+      "command": "npx tsx scripts/run-migration-rest.ts ${input:migrationFile}",
+      "problemMatcher": [],
+      "detail": "Run a database migration"
+    },
+    {
+      "label": "frontend: dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "frontend",
+      "problemMatcher": [],
+      "detail": "Start frontend dev server (Vite)"
+    },
+    {
+      "label": "frontend: build",
+      "type": "npm",
+      "script": "build",
+      "path": "frontend",
+      "problemMatcher": [],
+      "detail": "Build frontend"
+    },
+    {
+      "label": "frontend: test",
+      "type": "npm",
+      "script": "test",
+      "path": "frontend",
+      "problemMatcher": [],
+      "detail": "Run frontend tests"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "migrationFile",
+      "type": "promptString",
+      "description": "Migration file name (e.g., 024_additional_tables.sql)"
+    }
+  ]
+}

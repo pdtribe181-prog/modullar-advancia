@@ -1,0 +1,44 @@
+{
+  "recommendations": [
+    // Remote Development
+    "ms-vscode-remote.remote-wsl",
+    "ms-vscode-remote.remote-containers",
+
+    // TypeScript/JavaScript
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+
+    // Git/GitHub
+    "github.vscode-github-actions",
+    "github.copilot",
+    "eamodio.gitlens",
+    "donjayamanne.githistory",
+
+    // Docker
+    "ms-azuretools.vscode-docker",
+
+    // Database
+    "ms-azuretools.vscode-cosmosdb",
+
+    // API Development
+    "humao.rest-client",
+    "42crunch.vscode-openapi",
+
+    // Testing
+    "orta.vscode-jest",
+
+    // Markdown
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+
+    // Utilities
+    "editorconfig.editorconfig",
+    "streetsidesoftware.code-spell-checker",
+    "gruntfuggly.todo-tree",
+    "wayou.vscode-todo-highlight",
+
+    // Themes (optional)
+    "pkief.material-icon-theme"
+  ],
+  "unwantedRecommendations": []
+}

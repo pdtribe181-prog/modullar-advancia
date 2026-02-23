@@ -1,0 +1,98 @@
+{
+  "files.associations": {
+    "*.sql": "plaintext",
+    ".gcloudignore": "ignore"
+  },
+  "markdownlint.ignore": [".gcloudignore", ".gitignore", ".dockerignore"],
+  "eslint.validate": ["typescript", "javascript"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // Terminal Configuration
+  "terminal.integrated.defaultProfile.windows": "PowerShell (pwsh)",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell (pwsh)": {
+      "path": [
+        "${env:ProgramFiles}\\PowerShell\\7\\pwsh.exe",
+        "${env:LOCALAPPDATA}\\Microsoft\\WindowsApps\\pwsh.exe",
+        "pwsh"
+      ],
+      "icon": "terminal-powershell",
+      "args": ["-NoLogo"]
+    },
+    "Windows PowerShell": {
+      "path": ["${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"],
+      "icon": "terminal-powershell",
+      "args": ["-NoLogo"]
+    },
+    "WSL: Ubuntu": {
+      "source": "wsl",
+      "distribution": "Ubuntu",
+      "icon": "terminal-linux"
+    },
+    "Git Bash": {
+      "source": "Git Bash",
+      "icon": "terminal-bash"
+    },
+    "Command Prompt": {
+      "path": ["${env:windir}\\System32\\cmd.exe"],
+      "icon": "terminal-cmd"
+    }
+  },
+  "terminal.integrated.env.windows": {
+    "NODE_ENV": "development"
+  },
+  "terminal.integrated.fontFamily": "Consolas, 'Courier New', monospace",
+  "terminal.integrated.fontSize": 14,
+
+  // Git Configuration
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  "git.suggestSmartCommit": true,
+  "github.gitProtocol": "https",
+
+  // NPM Configuration
+  "npm.autoDetect": "on",
+  "npm.enableRunFromFolder": true,
+  "npm.packageManager": "npm",
+
+  // Existing SQL/DB settings
+  "mssql.intelliSense.enableIntelliSense": false,
+  "mssql.intelliSense.lowerCaseSuggestions": false,
+  "mssql.ignorePlatformWarning": true,
+  "mssql.connections": [],
+  "[sql]": {
+    "editor.formatOnSave": false
+  },
+  "[plaintext]": {
+    "editor.formatOnSave": false
+  },
+  "files.exclude": {
+    "node_modules": true,
+    "dist": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "sql.linter.executablePath": "",
+  "sql.format.enable": false,
+  "prisma.pinToPrisma6": true
+}
