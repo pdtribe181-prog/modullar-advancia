@@ -1,5 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 
+async function dismissCookieConsent(page: Page) {
+  const acceptButton = page.getByRole('button', { name: /accept all/i });
+  if (await acceptButton.isVisible().catch(() => false)) {
+    await acceptButton.click();
+  }
+}
+
 // Page Object for authentication flows
 export class AuthPage {
   constructor(private page: Page) {}
@@ -39,6 +46,11 @@ export class AuthPage {
 }
 
 test.describe('Authentication', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await dismissCookieConsent(page);
+  });
+
   test.describe('Login Page', () => {
     test('should display login form', async ({ page }) => {
       await page.goto('/login');
