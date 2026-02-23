@@ -62,6 +62,7 @@ export default function App() {
           <Route path="wallet-tools" element={<CryptoWallet />} />
           <Route path="faq" element={<FAQ />} />
           <Route path="login" element={<Login />} />
+          <Route path="signup" element={<Login />} />
           <Route path="payment" element={<PaymentPage />} />
           <Route path="payment/success" element={<PaymentSuccess />} />
           <Route path="checkout" element={<CheckoutPage />} />
@@ -75,6 +76,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="payments" element={<Navigate to="/history" replace />} />
           <Route
             path="history"
             element={

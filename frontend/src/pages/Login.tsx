@@ -1,18 +1,20 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { LoadingButton } from '../components/Spinner';
-import { 
-  validateLoginForm, 
-  validateSignupForm, 
-  getFieldError, 
-  type ValidationError 
+import {
+  validateLoginForm,
+  validateSignupForm,
+  getFieldError,
+  type ValidationError
 } from '../utils/validation';
 
 type AuthMethod = 'email' | 'phone';
 
 export function Login() {
-  const [isSignup, setIsSignup] = useState(false);
+  const location = useLocation();
+  const routeMode = useMemo(() => (location.pathname === '/signup' ? 'signup' : 'login'), [location.pathname]);
+  const [isSignup, setIsSignup] = useState(routeMode === 'signup');
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,16 +27,23 @@ export function Login() {
   const { login, signup, sendPhoneOtp, verifyPhoneOtp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    setIsSignup(routeMode === 'signup');
+    setFieldErrors([]);
+    setError('');
+    setOtpSent(false);
+  }, [routeMode]);
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setFieldErrors([]);
 
     // Client-side validation
-    const validation = isSignup 
+    const validation = isSignup
       ? validateSignupForm({ email, password })
       : validateLoginForm({ email, password });
-    
+
     if (!validation.success && validation.errors) {
       setFieldErrors(validation.errors);
       return;
@@ -152,11 +161,15 @@ export function Login() {
               {passwordError && <span id="password-error" className="field-error">{passwordError}</span>}
             </div>
 
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+              <div className="error-message" role="alert">
+                {error}
+              </div>
+            )}
 
-            <LoadingButton 
-              type="submit" 
-              className="btn btn-primary" 
+            <LoadingButton
+              type="submit"
+              className="btn btn-primary"
               loading={loading}
               loadingText="Processing..."
             >
@@ -197,11 +210,15 @@ export function Login() {
               </div>
             )}
 
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+              <div className="error-message" role="alert">
+                {error}
+              </div>
+            )}
 
-            <LoadingButton 
-              type="submit" 
-              className="btn btn-primary" 
+            <LoadingButton
+              type="submit"
+              className="btn btn-primary"
               loading={loading}
               loadingText={otpSent ? 'Verifying...' : 'Sending code...'}
             >
@@ -244,18 +261,15 @@ export function Login() {
         </div>
 
         <div className="login-footer">
-          <button
-            type="button"
-            className="btn-link"
-            onClick={() => {
-              setIsSignup(!isSignup);
-              setFieldErrors([]);
-              setError('');
-              setOtpSent(false);
-            }}
-          >
-            {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-          </button>
+          {isSignup ? (
+            <Link className="btn-link" to="/login">
+              Already have an account? Sign in
+            </Link>
+          ) : (
+            <Link className="btn-link" to="/signup">
+              Don't have an account? Sign up
+            </Link>
+          )}
         </div>
       </div>
     </div>

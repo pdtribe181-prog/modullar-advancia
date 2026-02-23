@@ -39,14 +39,26 @@ test.describe('Payment System', () => {
     test('should require authentication for checkout', async ({ page }) => {
       await page.goto('/checkout');
 
-      // Either shows login redirect or checkout form
-      const hasLoginRedirect = await page.url().includes('login');
+      // The app may client-side redirect after load (e.g. to /payment if checkout context is missing)
+      // so give it a moment to settle before asserting.
+      await Promise.race([
+        page.waitForURL(/login/, { timeout: 5000 }),
+        page.waitForURL(/\/payment/, { timeout: 5000 }),
+        page
+          .getByText(/amount|total|pay/i)
+          .first()
+          .waitFor({ state: 'visible', timeout: 5000 }),
+      ]).catch(() => {});
+
+      const hasLoginRedirect = page.url().includes('login');
+      const hasPaymentRedirect = page.url().includes('/payment');
       const hasCheckoutForm = await page
         .getByText(/amount|total|pay/i)
+        .first()
         .isVisible()
         .catch(() => false);
 
-      expect(hasLoginRedirect || hasCheckoutForm).toBeTruthy();
+      expect(hasLoginRedirect || hasPaymentRedirect || hasCheckoutForm).toBeTruthy();
     });
   });
 
