@@ -9,7 +9,7 @@ fi
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
-echo "WSL Node setup (nvm)" 
+echo "WSL Node setup (nvm)"
 echo "- Repo: ${REPO_DIR}"
 
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
@@ -65,4 +65,5 @@ append_once() {
 append_once "$HOME/.bashrc" 'export NVM_DIR="$HOME/.nvm"'
 append_once "$HOME/.profile" 'export NVM_DIR="$HOME/.nvm"'
 
-echo "Done. Open a new WSL terminal to pick up shell init changes." 
+echo "Done. Open a new WSL terminal to pick up shell init changes."
+
