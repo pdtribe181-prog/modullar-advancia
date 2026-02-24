@@ -210,146 +210,107 @@ export function SecuritySettings() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '32px 24px' }}>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Security Settings</h1>
-        <p className="mt-2 text-gray-600">
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#e2e8f0', margin: 0 }}>Security Settings</h1>
+        <p style={{ marginTop: '8px', color: '#94a3b8' }}>
           Manage your account security, linked accounts, and notification preferences
         </p>
       </div>
 
       {/* Quick Links */}
-      <div className="mb-6 flex gap-4">
+      <div style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
         <Link
           to="/security/mfa"
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#6366f1', color: '#fff', borderRadius: '9px', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}
         >
           🔐 Manage 2FA
         </Link>
         <Link
           to="/profile"
-          className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '9px', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}
         >
           👤 Profile Settings
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex gap-8">
-          {(['preferences', 'identities', 'activity', 'recovery'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab
-                  ? 'border-teal-600 text-teal-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab === 'preferences' && '🔔 Notifications'}
-              {tab === 'identities' && '🔗 Linked Accounts'}
-              {tab === 'activity' && '📋 Activity Log'}
-              {tab === 'recovery' && '📱 Recovery'}
-            </button>
-          ))}
-        </nav>
+      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '24px', display: 'flex', gap: '4px' }}>
+        {(['preferences', 'identities', 'activity', 'recovery'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '12px 16px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: activeTab === tab ? '#818cf8' : '#94a3b8',
+              borderBottom: activeTab === tab ? '2px solid #818cf8' : '2px solid transparent',
+              marginBottom: '-1px',
+              transition: 'color 0.15s',
+            }}
+          >
+            {tab === 'preferences' && '🔔 Notifications'}
+            {tab === 'identities' && '🔗 Linked Accounts'}
+            {tab === 'activity' && '📋 Activity Log'}
+            {tab === 'recovery' && '📱 Recovery'}
+          </button>
+        ))}
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div style={{ background: '#131625', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
         {/* Notification Preferences */}
         {activeTab === 'preferences' && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Security Notifications</h3>
-            <p className="text-gray-600 mb-6">
+          <div style={{ padding: '28px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Security Notifications</h3>
+            <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Choose how you want to be notified about security events
             </p>
 
-            <div className="space-y-4">
+            <div>
               {/* Notification Channels */}
-              <div className="border-b pb-4 mb-4">
-                <h4 className="font-medium mb-3">Notification Channels</h4>
-                <label className="flex items-center justify-between py-2">
-                  <span>Email notifications</span>
-                  <input
-                    type="checkbox"
-                    checked={preferences.emailNotifications}
-                    onChange={() => handleTogglePreference('emailNotifications')}
-                    className="w-5 h-5 text-teal-600 rounded"
-                  />
+              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', marginBottom: '16px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0', marginBottom: '12px', marginTop: 0 }}>Notification Channels</h4>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', cursor: 'pointer' }}>
+                  <span style={{ color: '#e2e8f0', fontSize: '14px' }}>Email notifications</span>
+                  <input type="checkbox" checked={preferences.emailNotifications} onChange={() => handleTogglePreference('emailNotifications')} style={{ width: '18px', height: '18px', accentColor: '#818cf8', cursor: 'pointer' }} />
                 </label>
-                <label className="flex items-center justify-between py-2">
-                  <span>SMS notifications</span>
-                  <input
-                    type="checkbox"
-                    checked={preferences.smsNotifications}
-                    onChange={() => handleTogglePreference('smsNotifications')}
-                    className="w-5 h-5 text-teal-600 rounded"
-                  />
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', cursor: 'pointer' }}>
+                  <span style={{ color: '#e2e8f0', fontSize: '14px' }}>SMS notifications</span>
+                  <input type="checkbox" checked={preferences.smsNotifications} onChange={() => handleTogglePreference('smsNotifications')} style={{ width: '18px', height: '18px', accentColor: '#818cf8', cursor: 'pointer' }} />
                 </label>
               </div>
 
               {/* Event Types */}
               <div>
-                <h4 className="font-medium mb-3">Notify me when...</h4>
-                <label className="flex items-center justify-between py-2 border-b">
-                  <div>
-                    <span className="block">New sign-in detected</span>
-                    <span className="text-sm text-gray-500">Get alerted when someone signs into your account</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferences.notifyOnLogin}
-                    onChange={() => handleTogglePreference('notifyOnLogin')}
-                    className="w-5 h-5 text-teal-600 rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between py-2 border-b">
-                  <div>
-                    <span className="block">Password changed</span>
-                    <span className="text-sm text-gray-500">Important security alert</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferences.notifyOnPasswordChange}
-                    onChange={() => handleTogglePreference('notifyOnPasswordChange')}
-                    className="w-5 h-5 text-teal-600 rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between py-2 border-b">
-                  <div>
-                    <span className="block">Email address changed</span>
-                    <span className="text-sm text-gray-500">Verify email changes</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferences.notifyOnEmailChange}
-                    onChange={() => handleTogglePreference('notifyOnEmailChange')}
-                    className="w-5 h-5 text-teal-600 rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between py-2">
-                  <div>
-                    <span className="block">New device detected</span>
-                    <span className="text-sm text-gray-500">Alert when signing in from an unrecognized device</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferences.notifyOnNewDevice}
-                    onChange={() => handleTogglePreference('notifyOnNewDevice')}
-                    className="w-5 h-5 text-teal-600 rounded"
-                  />
-                </label>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0', marginBottom: '12px', marginTop: 0 }}>Notify me when...</h4>
+                {[
+                  { key: 'notifyOnLogin' as const, label: 'New sign-in detected', sub: 'Get alerted when someone signs into your account' },
+                  { key: 'notifyOnPasswordChange' as const, label: 'Password changed', sub: 'Important security alert' },
+                  { key: 'notifyOnEmailChange' as const, label: 'Email address changed', sub: 'Verify email changes' },
+                  { key: 'notifyOnNewDevice' as const, label: 'New device detected', sub: 'Alert when signing in from an unrecognized device' },
+                ].map(({ key, label, sub }, i, arr) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', cursor: 'pointer' }}>
+                    <div>
+                      <span style={{ display: 'block', color: '#e2e8f0', fontSize: '14px' }}>{label}</span>
+                      <span style={{ color: '#64748b', fontSize: '12px' }}>{sub}</span>
+                    </div>
+                    <input type="checkbox" checked={preferences[key]} onChange={() => handleTogglePreference(key)} style={{ width: '18px', height: '18px', accentColor: '#818cf8', cursor: 'pointer', flexShrink: 0, marginLeft: '16px' }} />
+                  </label>
+                ))}
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t">
+            <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               <LoadingButton
                 onClick={handleSavePreferences}
                 loading={saving}
-                className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                className="btn btn-primary"
               >
                 Save Preferences
               </LoadingButton>
@@ -359,29 +320,28 @@ export function SecuritySettings() {
 
         {/* Linked Identities */}
         {activeTab === 'identities' && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Linked Accounts</h3>
-            <p className="text-gray-600 mb-6">
+          <div style={{ padding: '28px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Linked Accounts</h3>
+            <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Connect social accounts for easier sign-in
             </p>
 
-            {/* Existing Identities */}
             {identities.length > 0 && (
-              <div className="mb-6 space-y-3">
+              <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {identities.map((identity) => (
-                  <div key={identity.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{getProviderIcon(identity.provider)}</span>
+                  <div key={identity.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', background: '#181b2e' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '24px' }}>{getProviderIcon(identity.provider)}</span>
                       <div>
-                        <div className="font-medium capitalize">{identity.provider}</div>
-                        <div className="text-sm text-gray-500">
+                        <div style={{ fontWeight: '600', color: '#e2e8f0', textTransform: 'capitalize' }}>{identity.provider}</div>
+                        <div style={{ fontSize: '13px', color: '#94a3b8' }}>
                           {identity.identity_data?.email || identity.identity_data?.name || 'Connected'}
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={() => handleUnlinkIdentity(identity.id)}
-                      className="px-3 py-1 text-red-600 border border-red-600 rounded hover:bg-red-50"
+                      style={{ padding: '6px 14px', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '7px', background: 'transparent', color: '#f87171', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
                     >
                       Unlink
                     </button>
@@ -390,10 +350,9 @@ export function SecuritySettings() {
               </div>
             )}
 
-            {/* Add New Identity */}
             <div>
-              <h4 className="font-medium mb-3">Add account</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0', marginBottom: '12px', marginTop: 0 }}>Add account</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 {['google', 'github', 'facebook', 'apple'].map((provider) => {
                   const isLinked = identities.some(i => i.provider.toLowerCase() === provider);
                   return (
@@ -401,15 +360,11 @@ export function SecuritySettings() {
                       key={provider}
                       onClick={() => !isLinked && handleLinkIdentity(provider)}
                       disabled={isLinked}
-                      className={`flex items-center gap-3 p-4 border rounded-lg ${
-                        isLinked
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'hover:bg-gray-50'
-                      }`}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', background: isLinked ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)', color: isLinked ? '#475569' : '#e2e8f0', cursor: isLinked ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: '500' }}
                     >
-                      <span className="text-xl">{getProviderIcon(provider)}</span>
-                      <span className="capitalize">{provider}</span>
-                      {isLinked && <span className="ml-auto text-sm">✓ Linked</span>}
+                      <span style={{ fontSize: '20px' }}>{getProviderIcon(provider)}</span>
+                      <span style={{ textTransform: 'capitalize' }}>{provider}</span>
+                      {isLinked && <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#34d399' }}>✓ Linked</span>}
                     </button>
                   );
                 })}
@@ -420,35 +375,35 @@ export function SecuritySettings() {
 
         {/* Security Activity Log */}
         {activeTab === 'activity' && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Security Activity</h3>
-            <p className="text-gray-600 mb-6">
+          <div style={{ padding: '28px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Recent Security Activity</h3>
+            <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Review recent security events on your account
             </p>
 
             {securityEvents.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div style={{ textAlign: 'center', padding: '32px', color: '#94a3b8' }}>
                 <p>No recent security events</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {securityEvents.slice(0, 20).map((event) => (
-                  <div key={event.id} className="flex items-start gap-4 p-4 border rounded-lg">
-                    <span className="text-2xl">{getEventIcon(event.event_type)}</span>
-                    <div className="flex-1">
-                      <div className="font-medium">{formatEventType(event.event_type)}</div>
-                      <div className="text-sm text-gray-500">
+                  <div key={event.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '14px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', background: '#181b2e' }}>
+                    <span style={{ fontSize: '22px', flexShrink: 0 }}>{getEventIcon(event.event_type)}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '500', color: '#e2e8f0', fontSize: '14px' }}>{formatEventType(event.event_type)}</div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
                         {new Date(event.created_at).toLocaleString()}
                       </div>
                       {event.ip_address && (
-                        <div className="text-sm text-gray-500">
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
                           IP: {event.ip_address}
                           {event.location?.city && ` • ${event.location.city}, ${event.location.country}`}
                         </div>
                       )}
                     </div>
                     {event.event_type === 'failed_login' && (
-                      <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
+                      <span style={{ padding: '3px 10px', fontSize: '11px', background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '999px', flexShrink: 0, fontWeight: '600' }}>
                         Failed
                       </span>
                     )}
@@ -461,26 +416,26 @@ export function SecuritySettings() {
 
         {/* Recovery Phone */}
         {activeTab === 'recovery' && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Account Recovery</h3>
-            <p className="text-gray-600 mb-6">
+          <div style={{ padding: '28px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Account Recovery</h3>
+            <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Set up a recovery phone number in case you lose access to your email
             </p>
 
             {recoveryStatus.phone && recoveryStatus.verified ? (
-              <div className="flex items-center gap-4 p-4 bg-green-50 border border-green-200 rounded-lg mb-6">
-                <span className="text-2xl">✅</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', marginBottom: '24px' }}>
+                <span style={{ fontSize: '24px' }}>✅</span>
                 <div>
-                  <div className="font-medium text-green-900">Recovery phone verified</div>
-                  <div className="text-sm text-green-700">
+                  <div style={{ fontWeight: '600', color: '#34d399', fontSize: '14px' }}>Recovery phone verified</div>
+                  <div style={{ fontSize: '13px', color: '#6ee7b7', marginTop: '2px' }}>
                     {recoveryStatus.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}
                   </div>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSetRecoveryPhone} className="space-y-4">
+              <form onSubmit={handleSetRecoveryPhone} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#e2e8f0', marginBottom: '6px' }}>
                     Recovery Phone Number
                   </label>
                   <input
@@ -488,16 +443,16 @@ export function SecuritySettings() {
                     value={recoveryPhone}
                     onChange={(e) => setRecoveryPhone(e.target.value)}
                     placeholder="+1 (555) 123-4567"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '9px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontSize: '14px', boxSizing: 'border-box' }}
                   />
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
                     We'll send a verification code to this number
                   </p>
                 </div>
                 <LoadingButton
                   type="submit"
                   loading={saving}
-                  className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                  className="btn btn-primary"
                 >
                   Set Recovery Phone
                 </LoadingButton>
@@ -505,13 +460,13 @@ export function SecuritySettings() {
             )}
 
             {/* Security Tips */}
-            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">💡 Security Tips</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Enable two-factor authentication for extra security</li>
-                <li>• Use a unique, strong password</li>
-                <li>• Keep your recovery phone number up to date</li>
-                <li>• Review your security activity regularly</li>
+            <div style={{ marginTop: '32px', padding: '16px 20px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }}>
+              <h4 style={{ fontWeight: '600', color: '#a5b4fc', fontSize: '14px', marginBottom: '10px', marginTop: 0 }}>💡 Security Tips</h4>
+              <ul style={{ fontSize: '13px', color: '#94a3b8', lineHeight: '1.8', paddingLeft: '16px', margin: 0 }}>
+                <li>Enable two-factor authentication for extra security</li>
+                <li>Use a unique, strong password</li>
+                <li>Keep your recovery phone number up to date</li>
+                <li>Review your security activity regularly</li>
               </ul>
             </div>
           </div>

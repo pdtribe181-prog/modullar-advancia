@@ -115,6 +115,13 @@ class ApiService {
     onRetry: () => {},
   };
 
+  constructor() {
+    // Initialize token from localStorage if available
+    if (typeof window !== 'undefined') {
+      this.token = localStorage.getItem('token');
+    }
+  }
+
   setToken(token: string | null) {
     this.token = token;
   }

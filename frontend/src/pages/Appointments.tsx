@@ -176,30 +176,26 @@ export default function Appointments() {
     });
   }
 
-  function getStatusColor(status: string) {
-    switch (status) {
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-800';
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'completed':
-        return 'bg-gray-100 text-gray-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  function getStatusColor(status: string): React.CSSProperties {
+    const map: Record<string, React.CSSProperties> = {
+      scheduled: { background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' },
+      confirmed:  { background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' },
+      completed:  { background: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' },
+      cancelled:  { background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' },
+    };
+    const s = map[status] || map.completed;
+    return { ...s, display: 'inline-flex', padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '600', textTransform: 'capitalize' };
   }
 
   // Get minimum date (today)
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Appointments</h1>
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 24px' }}>
+      <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#e2e8f0', marginBottom: '28px' }}>Appointments</h1>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded mb-4">
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '12px 16px', borderRadius: '10px', marginBottom: '20px' }}>
           {error}
         </div>
       )}
@@ -207,39 +203,30 @@ export default function Appointments() {
       {step === 'list' && (
         <>
           {/* Upcoming Appointments */}
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Your Upcoming Appointments</h2>
+          <section style={{ marginBottom: '36px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#e2e8f0', marginBottom: '16px' }}>Your Upcoming Appointments</h2>
             {loadingAppointments ? (
-              <div className="flex items-center gap-2 text-gray-500">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#94a3b8' }}>
                 <Spinner size={20} /> Loading appointments...
               </div>
             ) : appointments.length === 0 ? (
-              <p className="text-gray-500">No upcoming appointments</p>
+              <p style={{ color: '#64748b' }}>No upcoming appointments</p>
             ) : (
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {appointments.map((apt) => (
-                  <div key={apt.id} className="border rounded-lg p-4 flex justify-between items-center">
+                  <div key={apt.id} style={{ background: '#131625', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
                     <div>
-                      <h3 className="font-medium">{apt.provider?.business_name}</h3>
-                      <p className="text-sm text-gray-600">{apt.provider?.specialty}</p>
-                      <p className="text-sm">
-                        {formatDate(apt.date)} at {apt.time}
-                      </p>
+                      <h3 style={{ fontWeight: '600', color: '#e2e8f0', margin: '0 0 4px' }}>{apt.provider?.business_name}</h3>
+                      <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 4px' }}>{apt.provider?.specialty}</p>
+                      <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>{formatDate(apt.date)} at {apt.time}</p>
                       {apt.reason && (
-                        <p className="text-sm text-gray-500 mt-1">Reason: {apt.reason}</p>
+                        <p style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>Reason: {apt.reason}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(apt.status)}`}>
-                        {apt.status}
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                      <span style={getStatusColor(apt.status)}>{apt.status}</span>
                       {['scheduled', 'confirmed'].includes(apt.status) && (
-                        <button
-                          onClick={() => handleCancelAppointment(apt.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Cancel
-                        </button>
+                        <button onClick={() => handleCancelAppointment(apt.id)} style={{ color: '#f87171', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>Cancel</button>
                       )}
                     </div>
                   </div>
@@ -250,33 +237,30 @@ export default function Appointments() {
 
           {/* Book New Appointment */}
           <section>
-            <h2 className="text-xl font-semibold mb-4">Book an Appointment</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#e2e8f0', marginBottom: '16px' }}>Book an Appointment</h2>
             {loadingProviders ? (
-              <div className="flex items-center gap-2 text-gray-500">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#94a3b8' }}>
                 <Spinner size={20} /> Loading providers...
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                   {providers.map((provider) => (
-                    <div
-                      key={provider.id}
-                      className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer transition"
-                      onClick={() => handleProviderSelect(provider)}
+                    <div key={provider.id} onClick={() => handleProviderSelect(provider)} style={{ background: '#131625', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '18px', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(129,140,248,0.6)')}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
                     >
-                      <h3 className="font-medium">{provider.name}</h3>
-                      <p className="text-sm text-gray-600">{provider.specialty}</p>
-                      <p className="text-lg font-semibold mt-2">
-                        ${provider.consultationFee}
-                      </p>
+                      <h3 style={{ fontWeight: '600', color: '#e2e8f0', margin: '0 0 4px' }}>{provider.name}</h3>
+                      <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 10px' }}>{provider.specialty}</p>
+                      <p style={{ fontSize: '20px', fontWeight: '700', color: '#818cf8', margin: '0 0 8px' }}>${provider.consultationFee}</p>
                       {provider.acceptsPayments && (
-                        <span className="text-green-600 text-sm">Online payments available</span>
+                        <span style={{ fontSize: '12px', color: '#34d399' }}>✓ Online payments</span>
                       )}
                     </div>
                   ))}
                 </div>
                 {providers.length === 0 && (
-                  <p className="text-gray-500">No providers available</p>
+                  <p style={{ color: '#64748b' }}>No providers available</p>
                 )}
               </>
             )}
@@ -285,53 +269,33 @@ export default function Appointments() {
       )}
 
       {step === 'book' && selectedProvider && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <button
-            onClick={() => setStep('list')}
-            className="text-blue-600 hover:text-blue-800 mb-4"
-          >
-            &larr; Back to providers
-          </button>
+        <div style={{ background: '#131625', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', padding: '28px' }}>
+          <button onClick={() => setStep('list')} style={{ color: '#818cf8', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', marginBottom: '20px', padding: 0 }}>&larr; Back to providers</button>
 
-          <h2 className="text-xl font-semibold mb-4">
-            Book with {selectedProvider.name}
-          </h2>
-          <p className="text-gray-600 mb-4">{selectedProvider.specialty}</p>
-          <p className="text-lg font-semibold mb-6">
-            Consultation Fee: ${selectedProvider.consultationFee}
-          </p>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#e2e8f0', marginBottom: '6px' }}>Book with {selectedProvider.name}</h2>
+          <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '4px' }}>{selectedProvider.specialty}</p>
+          <p style={{ fontSize: '18px', fontWeight: '700', color: '#818cf8', marginBottom: '24px' }}>Fee: ${selectedProvider.consultationFee}</p>
 
           {/* Date Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Select Date</label>
-            <input
-              type="date"
-              min={today}
-              value={selectedDate}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="border rounded px-3 py-2 w-full"
-            />
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#94a3b8', marginBottom: '8px' }}>Select Date</label>
+            <input type="date" min={today} value={selectedDate} onChange={(e) => handleDateChange(e.target.value)}
+              style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontSize: '14px', width: '100%', boxSizing: 'border-box' }} />
           </div>
 
           {/* Time Slots */}
           {selectedDate && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Select Time</label>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#94a3b8', marginBottom: '10px' }}>Select Time</label>
               {loading ? (
-                <p>Loading available times...</p>
+                <p style={{ color: '#64748b' }}>Loading available times...</p>
               ) : slots.length === 0 ? (
-                <p className="text-gray-500">No available slots for this date</p>
+                <p style={{ color: '#64748b' }}>No available slots for this date</p>
               ) : (
-                <div className="grid grid-cols-4 gap-2">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                   {slots.map((slot) => (
-                    <button
-                      key={slot.time}
-                      onClick={() => setSelectedSlot(slot.time)}
-                      className={`px-3 py-2 border rounded text-sm ${
-                        selectedSlot === slot.time
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'hover:border-blue-500'
-                      }`}
+                    <button key={slot.time} onClick={() => setSelectedSlot(slot.time)}
+                      style={{ padding: '8px', border: selectedSlot === slot.time ? '1px solid #818cf8' : '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', background: selectedSlot === slot.time ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.03)', color: selectedSlot === slot.time ? '#818cf8' : '#94a3b8', cursor: slot.available ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: selectedSlot === slot.time ? '600' : '400', opacity: slot.available ? 1 : 0.4 }}
                     >
                       {slot.time}
                     </button>
@@ -342,25 +306,15 @@ export default function Appointments() {
           )}
 
           {/* Reason */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">
-              Reason for Visit (optional)
-            </label>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="border rounded px-3 py-2 w-full"
-              rows={3}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#94a3b8', marginBottom: '8px' }}>Reason for Visit (optional)</label>
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3}
               placeholder="Describe the reason for your appointment..."
-            />
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
 
-          <button
-            onClick={handleBookAppointment}
-            disabled={!selectedDate || !selectedSlot || loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {loading ? 'Booking...' : `Book Appointment - $${selectedProvider.consultationFee}`}
+          <button onClick={handleBookAppointment} disabled={!selectedDate || !selectedSlot || loading} className="btn btn-primary" style={{ width: '100%', opacity: (!selectedDate || !selectedSlot || loading) ? 0.5 : 1 }}>
+            {loading ? 'Booking...' : `Book Appointment — $${selectedProvider.consultationFee}`}
           </button>
         </div>
       )}
@@ -415,23 +369,19 @@ function PaymentForm({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <button onClick={onCancel} className="text-blue-600 hover:text-blue-800 mb-4">
-        &larr; Back
-      </button>
+    <div style={{ background: '#131625', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', padding: '28px' }}>
+      <button onClick={onCancel} style={{ color: '#818cf8', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', marginBottom: '20px', padding: 0 }}>&larr; Back</button>
 
-      <h2 className="text-xl font-semibold mb-4">Complete Payment</h2>
+      <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#e2e8f0', marginBottom: '20px' }}>Complete Payment</h2>
 
       <form onSubmit={handleSubmit}>
-        <PaymentElement className="mb-4" />
+        <div style={{ marginBottom: '16px' }}>
+          <PaymentElement />
+        </div>
 
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+        {error && <p style={{ color: '#f87171', marginBottom: '16px', fontSize: '14px' }}>{error}</p>}
 
-        <button
-          type="submit"
-          disabled={!stripe || processing}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
-        >
+        <button type="submit" disabled={!stripe || processing} className="btn btn-primary" style={{ width: '100%', opacity: (!stripe || processing) ? 0.6 : 1 }}>
           {processing ? 'Processing...' : 'Pay Now'}
         </button>
       </form>

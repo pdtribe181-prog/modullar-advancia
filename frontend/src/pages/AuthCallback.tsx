@@ -32,17 +32,17 @@ export function AuthCallback() {
 
   if (error) {
     return (
-      <div className="max-w-lg mx-auto mt-16 text-center">
-        <div className="h-16 w-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
-          <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div style={{ maxWidth: '480px', margin: '80px auto 0', textAlign: 'center', padding: '0 24px' }}>
+        <div style={{ width: '64px', height: '64px', margin: '0 auto', borderRadius: '50%', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg style={{ width: '28px', height: '28px', color: '#f87171' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </div>
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">Authentication Failed</h1>
-        <p className="mt-2 text-gray-600">{errorDescription || 'Something went wrong during sign-in.'}</p>
+        <h1 style={{ marginTop: '20px', fontSize: '22px', fontWeight: '700', color: '#e2e8f0' }}>Authentication Failed</h1>
+        <p style={{ marginTop: '10px', color: '#94a3b8' }}>{errorDescription || 'Something went wrong during sign-in.'}</p>
         <button
           onClick={() => navigate('/login', { replace: true })}
-          className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          style={{ marginTop: '24px', display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#6366f1', color: '#fff', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}
         >
           Back to Login
         </button>
@@ -52,9 +52,9 @@ export function AuthCallback() {
 
   if (loading) {
     return (
-      <div className="max-w-lg mx-auto mt-16 text-center">
-        <div className="animate-spin h-8 w-8 mx-auto border-4 border-blue-600 border-t-transparent rounded-full" />
-        <p className="mt-4 text-gray-500">Completing sign-in...</p>
+      <div style={{ maxWidth: '480px', margin: '80px auto 0', textAlign: 'center', padding: '0 24px' }}>
+        <div style={{ width: '32px', height: '32px', margin: '0 auto', borderRadius: '50%', border: '3px solid rgba(99,102,241,0.2)', borderTopColor: '#818cf8', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ marginTop: '16px', color: '#94a3b8' }}>Completing sign-in...</p>
       </div>
     );
   }

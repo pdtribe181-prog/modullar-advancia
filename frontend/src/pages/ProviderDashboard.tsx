@@ -142,30 +142,31 @@ export default function ProviderDashboard() {
     });
   }
 
-  function getStatusColor(status: string) {
-    switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  function getStatusColor(status: string): React.CSSProperties {
+    const map: Record<string, React.CSSProperties> = {
+      scheduled: { background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' },
+      confirmed:  { background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' },
+      completed:  { background: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' },
+      cancelled:  { background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' },
+    };
+    const s = map[status] || { background: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' };
+    return { ...s, display: 'inline-flex', padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: '600', textTransform: 'capitalize' };
   }
 
   if (loading) {
     return (
-      <div className="p-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '16px' }}>
         <Spinner size={48} />
-        <p>Loading dashboard...</p>
+        <p style={{ color: '#94a3b8' }}>Loading dashboard...</p>
       </div>
     );
   }
 
   if (!provider) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-4">Provider Dashboard</h1>
-        <div className="bg-yellow-100 text-yellow-800 p-4 rounded">
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '32px 24px' }}>
+        <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#e2e8f0', marginBottom: '20px' }}>Provider Dashboard</h1>
+        <div style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', color: '#fde047', padding: '16px', borderRadius: '10px' }}>
           {error || 'You need to register as a provider to access this dashboard.'}
         </div>
       </div>
@@ -173,116 +174,84 @@ export default function ProviderDashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Provider Dashboard</h1>
-        <span className="text-gray-600">{provider.business_name}</span>
+    <div style={{ maxWidth: '1060px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+        <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#e2e8f0', margin: 0 }}>Provider Dashboard</h1>
+        <span style={{ color: '#94a3b8', fontSize: '14px' }}>{provider.business_name}</span>
       </div>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded mb-4">
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '12px 16px', borderRadius: '10px', marginBottom: '20px' }}>
           {error}
         </div>
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-gray-500 text-sm">Upcoming Appointments</h3>
-          <p className="text-3xl font-bold">{appointments.filter(a => ['scheduled', 'confirmed'].includes(a.status)).length}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+        <div style={{ background: '#131625', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '4px solid #818cf8', padding: '18px' }}>
+          <h3 style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 8px' }}>Upcoming Appointments</h3>
+          <p style={{ fontSize: '28px', fontWeight: '700', color: '#e2e8f0', margin: 0 }}>{appointments.filter(a => ['scheduled', 'confirmed'].includes(a.status)).length}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-gray-500 text-sm">This Month's Earnings</h3>
-          <p className="text-3xl font-bold">${earnings?.totalEarnings || 0}</p>
+        <div style={{ background: '#131625', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '4px solid #34d399', padding: '18px' }}>
+          <h3 style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 8px' }}>This Month's Earnings</h3>
+          <p style={{ fontSize: '28px', fontWeight: '700', color: '#e2e8f0', margin: 0 }}>${earnings?.totalEarnings || 0}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-gray-500 text-sm">Available Balance</h3>
-          <p className="text-3xl font-bold">${earnings?.stripeBalance?.available || 0}</p>
+        <div style={{ background: '#131625', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '4px solid #6366f1', padding: '18px' }}>
+          <h3 style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 8px' }}>Available Balance</h3>
+          <p style={{ fontSize: '28px', fontWeight: '700', color: '#e2e8f0', margin: 0 }}>${earnings?.stripeBalance?.available || 0}</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b mb-6">
-        <nav className="flex gap-4">
-          <button
-            onClick={() => setActiveTab('appointments')}
-            className={`pb-2 px-1 ${activeTab === 'appointments' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          >
-            Appointments
+      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '24px', display: 'flex', gap: '4px' }}>
+        {(['appointments', 'earnings', 'profile'] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: activeTab === tab ? '#818cf8' : '#94a3b8', borderBottom: activeTab === tab ? '2px solid #818cf8' : '2px solid transparent', marginBottom: '-1px', textTransform: 'capitalize' }}>
+            {tab === 'appointments' ? 'Appointments' : tab === 'earnings' ? 'Earnings' : 'Profile'}
           </button>
-          <button
-            onClick={() => setActiveTab('earnings')}
-            className={`pb-2 px-1 ${activeTab === 'earnings' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          >
-            Earnings
-          </button>
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`pb-2 px-1 ${activeTab === 'profile' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          >
-            Profile
-          </button>
-        </nav>
+        ))}
       </div>
 
       {/* Appointments Tab */}
       {activeTab === 'appointments' && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Upcoming Appointments</h2>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#e2e8f0', marginBottom: '16px' }}>Upcoming Appointments</h2>
           {appointments.length === 0 ? (
-            <p className="text-gray-500">No upcoming appointments</p>
+            <p style={{ color: '#94a3b8' }}>No upcoming appointments</p>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Time</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Patient</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Reason</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Actions</th>
+            <div style={{ background: '#131625', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#181b2e' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#94a3b8', fontSize: '12px', fontWeight: '600', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Date</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#94a3b8', fontSize: '12px', fontWeight: '600', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Time</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#94a3b8', fontSize: '12px', fontWeight: '600', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Patient</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#94a3b8', fontSize: '12px', fontWeight: '600', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Reason</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#94a3b8', fontSize: '12px', fontWeight: '600', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Status</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#94a3b8', fontSize: '12px', fontWeight: '600', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody>
                   {appointments.map((apt) => (
-                    <tr key={apt.id}>
-                      <td className="px-4 py-3 text-sm">{formatDate(apt.appointment_date)}</td>
-                      <td className="px-4 py-3 text-sm">{apt.appointment_time}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <div>{apt.patient?.name || 'Unknown'}</div>
-                        <div className="text-gray-500 text-xs">{apt.patient?.email}</div>
+                    <tr key={apt.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#e2e8f0' }}>{formatDate(apt.appointment_date)}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#e2e8f0' }}>{apt.appointment_time}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px' }}>
+                        <div style={{ color: '#e2e8f0' }}>{apt.patient?.name || 'Unknown'}</div>
+                        <div style={{ color: '#64748b', fontSize: '11px' }}>{apt.patient?.email}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm">{apt.reason || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(apt.status)}`}>
-                          {apt.status}
-                        </span>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>{apt.reason || '-'}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={getStatusColor(apt.status)}>{apt.status}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex gap-2">
+                      <td style={{ padding: '12px 16px', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
                           {apt.status === 'scheduled' && (
-                            <button
-                              onClick={() => handleConfirm(apt.id)}
-                              className="text-green-600 hover:text-green-800"
-                            >
-                              Confirm
-                            </button>
+                            <button onClick={() => handleConfirm(apt.id)} style={{ color: '#34d399', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>Confirm</button>
                           )}
                           {['scheduled', 'confirmed'].includes(apt.status) && (
                             <>
-                              <button
-                                onClick={() => setShowNotesModal(apt.id)}
-                                className="text-blue-600 hover:text-blue-800"
-                              >
-                                Complete
-                              </button>
-                              <button
-                                onClick={() => setShowCancelModal(apt.id)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                Cancel
-                              </button>
+                              <button onClick={() => setShowNotesModal(apt.id)} style={{ color: '#818cf8', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>Complete</button>
+                              <button onClick={() => setShowCancelModal(apt.id)} style={{ color: '#f87171', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>Cancel</button>
                             </>
                           )}
                         </div>
@@ -296,20 +265,20 @@ export default function ProviderDashboard() {
 
           {/* Complete Appointment Modal */}
           {showNotesModal && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-              <div style={{ background: 'white', borderRadius: '12px', padding: '24px', maxWidth: '420px', width: '100%' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Complete Appointment</h3>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>Notes (optional)</label>
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: '#131625', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '14px', padding: '28px', maxWidth: '420px', width: '100%' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#818cf8', marginTop: 0 }}>Complete Appointment</h3>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#e2e8f0' }}>Notes (optional)</label>
                 <textarea
                   value={notesInput}
                   onChange={(e) => setNotesInput(e.target.value)}
                   placeholder="Enter any notes for this appointment..."
                   rows={4}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '16px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', marginBottom: '16px', resize: 'vertical', boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <button onClick={() => { setShowNotesModal(null); setNotesInput(''); }} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>Cancel</button>
-                  <button onClick={() => handleComplete(showNotesModal)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer', fontWeight: '500' }}>Mark Complete</button>
+                  <button onClick={() => { setShowNotesModal(null); setNotesInput(''); }} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={() => handleComplete(showNotesModal)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#6366f1', color: 'white', cursor: 'pointer', fontWeight: '500' }}>Mark Complete</button>
                 </div>
               </div>
             </div>
@@ -317,21 +286,21 @@ export default function ProviderDashboard() {
 
           {/* Cancel Appointment Modal */}
           {showCancelModal && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-              <div style={{ background: 'white', borderRadius: '12px', padding: '24px', maxWidth: '420px', width: '100%' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#dc2626' }}>Cancel Appointment</h3>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>Reason for cancellation *</label>
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: '#131625', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '14px', padding: '28px', maxWidth: '420px', width: '100%' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#f87171', marginTop: 0 }}>Cancel Appointment</h3>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#e2e8f0' }}>Reason for cancellation *</label>
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Enter reason for cancellation..."
                   rows={3}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '16px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', marginBottom: '16px', resize: 'vertical', boxSizing: 'border-box' }}
                   required
                 />
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <button onClick={() => { setShowCancelModal(null); setCancelReason(''); }} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>Back</button>
-                  <button onClick={() => handleCancel(showCancelModal)} disabled={!cancelReason.trim()} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: cancelReason.trim() ? '#dc2626' : '#d1d5db', color: 'white', cursor: cancelReason.trim() ? 'pointer' : 'not-allowed', fontWeight: '500' }}>Cancel Appointment</button>
+                  <button onClick={() => { setShowCancelModal(null); setCancelReason(''); }} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', cursor: 'pointer' }}>Back</button>
+                  <button onClick={() => handleCancel(showCancelModal)} disabled={!cancelReason.trim()} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: cancelReason.trim() ? '#ef4444' : '#374151', color: 'white', cursor: cancelReason.trim() ? 'pointer' : 'not-allowed', fontWeight: '500' }}>Cancel Appointment</button>
                 </div>
               </div>
             </div>
@@ -342,24 +311,24 @@ export default function ProviderDashboard() {
       {/* Earnings Tab */}
       {activeTab === 'earnings' && earnings && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Earnings Summary (Last 30 Days)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium mb-4">Completed Appointments</h3>
-              <p className="text-4xl font-bold text-green-600">{earnings.completedAppointments}</p>
-              <p className="text-gray-500 mt-2">Total earnings: ${earnings.totalEarnings}</p>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#e2e8f0', marginBottom: '16px' }}>Earnings Summary (Last 30 Days)</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            <div style={{ background: '#131625', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '500', color: '#e2e8f0', marginBottom: '16px', marginTop: 0 }}>Completed Appointments</h3>
+              <p style={{ fontSize: '36px', fontWeight: '700', color: '#34d399', margin: 0 }}>{earnings.completedAppointments}</p>
+              <p style={{ color: '#94a3b8', marginTop: '8px' }}>Total earnings: ${earnings.totalEarnings}</p>
             </div>
             {earnings.stripeBalance && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-medium mb-4">Stripe Balance</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Available:</span>
-                    <span className="font-bold text-green-600">${earnings.stripeBalance.available}</span>
+              <div style={{ background: '#131625', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '500', color: '#e2e8f0', marginBottom: '16px', marginTop: 0 }}>Stripe Balance</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '14px' }}>Available:</span>
+                    <span style={{ fontWeight: '700', color: '#34d399' }}>${earnings.stripeBalance.available}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Pending:</span>
-                    <span className="font-bold">${earnings.stripeBalance.pending}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '14px' }}>Pending:</span>
+                    <span style={{ fontWeight: '700', color: '#e2e8f0' }}>${earnings.stripeBalance.pending}</span>
                   </div>
                 </div>
               </div>
@@ -367,11 +336,9 @@ export default function ProviderDashboard() {
           </div>
 
           {!provider.stripe_onboarding_complete && (
-            <div className="mt-4 bg-yellow-100 text-yellow-800 p-4 rounded">
+            <div style={{ marginTop: '16px', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', color: '#fde047', padding: '14px 16px', borderRadius: '10px' }}>
               Complete Stripe onboarding to receive payments directly to your bank account.
-              <a href="/connect/onboard" className="ml-2 text-blue-600 hover:underline">
-                Start Onboarding
-              </a>
+              <a href="/connect/onboard" style={{ marginLeft: '8px', color: '#818cf8', textDecoration: 'underline' }}>Start Onboarding</a>
             </div>
           )}
         </div>
@@ -412,124 +379,75 @@ function ProviderProfile({ provider, onUpdate }: { provider: Provider; onUpdate:
     }
   }
 
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontSize: '14px', boxSizing: 'border-box' };
+  const labelStyle: React.CSSProperties = { display: 'block', marginBottom: '6px', fontWeight: '500', fontSize: '13px', color: '#94a3b8' };
+
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Provider Profile</h2>
+    <div style={{ background: '#131625', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '28px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#e2e8f0', margin: 0 }}>Provider Profile</h2>
         {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="text-blue-600 hover:text-blue-800"
-          >
-            Edit
-          </button>
+          <button onClick={() => setEditing(true)} style={{ color: '#818cf8', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Edit</button>
         )}
       </div>
 
       {editing ? (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label className="block text-sm font-medium mb-1">Business Name</label>
-            <input
-              type="text"
-              value={form.businessName}
-              onChange={(e) => setForm({ ...form, businessName: e.target.value })}
-              className="w-full border rounded px-3 py-2"
-            />
+            <label style={labelStyle}>Business Name</label>
+            <input type="text" value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} style={inputStyle} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Specialty</label>
-            <input
-              type="text"
-              value={form.specialty}
-              onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-              className="w-full border rounded px-3 py-2"
-            />
+            <label style={labelStyle}>Specialty</label>
+            <input type="text" value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} style={inputStyle} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
-              <label className="block text-sm font-medium mb-1">Phone</label>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full border rounded px-3 py-2"
-              />
+              <label style={labelStyle}>Phone</label>
+              <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full border rounded px-3 py-2"
-              />
+              <label style={labelStyle}>Email</label>
+              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={inputStyle} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Consultation Fee ($)</label>
-            <input
-              type="number"
-              value={form.consultationFee}
-              onChange={(e) => setForm({ ...form, consultationFee: Number(e.target.value) })}
-              className="w-full border rounded px-3 py-2"
-            />
+            <label style={labelStyle}>Consultation Fee ($)</label>
+            <input type="number" value={form.consultationFee} onChange={(e) => setForm({ ...form, consultationFee: Number(e.target.value) })} style={inputStyle} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Bio</label>
-            <textarea
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              className="w-full border rounded px-3 py-2"
-              rows={4}
-            />
+            <label style={labelStyle}>Bio</label>
+            <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-            >
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={handleSave} disabled={saving} className="btn btn-primary" style={{ opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
-            <button
-              onClick={() => setEditing(false)}
-              className="border px-4 py-2 rounded hover:bg-gray-50"
-            >
-              Cancel
-            </button>
+            <button onClick={() => setEditing(false)} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', cursor: 'pointer', fontSize: '14px' }}>Cancel</button>
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {[
+            { label: 'Business Name', value: provider.business_name, bold: true },
+            { label: 'Specialty', value: provider.specialty, bold: true },
+            { label: 'Phone', value: provider.phone || 'Not set' },
+            { label: 'Email', value: provider.email || 'Not set' },
+            { label: 'Consultation Fee', value: `$${provider.consultation_fee}`, bold: true },
+          ].map(({ label, value, bold }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ color: '#64748b', fontSize: '13px', minWidth: '140px' }}>{label}:</span>
+              <span style={{ color: bold ? '#e2e8f0' : '#94a3b8', fontWeight: bold ? '600' : '400' }}>{value}</span>
+            </div>
+          ))}
           <div>
-            <span className="text-gray-500">Business Name:</span>
-            <span className="ml-2 font-medium">{provider.business_name}</span>
+            <span style={{ color: '#64748b', fontSize: '13px' }}>Bio:</span>
+            <p style={{ color: '#94a3b8', marginTop: '6px', lineHeight: '1.6' }}>{provider.bio || 'No bio added'}</p>
           </div>
-          <div>
-            <span className="text-gray-500">Specialty:</span>
-            <span className="ml-2 font-medium">{provider.specialty}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Phone:</span>
-            <span className="ml-2">{provider.phone || 'Not set'}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Email:</span>
-            <span className="ml-2">{provider.email || 'Not set'}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Consultation Fee:</span>
-            <span className="ml-2 font-medium">${provider.consultation_fee}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Bio:</span>
-            <p className="mt-1">{provider.bio || 'No bio added'}</p>
-          </div>
-          <div>
-            <span className="text-gray-500">Stripe Status:</span>
-            <span className={`ml-2 ${provider.stripe_onboarding_complete ? 'text-green-600' : 'text-yellow-600'}`}>
-              {provider.stripe_onboarding_complete ? 'Connected' : 'Not Connected'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: '#64748b', fontSize: '13px' }}>Stripe Status:</span>
+            <span style={{ color: provider.stripe_onboarding_complete ? '#34d399' : '#fde047', fontWeight: '500', fontSize: '13px' }}>
+              {provider.stripe_onboarding_complete ? '✓ Connected' : '⚠ Not Connected'}
             </span>
           </div>
         </div>

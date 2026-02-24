@@ -26,6 +26,8 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const { login, signup, sendPhoneOtp, verifyPhoneOtp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const redirectTo = (location.state as { from?: string } | null)?.from || '/dashboard';
+  const redirectMessage = (location.state as { message?: string } | null)?.message;
 
   useEffect(() => {
     setIsSignup(routeMode === 'signup');
@@ -57,7 +59,7 @@ export function Login() {
       } else {
         await login(email, password);
       }
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
@@ -87,7 +89,7 @@ export function Login() {
           return;
         }
         await verifyPhoneOtp(phone, otpCode);
-        navigate('/dashboard');
+        navigate(redirectTo);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -110,6 +112,11 @@ export function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
+        {redirectMessage && (
+          <div className="info-message" role="status" style={{ marginBottom: '16px', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', color: '#1d4ed8' }}>
+            ℹ️ {redirectMessage}
+          </div>
+        )}
         <h2>{isSignup ? 'Create Account' : 'Sign In'}</h2>
 
         {/* Auth Method Tabs */}

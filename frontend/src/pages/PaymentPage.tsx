@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { LoadingButton } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { validatePaymentForm, getFieldError, type ValidationError } from '../utils/validation';
+import { useAuth } from '../providers/AuthProvider';
 
 export function PaymentPage() {
   const [amount, setAmount] = useState('');
@@ -13,6 +14,12 @@ export function PaymentPage() {
   const [fieldErrors, setFieldErrors] = useState<ValidationError[]>([]);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+
+  // Redirect unauthenticated users to login — checkout requires a valid session
+  if (!authLoading && !user) {
+    return <Navigate to="/login" state={{ from: '/payment', message: 'Please log in to make a payment.' }} replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

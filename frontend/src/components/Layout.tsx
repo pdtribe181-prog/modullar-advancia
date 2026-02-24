@@ -1,101 +1,160 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, NavLink } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../providers/AuthProvider';
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="layout">
-      <header className="header" style={{
-        background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 100%)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-      }}>
-        <div className="container">
-          <Link to="/" className="logo" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            color: 'white',
-            textDecoration: 'none',
-          }}>
-            <span style={{ fontSize: '24px' }}>💎</span>
-            <span style={{ fontWeight: '700', fontSize: '18px' }}>Advancia PayLedger</span>
+      {/* ── Header ─────────────────────────────────────── */}
+      <header className="app-header">
+        <div className="app-header__inner">
+
+          {/* Logo */}
+          <Link to="/" className="app-logo" onClick={closeMenu}>
+            <svg className="app-logo__mark" width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <rect width="32" height="32" rx="9" fill="url(#lg-nav)"/>
+              <path d="M16 7L24 25H19.5L18 21.5H14L12.5 25H8L16 7ZM16 12.5L14.8 17H17.2L16 12.5Z" fill="white"/>
+              <defs>
+                <linearGradient id="lg-nav" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#818cf8"/><stop offset="1" stopColor="#a78bfa"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="app-logo__text">
+              <span className="app-logo__name"><span className="app-logo__grad">Advancia</span><span className="app-logo__sub"> PayLedger</span></span>
+            </span>
           </Link>
-          <nav className="nav" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-            <Link to="/" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>Home</Link>
-            <Link to="/payment" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>Make Payment</Link>
+
+          {/* Desktop nav */}
+          <nav className="app-nav">
+            <NavLink to="/" end className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Home</NavLink>
+            <NavLink to="/features" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Features</NavLink>
+            <NavLink to="/payment" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Make Payment</NavLink>
+            <NavLink to="/subscriptions" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Pricing</NavLink>
+            <NavLink to="/faq" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>FAQ</NavLink>
             {user ? (
               <>
-                <Link to="/dashboard" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>Dashboard</Link>
-                <Link to="/wallet" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>Wallet</Link>
+                <NavLink to="/dashboard" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Dashboard</NavLink>
+                <NavLink to="/wallet-balance" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Balance</NavLink>
+                <NavLink to="/convert" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Convert</NavLink>
+                <NavLink to="/appointments" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Appointments</NavLink>
+                <NavLink to="/history" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>History</NavLink>
+                <NavLink to="/medbed" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>MedBed</NavLink>
+                <NavLink to="/security" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Security</NavLink>
+                <NavLink to="/profile" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Profile</NavLink>
                 {user.role === 'admin' && (
-                  <Link to="/admin" style={{
-                    color: 'white',
-                    textDecoration: 'none',
-                    fontWeight: '600',
-                    background: 'rgba(255,255,255,0.2)',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                  }}>⚙️ Admin</Link>
+                  <NavLink to="/admin" className={({ isActive }) => `app-nav__link app-nav__link--admin${isActive ? ' app-nav__link--active' : ''}`}>⚙️ Admin</NavLink>
                 )}
-                <Link to="/profile" style={{ color: 'rgba(255,255,255,0.9)', textDecoration: 'none', fontWeight: '500' }}>Profile</Link>
-                <button
-                  onClick={logout}
-                  style={{
-                    background: 'rgba(255,255,255,0.15)',
-                    border: 'none',
-                    color: 'white',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                  }}
-                >
-                  Logout
-                </button>
+                <button className="app-nav__logout" onClick={logout}>Log out</button>
               </>
             ) : (
-              <Link to="/login" style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                padding: '10px 24px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: '600',
-              }}>Login</Link>
+              <Link to="/login" className="app-nav__cta">Get Started</Link>
             )}
           </nav>
+
+          {/* Hamburger (mobile) */}
+          <button
+            className={`app-hamburger${menuOpen ? ' app-hamburger--open' : ''}`}
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+          >
+            <span /><span /><span />
+          </button>
         </div>
+
+        {/* Mobile drawer */}
+        {menuOpen && (
+          <div className="app-mobile-nav">
+            <NavLink to="/" end className="app-mobile-nav__link" onClick={closeMenu}>Home</NavLink>
+            <NavLink to="/features" className="app-mobile-nav__link" onClick={closeMenu}>Features</NavLink>
+            <NavLink to="/payment" className="app-mobile-nav__link" onClick={closeMenu}>Make Payment</NavLink>
+            <NavLink to="/subscriptions" className="app-mobile-nav__link" onClick={closeMenu}>Pricing</NavLink>
+            <NavLink to="/faq" className="app-mobile-nav__link" onClick={closeMenu}>FAQ</NavLink>
+            {user ? (
+              <>
+                <NavLink to="/dashboard" className="app-mobile-nav__link" onClick={closeMenu}>Dashboard</NavLink>
+                <NavLink to="/wallet-balance" className="app-mobile-nav__link" onClick={closeMenu}>Balance</NavLink>
+                <NavLink to="/convert" className="app-mobile-nav__link" onClick={closeMenu}>Convert</NavLink>
+                <NavLink to="/withdraw" className="app-mobile-nav__link" onClick={closeMenu}>Withdraw</NavLink>
+                <NavLink to="/appointments" className="app-mobile-nav__link" onClick={closeMenu}>Appointments</NavLink>
+                <NavLink to="/history" className="app-mobile-nav__link" onClick={closeMenu}>History</NavLink>
+                <NavLink to="/medbed" className="app-mobile-nav__link" onClick={closeMenu}>MedBed</NavLink>
+                <NavLink to="/security" className="app-mobile-nav__link" onClick={closeMenu}>Security</NavLink>
+                <NavLink to="/notifications" className="app-mobile-nav__link" onClick={closeMenu}>Notifications</NavLink>
+                <NavLink to="/profile" className="app-mobile-nav__link" onClick={closeMenu}>Profile</NavLink>
+                {user.role === 'admin' && (
+                  <NavLink to="/admin" className="app-mobile-nav__link" onClick={closeMenu}>⚙️ Admin</NavLink>
+                )}
+                <button className="app-mobile-nav__logout" onClick={() => { logout(); closeMenu(); }}>Log out</button>
+              </>
+            ) : (
+              <NavLink to="/login" className="app-mobile-nav__cta" onClick={closeMenu}>Get Started →</NavLink>
+            )}
+          </div>
+        )}
       </header>
 
-      <main className="main">
-        <div className="container">
-          <Outlet />
-        </div>
+      {/* ── Main ───────────────────────────────────────── */}
+      <main className="app-main">
+        <Outlet />
       </main>
 
-      <footer className="footer" style={{
-        background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 100%)',
-        color: 'rgba(255,255,255,0.8)',
-        padding: '32px 0',
-      }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <p style={{ marginBottom: '12px' }}>
-            <span style={{ fontSize: '20px' }}>💎</span> Advancia PayLedger
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '16px' }}>
-            <Link to="/features" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Features</Link>
-            <Link to="/policy" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Privacy Policy</Link>
-            <Link to="/subscriptions" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Subscriptions</Link>
-            <Link to="/faq" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>FAQ</Link>
-            <Link to="/wallet-tools" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Crypto Wallet</Link>
+      {/* ── Footer ─────────────────────────────────────── */}
+      <footer className="app-footer">
+        <div className="app-footer__inner">
+          <div className="app-footer__brand">
+            <svg className="app-footer__mark" width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <rect width="32" height="32" rx="9" fill="url(#lg-ftr)"/>
+              <path d="M16 7L24 25H19.5L18 21.5H14L12.5 25H8L16 7ZM16 12.5L14.8 17H17.2L16 12.5Z" fill="white"/>
+              <defs>
+                <linearGradient id="lg-ftr" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#818cf8"/><stop offset="1" stopColor="#a78bfa"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="app-footer__name"><span className="app-logo__grad">Advancia</span> PayLedger</span>
+            <p className="app-footer__tagline">Web3-native healthcare payments,<br/>HIPAA-compliant &amp; PCI DSS Level 1.</p>
           </div>
-          <p style={{ fontSize: '14px', opacity: 0.7 }}>
-            &copy; 2026 Advancia PayLedger. Web3 Healthcare Payments. HIPAA Compliant.
-          </p>
+
+          <div className="app-footer__cols">
+            <div className="app-footer__col">
+              <p className="app-footer__col-title">Platform</p>
+              <Link to="/features" className="app-footer__link">Features</Link>
+              <Link to="/subscriptions" className="app-footer__link">Pricing</Link>
+              <Link to="/wallet-tools" className="app-footer__link">Crypto Wallet</Link>
+              <Link to="/payment" className="app-footer__link">Make Payment</Link>
+            </div>
+            <div className="app-footer__col">
+              <p className="app-footer__col-title">Support</p>
+              <Link to="/faq" className="app-footer__link">FAQ</Link>
+              <Link to="/policy" className="app-footer__link">Privacy Policy</Link>
+              <Link to="/policy#terms" className="app-footer__link">Terms of Service</Link>
+              <a href="mailto:support@advanciapayledger.com" className="app-footer__link">Contact</a>
+            </div>
+            <div className="app-footer__col">
+              <p className="app-footer__col-title">Compliance</p>
+              <span className="app-footer__badge">🏥 HIPAA</span>
+              <span className="app-footer__badge">🌐 GDPR</span>
+              <span className="app-footer__badge">🔒 PCI DSS L1</span>
+              <span className="app-footer__badge">✅ SOC 2</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="app-footer__bottom">
+          <span>&copy; 2026 Advancia PayLedger, Inc. All rights reserved.</span>
+          <span className="app-footer__bottom-links">
+            <Link to="/policy">Privacy</Link>
+            <Link to="/policy#terms">Terms</Link>
+          </span>
         </div>
       </footer>
-
     </div>
   );
 }

@@ -33,6 +33,13 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 // Admin Console
 const AdminConsole = lazy(() => import('./pages/AdminConsole'));
 
+// New feature pages
+const WalletBalance = lazy(() => import('./pages/WalletBalance').then(m => ({ default: m.WalletBalance })));
+const Withdraw = lazy(() => import('./pages/Withdraw').then(m => ({ default: m.Withdraw })));
+const MedBed = lazy(() => import('./pages/MedBed').then(m => ({ default: m.MedBed })));
+const Notifications = lazy(() => import('./pages/Notifications').then(m => ({ default: m.Notifications })));
+const Convert = lazy(() => import('./pages/Convert').then(m => ({ default: m.Convert })));
+
 // Missing redirect target pages
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
@@ -131,6 +138,46 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <WalletConnect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="convert"
+            element={
+              <ProtectedRoute>
+                <Convert />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="wallet-balance"
+            element={
+              <ProtectedRoute>
+                <WalletBalance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="withdraw"
+            element={
+              <ProtectedRoute>
+                <Withdraw />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="medbed"
+            element={
+              <ProtectedRoute>
+                <MedBed />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

@@ -259,21 +259,21 @@ export function AdminConsole() {
           </div>
 
           {/* Online Users */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+          <div style={{ background: '#131625', borderRadius: '12px', padding: '24px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#e2e8f0' }}>
               🟢 Currently Online Users
             </h3>
             {dashboardData.onlineUsers.length > 0 ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                 {dashboardData.onlineUsers.map(u => (
-                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#f0fdf4', borderRadius: '20px' }}>
-                    <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }}></span>
-                    <span>{u.email}</span>
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '20px' }}>
+                    <span style={{ width: '8px', height: '8px', background: '#34d399', borderRadius: '50%' }}></span>
+                    <span style={{ color: '#e2e8f0' }}>{u.email}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#6b7280' }}>No users currently online</p>
+              <p style={{ color: '#94a3b8' }}>No users currently online</p>
             )}
           </div>
         </div>
@@ -292,7 +292,9 @@ export function AdminConsole() {
               style={{
                 padding: '12px 16px',
                 borderRadius: '8px',
-                border: '1px solid #e5e7eb',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.04)',
+                color: '#e2e8f0',
                 minWidth: '250px',
                 fontSize: '14px',
               }}
@@ -303,7 +305,9 @@ export function AdminConsole() {
               style={{
                 padding: '12px 16px',
                 borderRadius: '8px',
-                border: '1px solid #e5e7eb',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: '#131625',
+                color: '#e2e8f0',
                 fontSize: '14px',
                 cursor: 'pointer',
               }}
@@ -316,35 +320,35 @@ export function AdminConsole() {
           </div>
 
           {/* Users Table */}
-          <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <div style={{ background: '#131625', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#f9fafb' }}>
-                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>User</th>
-                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Role</th>
-                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Last Login</th>
-                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Registered</th>
-                  <th style={{ padding: '16px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
+                <tr style={{ background: '#181b2e' }}>
+                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>User</th>
+                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Role</th>
+                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Status</th>
+                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Last Login</th>
+                  <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Registered</th>
+                  <th style={{ padding: '16px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map(u => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <td style={{ padding: '16px' }}>
                       <div>
-                        <div style={{ fontWeight: '600' }}>{u.full_name || 'No name'}</div>
-                        <div style={{ color: '#6b7280', fontSize: '14px' }}>{u.email}</div>
+                        <div style={{ fontWeight: '600', color: '#e2e8f0' }}>{u.full_name || 'No name'}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '14px' }}>{u.email}</div>
                       </div>
                     </td>
-                    <td style={{ padding: '16px', textTransform: 'capitalize' }}>{u.role}</td>
+                    <td style={{ padding: '16px', textTransform: 'capitalize', color: '#e2e8f0' }}>{u.role}</td>
                     <td style={{ padding: '16px' }}>
                       <span style={getStatusBadge(u.status)}>{u.status}</span>
                     </td>
-                    <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>
+                    <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px' }}>
                       {u.last_login ? formatDate(u.last_login) : 'Never'}
                     </td>
-                    <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>
+                    <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px' }}>
                       {formatDate(u.created_at)}
                     </td>
                     <td style={{ padding: '16px', textAlign: 'center' }}>
@@ -455,29 +459,29 @@ function TransactionsTab({ formatCurrency, formatDate }: { formatCurrency: (cent
   if (error) return <div style={{ padding: '24px', color: '#ef4444' }}>{error}</div>;
 
   return (
-    <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+    <div style={{ background: '#131625', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ background: '#f9fafb' }}>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>ID</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>User</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Amount</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Date</th>
+          <tr style={{ background: '#181b2e' }}>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>ID</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>User</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Amount</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Status</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Date</th>
           </tr>
         </thead>
         <tbody>
           {transactions.length === 0 ? (
-            <tr><td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>No transactions found</td></tr>
+            <tr><td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>No transactions found</td></tr>
           ) : transactions.map(tx => (
-            <tr key={tx.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-              <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px' }}>{tx.id.slice(0, 8)}...</td>
-              <td style={{ padding: '16px', fontSize: '14px' }}>{tx.user_email}</td>
-              <td style={{ padding: '16px', fontWeight: '600' }}>{formatCurrency(tx.amount)}</td>
+            <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px', color: '#a5b4fc' }}>{tx.id.slice(0, 8)}...</td>
+              <td style={{ padding: '16px', fontSize: '14px', color: '#e2e8f0' }}>{tx.user_email}</td>
+              <td style={{ padding: '16px', fontWeight: '600', color: '#e2e8f0' }}>{formatCurrency(tx.amount)}</td>
               <td style={{ padding: '16px' }}>
                 <span style={{ padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '600', background: tx.status === 'completed' ? '#d1fae5' : tx.status === 'pending' ? '#fef3c7' : '#fee2e2', color: tx.status === 'completed' ? '#065f46' : tx.status === 'pending' ? '#92400e' : '#991b1b' }}>{tx.status}</span>
               </td>
-              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>{formatDate(tx.created_at)}</td>
+              <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px' }}>{formatDate(tx.created_at)}</td>
             </tr>
           ))}
         </tbody>
@@ -511,25 +515,25 @@ function WebhooksTab({ formatDate }: { formatDate: (d: string) => string }) {
   if (error) return <div style={{ padding: '24px', color: '#ef4444' }}>{error}</div>;
 
   return (
-    <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+    <div style={{ background: '#131625', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ background: '#f9fafb' }}>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Event Type</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Date</th>
+          <tr style={{ background: '#181b2e' }}>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Event Type</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Status</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Date</th>
           </tr>
         </thead>
         <tbody>
           {events.length === 0 ? (
-            <tr><td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>No webhook events found</td></tr>
+            <tr><td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>No webhook events found</td></tr>
           ) : events.map(evt => (
-            <tr key={evt.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-              <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px' }}>{evt.event_type}</td>
+            <tr key={evt.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px', color: '#a5b4fc' }}>{evt.event_type}</td>
               <td style={{ padding: '16px' }}>
                 <span style={{ padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '600', background: evt.status === 'processed' ? '#d1fae5' : '#fef3c7', color: evt.status === 'processed' ? '#065f46' : '#92400e' }}>{evt.status}</span>
               </td>
-              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>{formatDate(evt.created_at)}</td>
+              <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px' }}>{formatDate(evt.created_at)}</td>
             </tr>
           ))}
         </tbody>
@@ -563,25 +567,25 @@ function AuditLogsTab({ formatDate }: { formatDate: (d: string) => string }) {
   if (error) return <div style={{ padding: '24px', color: '#ef4444' }}>{error}</div>;
 
   return (
-    <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+    <div style={{ background: '#131625', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ background: '#f9fafb' }}>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Action</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actor</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Details</th>
-            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Date</th>
+          <tr style={{ background: '#181b2e' }}>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Action</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Actor</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Details</th>
+            <th style={{ padding: '16px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Date</th>
           </tr>
         </thead>
         <tbody>
           {logs.length === 0 ? (
-            <tr><td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>No audit logs found</td></tr>
+            <tr><td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>No audit logs found</td></tr>
           ) : logs.map(log => (
-            <tr key={log.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-              <td style={{ padding: '16px', fontWeight: '500' }}>{log.action}</td>
-              <td style={{ padding: '16px', fontSize: '14px' }}>{log.actor_email}</td>
-              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.details}</td>
-              <td style={{ padding: '16px', color: '#6b7280', fontSize: '14px' }}>{formatDate(log.created_at)}</td>
+            <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <td style={{ padding: '16px', fontWeight: '500', color: '#e2e8f0' }}>{log.action}</td>
+              <td style={{ padding: '16px', fontSize: '14px', color: '#e2e8f0' }}>{log.actor_email}</td>
+              <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.details}</td>
+              <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px' }}>{formatDate(log.created_at)}</td>
             </tr>
           ))}
         </tbody>
@@ -594,16 +598,16 @@ function AuditLogsTab({ formatDate }: { formatDate: (d: string) => string }) {
 function StatCard({ title, value, icon, color }: { title: string; value: string | number; icon: string; color: string }) {
   return (
     <div style={{
-      background: 'white',
+      background: '#131625',
       borderRadius: '12px',
       padding: '20px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      border: '1px solid rgba(255,255,255,0.08)',
       borderLeft: `4px solid ${color}`,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px' }}>{title}</p>
-          <p style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a2e' }}>{value}</p>
+          <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px' }}>{title}</p>
+          <p style={{ fontSize: '24px', fontWeight: '700', color: '#e2e8f0' }}>{value}</p>
         </div>
         <span style={{ fontSize: '28px' }}>{icon}</span>
       </div>
