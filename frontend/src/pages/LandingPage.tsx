@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { LiveChartBanner } from '../components/LiveChartBanner';
 import '../styles.css';
 
 const STATS = [
@@ -186,6 +187,11 @@ export const LandingPage: React.FC = () => {
             <div className="lp-stat__label">{s.label}</div>
           </div>
         ))}
+      </section>
+
+      {/* ── LIVE CHART BANNER ── */}
+      <section className="lp-section" style={{ paddingBottom: 0 }}>
+        <LiveChartBanner />
       </section>
 
       {/* ── FEATURES ── */}
