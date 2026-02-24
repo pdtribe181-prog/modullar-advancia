@@ -149,7 +149,7 @@ export function CheckoutPage() {
       </div>
 
       <div className="security-badge">
-        <span>🔒 Secured by Stripe & Coinbase Commerce</span>
+        <span>🔒 Secured by Stripe</span>
         <p>Your payment information is encrypted and secure</p>
       </div>
     </div>

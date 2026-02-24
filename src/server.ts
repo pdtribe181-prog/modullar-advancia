@@ -16,7 +16,6 @@ import appointmentsRoutes from './routes/appointments.routes.js';
 import providerRoutes from './routes/provider.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import databaseWebhookRoutes from './routes/database-webhook.routes.js';
-import cryptoRoutes from './routes/crypto.routes.js';
 import medBedRoutes from './routes/medbed.routes.js';
 import { apiLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
@@ -154,7 +153,6 @@ apiRouter.use('/auth', authRoutes);
 apiRouter.use('/appointments', appointmentsRoutes);
 apiRouter.use('/provider', providerRoutes);
 apiRouter.use('/wallet', walletRoutes);
-apiRouter.use('/crypto', cryptoRoutes);
 apiRouter.use('/medbeds', medBedRoutes);
 apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 

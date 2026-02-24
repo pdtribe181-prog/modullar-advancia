@@ -12,6 +12,12 @@ frontend/dist/
 .env.*.local
 .env.production
 
+# Copy-paste deployment bundles (never commit)
+1-PAYLEDGER-BACKEND.env
+2-PAYLEDGER-FRONTEND.env
+3-HEALTHCARE.env
+4-SLIPWISE-LOCAL.env
+
 # IDE
 .vscode/*
 !.vscode/settings.json

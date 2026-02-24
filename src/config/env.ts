@@ -42,10 +42,6 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   REDIS_URL: z.string().optional(),
 
-  // Crypto Payments (Coinbase Commerce - optional)
-  COINBASE_COMMERCE_API_KEY: z.string().optional(),
-  COINBASE_COMMERCE_WEBHOOK_SECRET: z.string().optional(),
-
   // Frontend URL (required for redirects)
   FRONTEND_URL: z.string().url('FRONTEND_URL must be a valid URL').default('http://localhost:3001'),
 

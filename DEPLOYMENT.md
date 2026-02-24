@@ -1,4 +1,4 @@
-# Advancia Padvancia-vps-guide
+# Advancia PayLedger — Deployment Guide
 
 ## Architecture (VPS - Hostinger)
 
@@ -20,18 +20,64 @@
 
 ## Live URLs
 
-| Service  | URL                                        | Status       |
-| -------- | ------------------------------------------ | ------------ |
-| App      | <https://advanciapayledger.com>            | ⏳ Pending   |
-| API      | <https://advanciapayledger.com/api>        | ⏳ Pending   |
-| Brand    | <https://advanciapayledger.com>            | ⏳ Pending   |
-| Database | <https://pikguczsvikzragmrojz.supabase.co> | ✅ Connected |
+| Service  | URL                                           | Status       |
+| -------- | --------------------------------------------- | ------------ |
+| App      | <https://advanciapayledger.com>               | ⏳ Pending   |
+| API      | <https://api.advanciapayledger.com/api/v1>    | ⏳ Pending   |
+| Database | <https://pikguczsvikzragmrojz.supabase.co>    | ✅ Connected |
 
 ---
 
-## 1. VPS Setup Instructions (IP: 76.13.77.8)
+## 1. VPS Backend Deploy (IP: 76.13.77.8)
 
-### Phase 1: Initial Server Setup
+### Quick Deploy (recommended)
+
+1. SSH into the server:
+
+   ```bash
+   ssh root@76.13.77.8
+   ```
+
+2. Paste-run the full contents of `5-VPS-DEPLOY.sh`.
+
+3. Upload backend env (from your local machine):
+
+   ```bash
+   scp 1-PAYLEDGER-BACKEND.env root@76.13.77.8:/var/www/advancia/.env
+   ```
+
+4. Reload and check logs:
+
+   ```bash
+   pm2 reload ecosystem.config.cjs --env production
+   pm2 logs advancia-api
+   ```
+
+### DNS + SSL
+
+In Cloudflare → **advanciapayledger.com** → DNS:
+
+```text
+Type: A
+Name: api
+IPv4: 76.13.77.8
+Proxy: OFF (grey cloud)
+```
+
+Then on the VPS:
+
+```bash
+apt-get install -y certbot python3-certbot-nginx
+certbot --nginx -d api.advanciapayledger.com
+```
+
+Test:
+
+```bash
+curl https://api.advanciapayledger.com/health
+```
+
+### Manual Setup (if you’re not using the script)
 
 1. SSH into the server: `ssh root@76.13.77.8`
 2. Update system: `apt update && apt upgrade -y`
@@ -68,21 +114,21 @@
    chown -R $USER:$USER /var/www/advancia
    ```
 
-2. Clone repo (first time manually):
+2. Clone repo:
 
    ```bash
    git clone https://github.com/pdtribe181-prog/modullar-advancia.git /var/www/advancia
    ```
 
-3. Set environment variables in `.env` on server.
+3. Set environment variables in `/var/www/advancia/.env` (see `1-PAYLEDGER-BACKEND.env`).
 
 ### Phase 4: Nginx Configuration
 
-1. Copy local config to server:
+1. Copy local config to server (API subdomain):
 
    ```bash
    # From local machine
-   scp config/nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
+   scp nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
    ```
 
 2. Enable site:
@@ -97,18 +143,13 @@
 
 ---
 
-## 2. CI/CD Pipeline
+## 2. Frontend (Cloudflare Pages)
 
-**Live**: <https://app.advanciapayledger.com>
+Go to: **Cloudflare Pages → your project → Settings → Environment variables**
 
-### Redeploy if needed
+Add the variables from `2-PAYLEDGER-FRONTEND.env`.
 
-```bash
-cd frontend
-vercel --prod
-```
-
-### Environment Variables (in Vercel Dashboard)
+### Environment Variables (Cloudflare Pages)
 
 ```env
 VITE_API_URL=https://api.advanciapayledger.com/api/v1
@@ -130,7 +171,7 @@ stripe listen --forward-to localhost:3000/stripe/webhook
 ### Production
 
 1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
-2. Add endpoint: `https://modullar-advancia.onrender.com/stripe/webhook`
+2. Add endpoint: `https://api.advanciapayledger.com/api/v1/stripe/webhook`
 3. Select events:
    - `payment_intent.succeeded`
    - `payment_intent.payment_failed`
@@ -184,7 +225,7 @@ npm run test:coverage
 2. Add `app.advanciapayledger.com`
 3. DNS: `CNAME app → cname.vercel-dns.com`
 
-### Backend (Render)
+### Backend (VPS)
 
 1. Render Dashboard → Settings → Custom Domains
 2. Add `api.advanciapayledger.com`
@@ -196,8 +237,8 @@ npm run test:coverage
 
 - [x] Supabase connected
 - [x] 131 tests passing
-- [x] Frontend deployed to Vercel
-- [x] Backend deployed to Render
+- [x] Frontend deployed to Cloudflare Pages
+- [x] Backend deployed to VPS (PM2 + Nginx)
 - [x] Stripe webhook configured
 - [x] VITE_API_URL set in Vercel
 - [x] Google OAuth enabled
@@ -221,12 +262,12 @@ npm run test:coverage
 
 The marketing site at `advanciapayledger.com` (built with Rocket.new) needs updated links:
 
-| Current Link          | Should Point To                             |
-| --------------------- | ------------------------------------------- |
-| `/signup`             | `https://app.advanciapayledger.com/login?mode=signup` |
-| `/login`              | `https://app.advanciapayledger.com/login`             |
-| "Get Started" button  | `https://app.advanciapayledger.com`                   |
-| "Create Free Account" | `https://app.advanciapayledger.com/login?mode=signup` |
+| Current Link          | Should Point To                                          |
+| --------------------- | -------------------------------------------------------- |
+| `/signup`             | `https://app.advanciapayledger.com/login?mode=signup`    |
+| `/login`              | `https://app.advanciapayledger.com/login`                |
+| "Get Started" button  | `https://app.advanciapayledger.com`                      |
+| "Create Free Account" | `https://app.advanciapayledger.com/login?mode=signup`    |
 
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
 
@@ -282,7 +323,6 @@ Deployments are automatic on push to `main`:
 
 ## Support
 
-- Render Docs: <https://render.com/docs>
-- Vercel Docs: <https://vercel.com/docs>
+- Cloudflare Pages Docs: <https://developers.cloudflare.com/pages/>
 - Supabase Docs: <https://supabase.com/docs>
 - Stripe Docs: <https://stripe.com/docs>
