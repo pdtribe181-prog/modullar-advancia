@@ -46,6 +46,16 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ de
 const AuthCallback = lazy(() => import('./pages/AuthCallback').then(m => ({ default: m.AuthCallback })));
 const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
 
+// Legal & Compliance pages
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const Invoices = lazy(() => import('./pages/Invoices'));
+const EmailVerification = lazy(() => import('./pages/EmailVerification'));
+const TwoFactorSetup = lazy(() => import('./pages/TwoFactorSetup'));
+const Disputes = lazy(() => import('./pages/Disputes'));
+const KYCVerification = lazy(() => import('./pages/KYCVerification'));
+const AuditLog = lazy(() => import('./pages/AuditLog'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+
 /**
  * Role-based route guard — redirects to dashboard if user lacks required role.
  */
@@ -181,6 +191,51 @@ export default function App() {
               <ProtectedRoute>
                 <Notifications />
               </ProtectedRoute>
+            }
+          />
+          {/* Public pages */}
+          <Route path="terms" element={<TermsOfService />} />
+          <Route path="verify-email" element={<EmailVerification />} />
+          <Route path="welcome" element={<Onboarding />} />
+          {/* Protected feature pages */}
+          <Route
+            path="invoices"
+            element={
+              <ProtectedRoute>
+                <Invoices />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="disputes"
+            element={
+              <ProtectedRoute>
+                <Disputes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="kyc"
+            element={
+              <ProtectedRoute>
+                <KYCVerification />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="security/2fa-setup"
+            element={
+              <ProtectedRoute>
+                <TwoFactorSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/audit-log"
+            element={
+              <RoleGuard allowedRoles={['admin']}>
+                <AuditLog />
+              </RoleGuard>
             }
           />
           <Route
