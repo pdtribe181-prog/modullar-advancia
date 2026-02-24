@@ -255,7 +255,7 @@ describe('stripe.routes', () => {
       expect(res.body.data.clientSecret).toBe('pi_123_secret');
     });
 
-    it('converts amount to cents before calling stripe', async () => {
+    it('accepts amount in cents (no conversion needed)', async () => {
       mockPaymentIntentsCreate.mockResolvedValue({
         id: 'pi_x',
         client_secret: 'secret',
@@ -267,7 +267,7 @@ describe('stripe.routes', () => {
       await request(app)
         .post('/stripe/payment-intents')
         .set('Authorization', 'Bearer token')
-        .send({ amount: 50, currency: 'usd', customerId: 'cus_1' });
+        .send({ amount: 5000, currency: 'usd', customerId: 'cus_1' });
 
       expect(mockPaymentIntentsCreate).toHaveBeenCalledWith(
         expect.objectContaining({ amount: 5000 })

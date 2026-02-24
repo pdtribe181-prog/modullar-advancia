@@ -33,18 +33,26 @@ npm ci --ignore-scripts
 echo "🛠️  Building Backend..."
 npm run build
 
-# 3. Update Nginx config if changed
-if ! diff -q nginx/advancia.conf /etc/nginx/sites-available/advancia >/dev/null 2>&1; then
+# 3. Install Frontend Dependencies & Build
+echo "📦 Installing Frontend Dependencies..."
+cd frontend
+npm ci
+echo "🛠️  Building Frontend..."
+npm run build
+cd ..
+
+# 4. Update Nginx config if changed
+if ! diff -q config/nginx/advancia.conf /etc/nginx/sites-available/advancia >/dev/null 2>&1; then
     echo "🌐 Nginx config changed, updating..."
-    cp nginx/advancia.conf /etc/nginx/sites-available/advancia
+    cp config/nginx/advancia.conf /etc/nginx/sites-available/advancia
     nginx -t && systemctl reload nginx
 fi
 
-# 4. Restart PM2 Process
+# 5. Restart PM2 Process
 echo "🔄 Restarting Backend Service..."
 pm2 reload ecosystem.config.cjs --env production
 
-# 5. Health check
+# 6. Health check
 echo "🏥 Running health check..."
 sleep 3
 for i in 1 2 3 4 5; do
