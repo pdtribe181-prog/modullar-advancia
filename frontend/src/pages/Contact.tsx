@@ -106,6 +106,7 @@ const selectStyle: CSSProperties = {
   backgroundRepeat: 'no-repeat',
   backgroundPosition: 'right 16px center',
   paddingRight: '40px',
+  backgroundColor: '#0d1424',
 };
 
 const textareaStyle: CSSProperties = {
@@ -408,8 +409,8 @@ export const Contact: React.FC = () => {
                 <p style={infoTextStyle}>
                   For general inquiries and support
                 </p>
-                <a href="mailto:support@advancia.io" style={{ ...linkStyle, display: 'block', marginTop: '8px' }}>
-                  support@advancia.io
+                <a href="mailto:support@advanciapayledger.com" style={{ ...linkStyle, display: 'block', marginTop: '8px' }}>
+                  support@advanciapayledger.com
                 </a>
                 <p style={{ ...infoTextStyle, marginTop: '8px', fontSize: '12px' }}>
                   Response time: Within 24 hours
@@ -530,11 +531,120 @@ export const Contact: React.FC = () => {
                 <p style={infoTextStyle}>
                   Need a custom implementation for your healthcare organization? Contact our enterprise team for dedicated support and SLAs.
                 </p>
-                <a href="mailto:enterprise@advancia.io" style={{ ...linkStyle, display: 'block', marginTop: '8px' }}>
-                  enterprise@advancia.io
+                <a href="mailto:enterprise@advanciapayledger.com" style={{ ...linkStyle, display: 'block', marginTop: '8px' }}>
+                  enterprise@advanciapayledger.com
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* CTA Sections */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '24px',
+          marginTop: '64px',
+        }}>
+          {/* Still have questions */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(96, 128, 245, 0.12) 0%, rgba(96, 128, 245, 0.04) 100%)',
+            borderRadius: '16px',
+            padding: '32px',
+            border: '1px solid rgba(96, 128, 245, 0.2)',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>💬</div>
+            <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '8px' }}>
+              Still have questions?
+            </h3>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px', lineHeight: 1.6 }}>
+              Our support team is available Monday–Friday, 9 am–6 pm EST.
+            </p>
+            <a
+              href="mailto:support@advanciapayledger.com"
+              style={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                borderRadius: '10px',
+                background: 'var(--primary)',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '14px',
+                textDecoration: 'none',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              Email Support
+            </a>
+          </div>
+
+          {/* Developer Docs */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)',
+            borderRadius: '16px',
+            padding: '32px',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>📖</div>
+            <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '8px' }}>
+              Developer Docs
+            </h3>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px', lineHeight: 1.6 }}>
+              Integrate our API into your clinic management system.
+            </p>
+            <a
+              href="/api/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                borderRadius: '10px',
+                background: '#10b981',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '14px',
+                textDecoration: 'none',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              View API Docs
+            </a>
+          </div>
+
+          {/* Get Started */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(168, 85, 247, 0.04) 100%)',
+            borderRadius: '16px',
+            padding: '32px',
+            border: '1px solid rgba(168, 85, 247, 0.2)',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>🚀</div>
+            <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', marginBottom: '8px' }}>
+              Get Started Now
+            </h3>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px', lineHeight: 1.6 }}>
+              Create a free account and explore all features risk-free.
+            </p>
+            <Link
+              to="/signup"
+              style={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                borderRadius: '10px',
+                background: '#a855f7',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '14px',
+                textDecoration: 'none',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              Sign Up Free
+            </Link>
           </div>
         </div>
       </div>

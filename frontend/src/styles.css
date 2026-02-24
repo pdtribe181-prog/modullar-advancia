@@ -165,6 +165,7 @@ p { color: var(--text-muted); line-height: 1.7; }
 
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
+.app-logo, .app-logo:hover, .app-logo:focus, .app-logo:active { text-decoration: none !important; }
 
 /* Landing page — no underline on ANY decorative or button element */
 .lp-btn,
@@ -190,6 +191,17 @@ a:hover { text-decoration: underline; }
 input, button, select, textarea {
   font-family: var(--font-body);
   font-size: inherit;
+}
+
+/* Select dropdown options - ensure visibility on dark theme */
+select {
+  background-color: #0d1424;
+  color: #ffffff;
+}
+select option {
+  background-color: #0d1424;
+  color: #ffffff;
+  padding: 10px;
 }
 
 /* ── Utility container ─────────────────────── */

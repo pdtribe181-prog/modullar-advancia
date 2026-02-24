@@ -412,7 +412,7 @@ export const TermsOfService: React.FC = () => {
         <footer style={footerStyle}>
           <p style={footerTextStyle}>
             Questions about these Terms? Contact us at{' '}
-            <Link to="/contact" style={linkStyle}>legal@advancia.io</Link>
+            <Link to="/contact" style={linkStyle}>legal@advanciapayledger.com</Link>
           </p>
           <p style={footerTextStyle}>
             See also: <Link to="/policy" style={linkStyle}>Privacy Policy</Link>
