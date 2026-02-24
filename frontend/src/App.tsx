@@ -44,6 +44,7 @@ const Convert = lazy(() => import('./pages/Convert').then(m => ({ default: m.Con
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const AuthCallback = lazy(() => import('./pages/AuthCallback').then(m => ({ default: m.AuthCallback })));
+const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
 
 /**
  * Role-based route guard — redirects to dashboard if user lacks required role.
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="wallet-tools" element={<CryptoWallet />} />
           <Route path="faq" element={<FAQ />} />
+          <Route path="contact" element={<Contact />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Login />} />
           <Route path="payment" element={<PaymentPage />} />

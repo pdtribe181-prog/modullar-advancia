@@ -37,6 +37,7 @@ export function Layout() {
             <NavLink to="/payment" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Make Payment</NavLink>
             <NavLink to="/subscriptions" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Pricing</NavLink>
             <NavLink to="/faq" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>FAQ</NavLink>
+            <NavLink to="/contact" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Contact</NavLink>
             {user ? (
               <>
                 <NavLink to="/dashboard" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Dashboard</NavLink>
@@ -76,6 +77,7 @@ export function Layout() {
             <NavLink to="/payment" className="app-mobile-nav__link" onClick={closeMenu}>Make Payment</NavLink>
             <NavLink to="/subscriptions" className="app-mobile-nav__link" onClick={closeMenu}>Pricing</NavLink>
             <NavLink to="/faq" className="app-mobile-nav__link" onClick={closeMenu}>FAQ</NavLink>
+            <NavLink to="/contact" className="app-mobile-nav__link" onClick={closeMenu}>Contact</NavLink>
             {user ? (
               <>
                 <NavLink to="/dashboard" className="app-mobile-nav__link" onClick={closeMenu}>Dashboard</NavLink>
