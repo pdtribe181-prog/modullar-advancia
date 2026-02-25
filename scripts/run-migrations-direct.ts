@@ -18,10 +18,11 @@ dotenv.config();
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabasePassword = process.env.SUPABASE_DB_PASSWORD!;
 
-// Extract host from SUPABASE_URL
-const dbHost = supabaseUrl.replace('https://', '').split('.')[0] + '.supabase.co';
+// Extract project ref and build direct DB host
+const projectRef = supabaseUrl.replace('https://', '').split('.')[0];
+const dbHost = `db.${projectRef}.supabase.co`;
 
-const connectionString = `postgresql://postgres:${supabasePassword}@${dbHost}:5432/postgres`;
+const connectionString = `postgresql://postgres:${encodeURIComponent(supabasePassword)}@${dbHost}:5432/postgres`;
 
 console.log(`\n🔐 Connecting to PostgreSQL: ${dbHost}`);
 console.log(`📝 Connection string: postgresql://postgres:***@${dbHost}:5432/postgres\n`);
@@ -64,17 +65,6 @@ async function runAllMigrations() {
   const failedFiles: string[] = [];
   const startTime = Date.now();
 
-  // Create connection
-  let client: any;
-  try {
-    client = sql(connectionString);
-    console.log('\n✅ PostgreSQL connection established\n');
-  } catch (err: any) {
-    console.error('❌ Failed to connect to PostgreSQL:', err.message);
-    console.error('💡 Verify your SUPABASE_DB_PASSWORD is correct in .env\n');
-    process.exit(1);
-  }
-
   try {
     // Execute remaining migrations (assuming 001-011 already ran)
     for (let fileIdx = 11; fileIdx < migrationFiles.length; fileIdx++) {
@@ -106,8 +96,10 @@ async function runAllMigrations() {
         continue;
       }
 
+      // Create a fresh connection per migration to isolate failures
+      let client: any;
       try {
-        // Execute raw SQL directly
+        client = sql(connectionString);
         await client.unsafe(cleanedSql);
         console.log(`   ✅ Migration succeeded`);
         filesSucceeded++;
@@ -118,10 +110,12 @@ async function runAllMigrations() {
         console.error(`   → ${errorMsg}\n`);
         filesFailed++;
         failedFiles.push(migrationFile);
+      } finally {
+        if (client) await client.end();
       }
     }
-  } finally {
-    await client.end();
+  } catch (err: any) {
+    console.error('Fatal error:', err.message);
   }
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
