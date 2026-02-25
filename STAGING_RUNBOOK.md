@@ -58,6 +58,16 @@ Expected:
 - DNS resolves to Cloudflare-proxied IPs (if proxy ON) or Render target.
 - HTTPS responds `200` (or expected status), valid certificate chain.
 
+If Cloudflare returns `403` for staging `/health`, use automation script:
+
+```powershell
+# Check if allow rule exists
+./scripts/cloudflare-allow-staging-health.ps1 -Mode Check
+
+# Create allow rule (requires CF_ZONE_ID + CF_API_TOKEN)
+./scripts/cloudflare-allow-staging-health.ps1 -Mode Apply
+```
+
 ## 5) Functional Smoke Tests
 
 Preferred one-command check:
