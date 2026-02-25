@@ -434,22 +434,48 @@ router.post(
       throw AppError.unauthorized(error.message);
     }
 
-    // Create profile if new user
+    // Check user status — pending/suspended users must not get a session
     if (data.user) {
-      const { data: existingProfile } = await supabase
+      const { data: profile } = await supabase
         .from('user_profiles')
-        .select('id')
+        .select('status, role')
         .eq('id', data.user.id)
         .single();
 
-      if (!existingProfile) {
+      if (profile?.status === 'pending') {
+        await supabase.auth.signOut();
+        throw AppError.forbidden(
+          'Your account is pending approval. Please wait for admin confirmation.'
+        );
+      }
+
+      if (profile?.status === 'suspended') {
+        await supabase.auth.signOut();
+        throw AppError.forbidden('Your account has been suspended. Please contact support.');
+      }
+
+      // Create profile if new user (no existing profile)
+      if (!profile) {
         await supabase.from('user_profiles').insert({
           id: data.user.id,
           phone: data.user.phone,
           full_name: data.user.user_metadata?.full_name || 'User',
           role: data.user.user_metadata?.role || 'patient',
+          status: 'pending',
         });
+
+        // New phone users also start as pending
+        await supabase.auth.signOut();
+        throw AppError.forbidden(
+          'Registration successful. Your account is pending admin approval.'
+        );
       }
+
+      // Update last_login timestamp
+      await supabase
+        .from('user_profiles')
+        .update({ last_login: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('id', data.user.id);
     }
 
     res.json({

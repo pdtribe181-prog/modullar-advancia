@@ -190,12 +190,9 @@ router.post(
   validateBody(refundSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { paymentIntentId, amount, reason } = req.body;
+    // amount is already in cents (validated by amountSchema) — do NOT multiply by 100
     const refund = amount
-      ? await stripeServices.refunds.createPartial(
-          paymentIntentId,
-          Math.round(amount * 100),
-          reason
-        )
+      ? await stripeServices.refunds.createPartial(paymentIntentId, Math.round(amount), reason)
       : await stripeServices.refunds.createFull(paymentIntentId, reason);
     res.json({
       success: true,
@@ -301,10 +298,12 @@ router.get(
 router.post(
   '/transfers',
   authenticate,
+  requireRole('admin'),
   asyncHandler(async (req: Request, res: Response) => {
     const { amount, destinationAccountId, transactionId, description } = req.body;
+    // amount is already in cents — do NOT multiply by 100
     const transfer = await stripeServices.transfers.createTransfer({
-      amount: Math.round(amount * 100),
+      amount: Math.round(amount),
       destinationAccountId,
       transactionId,
       description,
@@ -382,6 +381,7 @@ router.post(
 router.post(
   '/products',
   authenticate,
+  requireRole('admin'),
   asyncHandler(async (req: Request, res: Response) => {
     const product = await stripeServices.products.create(req.body);
     res.json({ success: true, data: product });
@@ -399,11 +399,13 @@ router.get(
 router.post(
   '/prices',
   authenticate,
+  requireRole('admin'),
   asyncHandler(async (req: Request, res: Response) => {
     const { productId, unitAmount, currency, interval } = req.body;
+    // unitAmount is already in cents — do NOT multiply by 100
     const price = await stripeServices.products.createPrice(
       productId,
-      Math.round(unitAmount * 100),
+      Math.round(unitAmount),
       currency || 'usd',
       interval ? { interval } : undefined
     );
@@ -481,9 +483,10 @@ router.post(
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const { customerId, amount, productName, successUrl, cancelUrl, metadata } = req.body;
+    // amount is already in cents — do NOT multiply by 100
     const session = await stripeServices.checkout.createPaymentSession({
       customerId,
-      amount: Math.round(amount * 100),
+      amount: Math.round(amount),
       productName: productName || 'Healthcare Service',
       successUrl: successUrl || `${process.env.FRONTEND_URL}/payment/success`,
       cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancelled`,
@@ -516,9 +519,10 @@ router.post(
     // Add line items if provided
     if (items && items.length > 0) {
       for (const item of items) {
+        // item.amount is already in cents — do NOT multiply by 100
         await stripeServices.invoices.addLineItem(
           invoice.id,
-          Math.round(item.amount * 100),
+          Math.round(item.amount),
           item.description,
           item.currency || 'usd'
         );

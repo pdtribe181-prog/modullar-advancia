@@ -53,10 +53,25 @@ async function getRedisStore(): Promise<Store | undefined> {
   }
 }
 
+// Cache the resolved Redis store so all limiters share it
+let _resolvedStore: Store | undefined;
+let _storeResolved = false;
+
+async function resolveRedisStore(): Promise<Store | undefined> {
+  if (_storeResolved) return _resolvedStore;
+  _resolvedStore = await getRedisStore();
+  _storeResolved = true;
+  return _resolvedStore;
+}
+
+// Pre-resolve the store eagerly (non-blocking) so it's ready when first limiter fires
+resolveRedisStore().catch(() => {});
+
 // Factory functions that create limiters with config
-function createApiLimiter() {
+function createApiLimiter(store?: Store) {
   const config = getConfig();
   return rateLimit({
+    ...(store ? { store } : {}),
     windowMs: config.RATE_LIMIT_API_WINDOW_MS,
     max: config.RATE_LIMIT_API_MAX,
     message: { error: 'Too many requests, please try again later' },
@@ -70,9 +85,10 @@ function createApiLimiter() {
   });
 }
 
-function createAuthLimiter() {
+function createAuthLimiter(store?: Store) {
   const config = getConfig();
   return rateLimit({
+    ...(store ? { store } : {}),
     windowMs: config.RATE_LIMIT_AUTH_WINDOW_MS,
     max: config.RATE_LIMIT_AUTH_MAX,
     message: { error: 'Too many authentication attempts, please try again later' },
@@ -83,9 +99,10 @@ function createAuthLimiter() {
   });
 }
 
-function createPaymentLimiter() {
+function createPaymentLimiter(store?: Store) {
   const config = getConfig();
   return rateLimit({
+    ...(store ? { store } : {}),
     windowMs: config.RATE_LIMIT_PAYMENT_WINDOW_MS,
     max: config.RATE_LIMIT_PAYMENT_MAX,
     message: { error: 'Too many payment requests, please slow down' },
@@ -99,9 +116,10 @@ function createPaymentLimiter() {
   });
 }
 
-function createSensitiveLimiter() {
+function createSensitiveLimiter(store?: Store) {
   const config = getConfig();
   return rateLimit({
+    ...(store ? { store } : {}),
     windowMs: config.RATE_LIMIT_SENSITIVE_WINDOW_MS,
     max: config.RATE_LIMIT_SENSITIVE_MAX,
     message: { error: 'Rate limit exceeded for sensitive operations' },
@@ -115,9 +133,10 @@ function createSensitiveLimiter() {
   });
 }
 
-function createWebhookLimiter() {
+function createWebhookLimiter(store?: Store) {
   const config = getConfig();
   return rateLimit({
+    ...(store ? { store } : {}),
     windowMs: config.RATE_LIMIT_WEBHOOK_WINDOW_MS,
     max: config.RATE_LIMIT_WEBHOOK_MAX,
     message: { error: 'Webhook rate limit exceeded' },
@@ -127,9 +146,10 @@ function createWebhookLimiter() {
   });
 }
 
-function createOnboardingLimiter() {
+function createOnboardingLimiter(store?: Store) {
   const config = getConfig();
   return rateLimit({
+    ...(store ? { store } : {}),
     windowMs: config.RATE_LIMIT_ONBOARDING_WINDOW_MS,
     max: config.RATE_LIMIT_ONBOARDING_MAX,
     message: { error: 'Too many onboarding attempts, please try again later' },
@@ -139,7 +159,7 @@ function createOnboardingLimiter() {
   });
 }
 
-// Lazy-initialized singleton limiters
+// Lazy-initialized singleton limiters (use Redis store when available)
 let _apiLimiter: RequestHandler | null = null;
 let _authLimiter: RequestHandler | null = null;
 let _paymentLimiter: RequestHandler | null = null;
@@ -148,31 +168,31 @@ let _webhookLimiter: RequestHandler | null = null;
 let _onboardingLimiter: RequestHandler | null = null;
 
 export const apiLimiter: RequestHandler = (req, res, next) => {
-  if (!_apiLimiter) _apiLimiter = createApiLimiter();
+  if (!_apiLimiter) _apiLimiter = createApiLimiter(_resolvedStore);
   return _apiLimiter(req, res, next);
 };
 
 export const authLimiter: RequestHandler = (req, res, next) => {
-  if (!_authLimiter) _authLimiter = createAuthLimiter();
+  if (!_authLimiter) _authLimiter = createAuthLimiter(_resolvedStore);
   return _authLimiter(req, res, next);
 };
 
 export const paymentLimiter: RequestHandler = (req, res, next) => {
-  if (!_paymentLimiter) _paymentLimiter = createPaymentLimiter();
+  if (!_paymentLimiter) _paymentLimiter = createPaymentLimiter(_resolvedStore);
   return _paymentLimiter(req, res, next);
 };
 
 export const sensitiveLimiter: RequestHandler = (req, res, next) => {
-  if (!_sensitiveLimiter) _sensitiveLimiter = createSensitiveLimiter();
+  if (!_sensitiveLimiter) _sensitiveLimiter = createSensitiveLimiter(_resolvedStore);
   return _sensitiveLimiter(req, res, next);
 };
 
 export const webhookLimiter: RequestHandler = (req, res, next) => {
-  if (!_webhookLimiter) _webhookLimiter = createWebhookLimiter();
+  if (!_webhookLimiter) _webhookLimiter = createWebhookLimiter(_resolvedStore);
   return _webhookLimiter(req, res, next);
 };
 
 export const onboardingLimiter: RequestHandler = (req, res, next) => {
-  if (!_onboardingLimiter) _onboardingLimiter = createOnboardingLimiter();
+  if (!_onboardingLimiter) _onboardingLimiter = createOnboardingLimiter(_resolvedStore);
   return _onboardingLimiter(req, res, next);
 };

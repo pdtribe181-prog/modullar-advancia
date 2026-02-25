@@ -95,7 +95,11 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
   redis
     .get(key)
     .then((storedToken) => {
-      if (!storedToken || storedToken !== clientToken) {
+      if (
+        !storedToken ||
+        storedToken.length !== clientToken.length ||
+        !crypto.timingSafeEqual(Buffer.from(storedToken), Buffer.from(clientToken))
+      ) {
         logger.warn('CSRF token mismatch', { method: req.method, path: req.path });
         res.status(403).json({ error: 'Invalid CSRF token' });
         return;
