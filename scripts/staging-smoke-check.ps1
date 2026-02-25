@@ -27,6 +27,13 @@ function Write-Fail {
     Write-Host "[FAIL] $Message" -ForegroundColor Red
 }
 
+function Write-Hint {
+    param(
+        [string]$Message
+    )
+    Write-Host "[HINT] $Message" -ForegroundColor Yellow
+}
+
 $checks = @()
 
 try {
@@ -68,6 +75,14 @@ try {
 }
 catch {
     Write-Fail "HTTPS header check failed: $($_.Exception.Message)"
+    if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+        $statusCode = [int]$_.Exception.Response.StatusCode
+        Write-Host "[INFO] HTTP status: $statusCode" -ForegroundColor Yellow
+        if ($statusCode -eq 403) {
+            Write-Hint "Cloudflare is likely blocking staging traffic. Check WAF/Firewall rules, Bot Fight Mode, and custom rules for api-staging host."
+            Write-Hint "Add an allow/skip rule for host=api-staging.advanciapayledger.com and path starts with /health for smoke tests."
+        }
+    }
     $checks += $false
 }
 
@@ -107,6 +122,13 @@ try {
 }
 catch {
     Write-Fail "Health payload check failed: $($_.Exception.Message)"
+    if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+        $statusCode = [int]$_.Exception.Response.StatusCode
+        Write-Host "[INFO] HTTP status: $statusCode" -ForegroundColor Yellow
+        if ($statusCode -eq 403) {
+            Write-Hint "Health endpoint is reachable through DNS but blocked by edge security policy (Cloudflare 403)."
+        }
+    }
     $checks += $false
 }
 
