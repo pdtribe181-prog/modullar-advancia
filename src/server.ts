@@ -68,6 +68,9 @@ initializeMonitoring({
 const app = express();
 const PORT = env.PORT;
 
+// Trust proxy (nginx / Cloudflare) — required for express-rate-limit, secure cookies, etc.
+app.set('trust proxy', 1);
+
 // Sentry request handler (must be first middleware)
 app.use(sentryRequestHandler);
 
