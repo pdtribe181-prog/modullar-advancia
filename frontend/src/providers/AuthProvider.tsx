@@ -278,7 +278,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuth(newToken, profileRes.data, expiresAt);
   };
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // Attempt server-side logout (best-effort, don't block on failure)
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Server logout failed — still clear local state
+    }
     clearAuth();
     window.dispatchEvent(new CustomEvent('auth:logout'));
   }, [clearAuth]);

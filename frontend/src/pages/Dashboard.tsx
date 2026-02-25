@@ -29,6 +29,7 @@ export function Dashboard() {
   const [wallets, setWallets] = useState<LinkedWallet[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -38,6 +39,7 @@ export function Dashboard() {
   }, [authLoading, user]);
 
   const fetchDashboardData = async () => {
+    setFetchError(null);
     try {
       const [txResponse, walletResponse] = await Promise.allSettled([
         api.get<{ success: boolean; data: Transaction[] }>('/transactions?limit=10'),
@@ -49,8 +51,12 @@ export function Dashboard() {
       if (walletResponse.status === 'fulfilled' && walletResponse.value.success) {
         setWallets(walletResponse.value.data || []);
       }
+      // Mark error if both failed
+      if (txResponse.status === 'rejected' && walletResponse.status === 'rejected') {
+        setFetchError('Unable to load dashboard data. Please try again.');
+      }
     } catch {
-      // Dashboard data unavailable — silently handled
+      setFetchError('Unable to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -104,6 +110,15 @@ export function Dashboard() {
           </p>
         </div>
       </div>
+
+      {fetchError && (
+        <div role="alert" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', padding: '14px 18px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fca5a5', fontSize: '0.9rem' }}>
+          <span>⚠️ {fetchError}</span>
+          <button onClick={fetchDashboardData} style={{ background: 'rgba(239,68,68,0.2)', border: 'none', borderRadius: '8px', padding: '6px 14px', color: '#fca5a5', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600' }}>
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
         {/* Wallets Card */}

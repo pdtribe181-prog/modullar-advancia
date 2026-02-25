@@ -113,7 +113,7 @@ export function Login() {
     <div className="login-page">
       <div className="login-card">
         {redirectMessage && (
-          <div className="info-message" role="status" style={{ marginBottom: '16px', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', color: '#1d4ed8' }}>
+          <div className="info-message" role="status" style={{ marginBottom: '16px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', color: '#a5b4fc' }}>
             ℹ️ {redirectMessage}
           </div>
         )}
@@ -182,6 +182,14 @@ export function Login() {
             >
               {isSignup ? 'Create Account' : 'Sign In'}
             </LoadingButton>
+
+            {!isSignup && (
+              <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                <Link to="/reset-password" className="btn-link" style={{ fontSize: '0.85rem' }}>
+                  Forgot Password?
+                </Link>
+              </div>
+            )}
           </form>
         )}
 

@@ -43,9 +43,11 @@ export function Layout() {
                 <NavLink to="/dashboard" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Dashboard</NavLink>
                 <NavLink to="/wallet-balance" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Balance</NavLink>
                 <NavLink to="/convert" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Convert</NavLink>
+                <NavLink to="/withdraw" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Withdraw</NavLink>
                 <NavLink to="/appointments" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Appointments</NavLink>
                 <NavLink to="/history" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>History</NavLink>
                 <NavLink to="/medbed" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>MedBed</NavLink>
+                <NavLink to="/notifications" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Notifications</NavLink>
                 <NavLink to="/security" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Security</NavLink>
                 <NavLink to="/profile" className={({ isActive }) => `app-nav__link${isActive ? ' app-nav__link--active' : ''}`}>Profile</NavLink>
                 {user.role === 'admin' && (

@@ -71,7 +71,7 @@ export function CheckoutPage() {
   const handleSuccess = () => {
     sessionStorage.removeItem('paymentInfo');
     showToast('Payment completed successfully!', 'success');
-    navigate('/?payment=success');
+    navigate('/payment/success');
   };
 
   const handleError = (errorMessage: string) => {

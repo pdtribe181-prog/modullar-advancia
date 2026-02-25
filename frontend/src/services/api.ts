@@ -214,6 +214,11 @@ class ApiService {
             errorData
           );
 
+          // Dispatch auth:unauthorized event so AuthProvider can clear session
+          if (response.status === 401) {
+            window.dispatchEvent(new Event('auth:unauthorized'));
+          }
+
           // Capture the error in Sentry
           captureError(error, {
             extra: {

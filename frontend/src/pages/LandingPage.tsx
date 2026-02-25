@@ -116,7 +116,7 @@ const PLANS = [
     color: 'plan-enterprise',
     features: ['Everything in Provider', 'Dedicated SLA', 'Custom integrations', 'HIPAA BAA included', 'Dedicated account manager'],
     cta: 'Contact Sales',
-    href: '/faq',
+    href: '/contact',
     highlight: false,
   },
 ];
