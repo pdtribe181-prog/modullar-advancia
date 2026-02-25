@@ -253,8 +253,8 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] Always Use HTTPS: On
 - [ ] Automatic HTTPS Rewrites: On
 - [ ] HTTP Strict Transport Security: Enabled
-- [ ] Minimum TLS Version: 1.2
-- [ ] TLS 1.3: Enabled
+- [x] Minimum TLS Version: 1.2
+- [x] TLS 1.3: Enabled
 - [x] Universal SSL: Active
 
 **Security Settings**
@@ -281,8 +281,8 @@ This checklist ensures all systems are production-ready before go-live. Complete
   - Output Directory: `dist`
   - Root Directory: `frontend`
 - [x] Environment variables configured
-- [ ] Custom domain added: `advanciapayledger.com`
-- [ ] DNS configured for custom domain
+- [x] Custom domain added: `advanciapayledger.com`
+- [x] DNS configured for custom domain
 - [x] SSL certificate issued (Cloudflare)
 - [x] Production deployment successful
 - [x] Preview deployments enabled
