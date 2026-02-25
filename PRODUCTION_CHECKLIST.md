@@ -240,13 +240,13 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] DNS propagation verified
 
 **DNS Records**
-- [x] A record: `api.advanciapayledger.com` → `76.13.77.8` (Proxy OFF)
+- [x] A record: `api.advanciapayledger.com` → `76.13.77.8` (Proxy ON)
 - [ ] CNAME record: `www` → `advanciapayledger.com`
-- [ ] CNAME record: `app` → Cloudflare Pages (not Vercel)
-- [ ] MX records for email (if using custom email)
-- [ ] TXT record: SPF
-- [ ] TXT record: DKIM
-- [ ] TXT record: DMARC
+- [ ] A/CNAME record: `app` → Hostinger VPS or selected app host
+- [x] MX records for email configured
+- [x] TXT record: SPF
+- [x] TXT record: DKIM
+- [x] TXT record: DMARC
 
 **Cloudflare Settings**
 - [ ] SSL/TLS mode: Full (Strict)
@@ -272,21 +272,16 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [ ] Brotli compression: Enabled
 - [ ] Rocket Loader: Disabled (may interfere with React)
 
-### Frontend (Cloudflare Pages)
+### Frontend (Hostinger VPS + Cloudflare)
 
-- [x] Project imported from GitHub
-- [x] Build settings configured:
-  - Framework Preset: Vite
-  - Build Command: `npm run build`
-  - Output Directory: `dist`
-  - Root Directory: `frontend`
-- [x] Environment variables configured
+- [x] Frontend built and deployed on VPS
+- [x] Nginx serves frontend at `advanciapayledger.com`
+- [x] Cloudflare proxy active for apex domain
 - [x] Custom domain added: `advanciapayledger.com`
 - [x] DNS configured for custom domain
-- [x] SSL certificate issued (Cloudflare)
-- [x] Production deployment successful
-- [x] Preview deployments enabled
-- [x] Auto-deploy on push to `main` enabled
+- [x] SSL certificate active
+- [x] Production frontend accessible over HTTPS
+- [ ] `www` alias configured and routing correctly
 
 ---
 

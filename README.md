@@ -67,6 +67,27 @@ TWILIO_ACCOUNT_SID=AC...        # SMS notifications
 SENTRY_DSN=https://...          # Error monitoring
 ```
 
+### Staging (Render + Supabase)
+
+This project supports a staging API on Render and should use a dedicated Supabase staging project.
+
+- Staging API hostname: `api-staging.advanciapayledger.com`
+- Render origin: `modullar-advancia.onrender.com`
+- Keep staging and production Supabase projects fully separate.
+
+Use [.env.staging.example](.env.staging.example) as the source of truth for staging variables.
+
+Minimum required staging variables in Render:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STRIPE_SECRET_KEY` (test key)
+- `STRIPE_WEBHOOK_SECRET`
+- `FRONTEND_URL`
+- `CORS_ORIGINS`
+- `SENTRY_DSN` and `SENTRY_ENVIRONMENT=staging`
+
 ## Project Structure
 
 ```text
@@ -172,6 +193,12 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.
 # Full stack on VPS (Nginx serves frontend, proxies API)
 ssh advancia-vps 'cd /var/www/advancia && git pull && npm ci && npm run build && pm2 reload advancia-api'
 ```
+
+### Staging API (Render)
+
+- Render blueprint file: [render.yaml](render.yaml)
+- Service target: `modullar-advancia.onrender.com`
+- Recommended DNS: `api-staging.advanciapayledger.com` CNAME to Render target (proxied via Cloudflare)
 
 ## DNS Configuration (Cloudflare)
 
