@@ -138,7 +138,7 @@ describe('Auth Service', () => {
       // Test that MFA required check looks for aal1/aal2 levels
       // Note: We need to check if function exists first as it might be imported dynamically
       if (typeof authService.isMFARequired === 'function') {
-         expect(typeof authService.isMFARequired).toBe('function');
+        expect(typeof authService.isMFARequired).toBe('function');
       }
     });
   });

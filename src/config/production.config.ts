@@ -13,8 +13,8 @@ export const productionConfig = {
   security: {
     trustProxy: process.env.TRUST_PROXY === 'true',
     helmetEnabled: process.env.HELMET_ENABLED !== 'false',
-    corsOrigins: process.env.FRONTEND_URL 
-      ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+    corsOrigins: process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
       : ['http://localhost:3000', 'http://localhost:5173'],
   },
 
@@ -54,7 +54,7 @@ export function validateConfig(): void {
     'STRIPE_WEBHOOK_SECRET',
   ];
 
-  const missing = required.filter(key => !process.env[key]);
+  const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);

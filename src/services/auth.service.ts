@@ -25,7 +25,12 @@ export interface MFAEnrollResult {
 
 export const authService = {
   // Sign up with email and password
-  async signUp(email: string, password: string, fullName: string, role: 'patient' | 'provider' = 'patient') {
+  async signUp(
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'patient' | 'provider' = 'patient'
+  ) {
     const supabase = getSupabaseClient();
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -33,23 +38,21 @@ export const authService = {
       options: {
         data: {
           full_name: fullName,
-          role
-        }
-      }
+          role,
+        },
+      },
     });
 
     if (authError) throw authError;
 
     // Create user profile after signup
     if (authData.user) {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: authData.user.id,
-          email,
-          full_name: fullName,
-          role
-        });
+      const { error: profileError } = await supabase.from('user_profiles').insert({
+        id: authData.user.id,
+        email,
+        full_name: fullName,
+        role,
+      });
 
       if (profileError) throw profileError;
     }
@@ -62,7 +65,7 @@ export const authService = {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
     if (error) throw error;
@@ -79,7 +82,10 @@ export const authService = {
   // Get current user
   async getCurrentUser() {
     const supabase = getSupabaseClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
     if (error) throw error;
     return user;
   },
@@ -87,7 +93,10 @@ export const authService = {
   // Get current session
   async getSession() {
     const supabase = getSupabaseClient();
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
     if (error) throw error;
     return session;
   },
@@ -96,7 +105,7 @@ export const authService = {
   async resetPassword(email: string) {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/reset-password`
+      redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/reset-password`,
     });
 
     if (error) throw error;
@@ -107,7 +116,7 @@ export const authService = {
   async updatePassword(newPassword: string) {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.updateUser({
-      password: newPassword
+      password: newPassword,
     });
 
     if (error) throw error;
@@ -126,8 +135,8 @@ export const authService = {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
-      }
+        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
+      },
     });
 
     if (error) throw error;
@@ -141,16 +150,20 @@ export const authService = {
   /**
    * Sign up with phone number - sends OTP
    */
-  async signUpWithPhone(phone: string, fullName: string, role: 'patient' | 'provider' = 'patient'): Promise<PhoneSignUpResult> {
+  async signUpWithPhone(
+    phone: string,
+    fullName: string,
+    role: 'patient' | 'provider' = 'patient'
+  ): Promise<PhoneSignUpResult> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.signInWithOtp({
       phone,
       options: {
         data: {
           full_name: fullName,
-          role
-        }
-      }
+          role,
+        },
+      },
     });
 
     if (error) throw error;
@@ -163,7 +176,7 @@ export const authService = {
   async signInWithPhone(phone: string): Promise<{ messageId?: string }> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.signInWithOtp({
-      phone
+      phone,
     });
 
     if (error) throw error;
@@ -178,7 +191,7 @@ export const authService = {
     const { data, error } = await supabase.auth.verifyOtp({
       phone,
       token,
-      type: 'sms'
+      type: 'sms',
     });
 
     if (error) throw error;
@@ -196,7 +209,7 @@ export const authService = {
           id: data.user.id,
           phone: data.user.phone,
           full_name: data.user.user_metadata?.full_name || 'User',
-          role: data.user.user_metadata?.role || 'patient'
+          role: data.user.user_metadata?.role || 'patient',
         });
       }
     }
@@ -210,7 +223,7 @@ export const authService = {
   async updatePhone(phone: string): Promise<{ user: unknown }> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.updateUser({
-      phone
+      phone,
     });
 
     if (error) throw error;
@@ -224,7 +237,7 @@ export const authService = {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.resend({
       type: 'sms',
-      phone
+      phone,
     });
 
     if (error) throw error;
@@ -242,7 +255,7 @@ export const authService = {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: 'totp',
-      friendlyName
+      friendlyName,
     });
 
     if (error) throw error;
@@ -254,10 +267,10 @@ export const authService = {
    */
   async verifyMFA(factorId: string, code: string): Promise<AuthMFAVerifyResponse['data']> {
     const supabase = getSupabaseClient();
-    
+
     // First create a challenge
     const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-      factorId
+      factorId,
     });
 
     if (challengeError) throw challengeError;
@@ -266,7 +279,7 @@ export const authService = {
     const { data, error } = await supabase.auth.mfa.verify({
       factorId,
       challengeId: challengeData.id,
-      code
+      code,
     });
 
     if (error) throw error;
@@ -278,9 +291,9 @@ export const authService = {
    */
   async challengeMFA(factorId: string, code: string): Promise<AuthMFAVerifyResponse['data']> {
     const supabase = getSupabaseClient();
-    
+
     const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-      factorId
+      factorId,
     });
 
     if (challengeError) throw challengeError;
@@ -288,7 +301,7 @@ export const authService = {
     const { data, error } = await supabase.auth.mfa.verify({
       factorId,
       challengeId: challengeData.id,
-      code
+      code,
     });
 
     if (error) throw error;
@@ -312,7 +325,7 @@ export const authService = {
   async unenrollMFA(factorId: string): Promise<{ id: string }> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.mfa.unenroll({
-      factorId
+      factorId,
     });
 
     if (error) throw error;
@@ -322,7 +335,11 @@ export const authService = {
   /**
    * Get the current MFA assurance level
    */
-  async getMFAAssuranceLevel(): Promise<{ currentLevel: string | null; nextLevel: string | null; currentAuthenticationMethods: unknown[] }> {
+  async getMFAAssuranceLevel(): Promise<{
+    currentLevel: string | null;
+    nextLevel: string | null;
+    currentAuthenticationMethods: unknown[];
+  }> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
@@ -330,7 +347,7 @@ export const authService = {
     return {
       currentLevel: data.currentLevel as string | null,
       nextLevel: data.nextLevel as string | null,
-      currentAuthenticationMethods: data.currentAuthenticationMethods as unknown[]
+      currentAuthenticationMethods: data.currentAuthenticationMethods as unknown[],
     };
   },
 
@@ -372,7 +389,7 @@ export const authService = {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.resend({
       type: 'signup',
-      email
+      email,
     });
 
     if (error) throw error;
@@ -385,12 +402,12 @@ export const authService = {
   async updateEmail(newEmail: string): Promise<{ user: unknown }> {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.updateUser({
-      email: newEmail
+      email: newEmail,
     });
 
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 export default authService;

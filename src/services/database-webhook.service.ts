@@ -74,7 +74,9 @@ interface NotificationRecord {
 }
 
 // Helper to get user details
-async function getUserDetails(userId: string): Promise<{ email?: string; full_name?: string; phone?: string } | null> {
+async function getUserDetails(
+  userId: string
+): Promise<{ email?: string; full_name?: string; phone?: string } | null> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('user_profiles')
@@ -90,7 +92,9 @@ async function getUserDetails(userId: string): Promise<{ email?: string; full_na
 }
 
 // Helper to get provider details
-async function getProviderDetails(providerId: string): Promise<{ business_name?: string; email?: string } | null> {
+async function getProviderDetails(
+  providerId: string
+): Promise<{ business_name?: string; email?: string } | null> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('providers')
@@ -106,21 +110,29 @@ async function getProviderDetails(providerId: string): Promise<{ business_name?:
 }
 
 // Create in-app notification
-async function createNotification(userId: string, type: string, title: string, message: string, metadata?: Record<string, unknown>) {
+async function createNotification(
+  userId: string,
+  type: string,
+  title: string,
+  message: string,
+  metadata?: Record<string, unknown>
+) {
   const supabase = createServiceClient();
-  const { error } = await supabase
-    .from('notifications')
-    .insert({
-      user_id: userId,
-      notification_type: type as 'system' | 'transaction' | 'security' | 'compliance' | 'marketing',
-      title,
-      message,
-      metadata,
-      read_status: 'unread',
-    });
+  const { error } = await supabase.from('notifications').insert({
+    user_id: userId,
+    notification_type: type as 'system' | 'transaction' | 'security' | 'compliance' | 'marketing',
+    title,
+    message,
+    metadata,
+    read_status: 'unread',
+  });
 
   if (error) {
-    logger.error('Failed to create notification', undefined, { userId, type, errorMessage: error.message });
+    logger.error('Failed to create notification', undefined, {
+      userId,
+      type,
+      errorMessage: error.message,
+    });
   }
 }
 
@@ -130,16 +142,16 @@ export const databaseWebhookService = {
    */
   async handleTransaction(payload: WebhookPayload<TransactionRecord>): Promise<void> {
     const { type, record, old_record } = payload;
-    
+
     if (!record) {
       logger.warn('Transaction webhook received without record');
       return;
     }
 
-    logger.info('Processing transaction webhook', { 
-      type, 
+    logger.info('Processing transaction webhook', {
+      type,
       transactionId: record.id,
-      status: record.status 
+      status: record.status,
     });
 
     // Handle new completed payment
@@ -168,13 +180,13 @@ export const databaseWebhookService = {
    */
   async handleDispute(payload: WebhookPayload<DisputeRecord>): Promise<void> {
     const { type, record, old_record } = payload;
-    
+
     if (!record) return;
 
-    logger.info('Processing dispute webhook', { 
-      type, 
+    logger.info('Processing dispute webhook', {
+      type,
       disputeId: record.id,
-      status: record.status 
+      status: record.status,
     });
 
     // New dispute opened
@@ -193,13 +205,13 @@ export const databaseWebhookService = {
    */
   async handleAppointment(payload: WebhookPayload<AppointmentRecord>): Promise<void> {
     const { type, record, old_record } = payload;
-    
+
     if (!record) return;
 
-    logger.info('Processing appointment webhook', { 
-      type, 
+    logger.info('Processing appointment webhook', {
+      type,
       appointmentId: record.id,
-      status: record.status 
+      status: record.status,
     });
 
     // New appointment created
@@ -228,13 +240,13 @@ export const databaseWebhookService = {
    */
   async handleWalletTransaction(payload: WebhookPayload<WalletTransactionRecord>): Promise<void> {
     const { type, record, old_record } = payload;
-    
+
     if (!record) return;
 
-    logger.info('Processing wallet transaction webhook', { 
-      type, 
+    logger.info('Processing wallet transaction webhook', {
+      type,
       walletTxId: record.id,
-      status: record.status 
+      status: record.status,
     });
 
     // Payout completed
@@ -307,7 +319,7 @@ export const databaseWebhookService = {
 
   async notifyPaymentFailed(transaction: TransactionRecord): Promise<void> {
     const patient = await getUserDetails(transaction.patient_id);
-    
+
     if (patient?.email) {
       await emailService.sendEmail({
         to: patient.email,
@@ -333,7 +345,7 @@ export const databaseWebhookService = {
 
   async notifyPaymentRefunded(transaction: TransactionRecord): Promise<void> {
     const patient = await getUserDetails(transaction.patient_id);
-    
+
     if (patient?.email) {
       await emailService.sendEmail({
         to: patient.email,
@@ -360,7 +372,7 @@ export const databaseWebhookService = {
   async notifyDisputeOpened(dispute: DisputeRecord): Promise<void> {
     // Notify provider of new dispute
     const provider = await getProviderDetails(dispute.provider_id);
-    
+
     if (provider?.email) {
       await emailService.sendEmail({
         to: provider.email,
@@ -389,13 +401,14 @@ export const databaseWebhookService = {
     const patient = await getUserDetails(dispute.patient_id);
     const provider = await getProviderDetails(dispute.provider_id);
 
-    const statusMessage = dispute.status === 'resolved' 
-      ? 'has been resolved'
-      : dispute.status === 'won'
-      ? 'has been decided in your favor'
-      : dispute.status === 'lost'
-      ? 'has been decided against you'
-      : `status changed to ${dispute.status}`;
+    const statusMessage =
+      dispute.status === 'resolved'
+        ? 'has been resolved'
+        : dispute.status === 'won'
+          ? 'has been decided in your favor'
+          : dispute.status === 'lost'
+            ? 'has been decided against you'
+            : `status changed to ${dispute.status}`;
 
     // Notify patient
     if (patient?.email) {
@@ -447,17 +460,17 @@ export const databaseWebhookService = {
   async notifyAppointmentCreated(appointment: AppointmentRecord): Promise<void> {
     const patient = await getUserDetails(appointment.patient_id);
     const provider = await getProviderDetails(appointment.provider_id);
-    
+
     const appointmentDate = new Date(appointment.scheduled_at);
-    const formattedDate = appointmentDate.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    const formattedDate = appointmentDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
-    const formattedTime = appointmentDate.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit' 
+    const formattedTime = appointmentDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
     });
 
     // Notify patient
@@ -496,12 +509,12 @@ export const databaseWebhookService = {
 
   async notifyAppointmentConfirmed(appointment: AppointmentRecord): Promise<void> {
     const patient = await getUserDetails(appointment.patient_id);
-    
+
     const appointmentDate = new Date(appointment.scheduled_at);
     const formattedDate = appointmentDate.toLocaleDateString();
-    const formattedTime = appointmentDate.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit' 
+    const formattedTime = appointmentDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
     });
 
     await createNotification(
@@ -528,7 +541,7 @@ export const databaseWebhookService = {
 
   async notifyAppointmentCancelled(appointment: AppointmentRecord): Promise<void> {
     const patient = await getUserDetails(appointment.patient_id);
-    
+
     await createNotification(
       appointment.patient_id,
       'appointment_cancelled',
@@ -557,9 +570,12 @@ export const databaseWebhookService = {
     }
   },
 
-  async notifyAppointmentRescheduled(appointment: AppointmentRecord, oldScheduledAt?: string): Promise<void> {
+  async notifyAppointmentRescheduled(
+    appointment: AppointmentRecord,
+    oldScheduledAt?: string
+  ): Promise<void> {
     const patient = await getUserDetails(appointment.patient_id);
-    
+
     const newDate = new Date(appointment.scheduled_at);
     const oldDate = oldScheduledAt ? new Date(oldScheduledAt) : null;
 

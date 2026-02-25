@@ -344,7 +344,12 @@ export type Database = {
           invoice_id: string | null;
           patient_id: string | null;
           provider_id: string | null;
-          dispute_reason: 'fraud' | 'duplicate' | 'product_not_received' | 'service_not_provided' | 'other';
+          dispute_reason:
+            | 'fraud'
+            | 'duplicate'
+            | 'product_not_received'
+            | 'service_not_provided'
+            | 'other';
           status: 'new' | 'under_review' | 'resolved' | 'rejected';
           amount: number;
           currency: string;
@@ -368,7 +373,12 @@ export type Database = {
           invoice_id?: string | null;
           patient_id?: string | null;
           provider_id?: string | null;
-          dispute_reason: 'fraud' | 'duplicate' | 'product_not_received' | 'service_not_provided' | 'other';
+          dispute_reason:
+            | 'fraud'
+            | 'duplicate'
+            | 'product_not_received'
+            | 'service_not_provided'
+            | 'other';
           status?: 'new' | 'under_review' | 'resolved' | 'rejected';
           amount: number;
           currency?: string;
@@ -392,7 +402,12 @@ export type Database = {
           invoice_id?: string | null;
           patient_id?: string | null;
           provider_id?: string | null;
-          dispute_reason?: 'fraud' | 'duplicate' | 'product_not_received' | 'service_not_provided' | 'other';
+          dispute_reason?:
+            | 'fraud'
+            | 'duplicate'
+            | 'product_not_received'
+            | 'service_not_provided'
+            | 'other';
           status?: 'new' | 'under_review' | 'resolved' | 'rejected';
           amount?: number;
           currency?: string;
@@ -593,7 +608,12 @@ export type Database = {
       payment_status: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled';
       invoice_status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'refunded';
       dispute_status: 'new' | 'under_review' | 'resolved' | 'rejected';
-      dispute_reason: 'fraud' | 'duplicate' | 'product_not_received' | 'service_not_provided' | 'other';
+      dispute_reason:
+        | 'fraud'
+        | 'duplicate'
+        | 'product_not_received'
+        | 'service_not_provided'
+        | 'other';
       notification_type: 'system' | 'transaction' | 'security' | 'compliance' | 'marketing';
       notification_priority: 'low' | 'medium' | 'high' | 'critical';
       webhook_status: 'active' | 'inactive' | 'failed';
@@ -604,7 +624,10 @@ export type Database = {
 };
 
 // Helper types
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert'];
-export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update'];
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row'];
+export type InsertTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert'];
+export type UpdateTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update'];
 export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];

@@ -310,8 +310,30 @@ describe('wallet.routes', () => {
   describe('GET /wallet/list', () => {
     it('returns linked wallets for user', async () => {
       mockGetByUserId.mockResolvedValue([
-        { id: 'w1', wallet_address: '0xabc', blockchain_network: 'ethereum', wallet_label: 'Main', verification_status: 'verified', is_primary_payout: false, payout_enabled: true, min_payout_amount: 10, payout_currency: 'USDC', created_at: '2025-01-01' },
-        { id: 'w2', wallet_address: '0xdef', blockchain_network: 'polygon', wallet_label: 'Alt', verification_status: 'verified', is_primary_payout: false, payout_enabled: false, min_payout_amount: 10, payout_currency: 'USDT', created_at: '2025-01-02' },
+        {
+          id: 'w1',
+          wallet_address: '0xabc',
+          blockchain_network: 'ethereum',
+          wallet_label: 'Main',
+          verification_status: 'verified',
+          is_primary_payout: false,
+          payout_enabled: true,
+          min_payout_amount: 10,
+          payout_currency: 'USDC',
+          created_at: '2025-01-01',
+        },
+        {
+          id: 'w2',
+          wallet_address: '0xdef',
+          blockchain_network: 'polygon',
+          wallet_label: 'Alt',
+          verification_status: 'verified',
+          is_primary_payout: false,
+          payout_enabled: false,
+          min_payout_amount: 10,
+          payout_currency: 'USDT',
+          created_at: '2025-01-02',
+        },
       ]);
 
       const res = await request(app).get('/wallet/list').set('Authorization', 'Bearer token');
@@ -407,7 +429,16 @@ describe('wallet.routes', () => {
       // Provider lookup
       mockSupabaseChain({ data: { id: 'prov_1' }, error: null });
       mockGetByProviderId.mockResolvedValue([
-        { id: 'tx1', transaction_type: 'payout', amount: '100', currency: 'USDC', fiat_equivalent: '100', status: 'completed', tx_hash: '0xhash', created_at: '2025-01-01' },
+        {
+          id: 'tx1',
+          transaction_type: 'payout',
+          amount: '100',
+          currency: 'USDC',
+          fiat_equivalent: '100',
+          status: 'completed',
+          tx_hash: '0xhash',
+          created_at: '2025-01-01',
+        },
       ]);
 
       const res = await request(app)

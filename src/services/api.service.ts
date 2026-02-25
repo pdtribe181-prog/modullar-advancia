@@ -4,11 +4,7 @@ import { supabase } from '../lib/supabase';
 // User Profiles Service
 export const userProfilesService = {
   async getById(id: string) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabase.from('user_profiles').select('*').eq('id', id).single();
     if (error) throw error;
     return data;
   },
@@ -22,15 +18,13 @@ export const userProfilesService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // Patients Service
 export const patientsService = {
   async getAll() {
-    const { data, error } = await supabase
-      .from('patients')
-      .select('*, user_profiles(*)');
+    const { data, error } = await supabase.from('patients').select('*, user_profiles(*)');
     if (error) throw error;
     return data;
   },
@@ -46,11 +40,7 @@ export const patientsService = {
   },
 
   async create(patient: Record<string, unknown>) {
-    const { data, error } = await supabase
-      .from('patients')
-      .insert(patient)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('patients').insert(patient).select().single();
     if (error) throw error;
     return data;
   },
@@ -64,15 +54,13 @@ export const patientsService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // Providers Service
 export const providersService = {
   async getAll() {
-    const { data, error } = await supabase
-      .from('providers')
-      .select('*, user_profiles(*)');
+    const { data, error } = await supabase.from('providers').select('*, user_profiles(*)');
     if (error) throw error;
     return data;
   },
@@ -105,7 +93,7 @@ export const providersService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // Appointments Service
@@ -149,7 +137,7 @@ export const appointmentsService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // Transactions Service
@@ -193,7 +181,7 @@ export const transactionsService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // Invoices Service
@@ -219,11 +207,7 @@ export const invoicesService = {
   },
 
   async create(invoice: Record<string, unknown>) {
-    const { data, error } = await supabase
-      .from('invoices')
-      .insert(invoice)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('invoices').insert(invoice).select().single();
     if (error) throw error;
     return data;
   },
@@ -237,7 +221,7 @@ export const invoicesService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // Notifications Service
@@ -272,7 +256,7 @@ export const notificationsService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // API Keys Service
@@ -288,11 +272,7 @@ export const apiKeysService = {
   },
 
   async create(apiKey: Record<string, unknown>) {
-    const { data, error } = await supabase
-      .from('api_keys')
-      .insert(apiKey)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('api_keys').insert(apiKey).select().single();
     if (error) throw error;
     return data;
   },
@@ -306,7 +286,7 @@ export const apiKeysService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };
 
 // Webhooks Service
@@ -322,11 +302,7 @@ export const webhooksService = {
   },
 
   async create(webhook: Record<string, unknown>) {
-    const { data, error } = await supabase
-      .from('webhooks')
-      .insert(webhook)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('webhooks').insert(webhook).select().single();
     if (error) throw error;
     return data;
   },
@@ -343,12 +319,9 @@ export const webhooksService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
-      .from('webhooks')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('webhooks').delete().eq('id', id);
     if (error) throw error;
-  }
+  },
 };
 
 // Disputes Service
@@ -356,7 +329,9 @@ export const disputesService = {
   async getAll() {
     const { data, error } = await supabase
       .from('disputes')
-      .select('*, transactions(*), invoices(*), patients(*, user_profiles(*)), providers(*, user_profiles(*))')
+      .select(
+        '*, transactions(*), invoices(*), patients(*, user_profiles(*)), providers(*, user_profiles(*))'
+      )
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
@@ -365,7 +340,9 @@ export const disputesService = {
   async getById(id: string) {
     const { data, error } = await supabase
       .from('disputes')
-      .select('*, transactions(*), invoices(*), patients(*, user_profiles(*)), providers(*, user_profiles(*)), dispute_evidence(*), dispute_timeline(*)')
+      .select(
+        '*, transactions(*), invoices(*), patients(*, user_profiles(*)), providers(*, user_profiles(*)), dispute_evidence(*), dispute_timeline(*)'
+      )
       .eq('id', id)
       .single();
     if (error) throw error;
@@ -373,11 +350,7 @@ export const disputesService = {
   },
 
   async create(dispute: Record<string, unknown>) {
-    const { data, error } = await supabase
-      .from('disputes')
-      .insert(dispute)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('disputes').insert(dispute).select().single();
     if (error) throw error;
     return data;
   },
@@ -391,5 +364,5 @@ export const disputesService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
 };

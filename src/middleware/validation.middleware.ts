@@ -89,7 +89,7 @@ export const paginationSchema = z.object({
 export function validateBody<T extends z.ZodSchema>(schema: T) {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.body);
-    
+
     if (!result.success) {
       const errors = result.error.issues.map((issue) => ({
         field: issue.path.join('.'),
@@ -97,7 +97,7 @@ export function validateBody<T extends z.ZodSchema>(schema: T) {
       }));
       return res.status(400).json({ error: 'Validation failed', details: errors });
     }
-    
+
     req.body = result.data;
     next();
   };
@@ -109,7 +109,7 @@ export function validateBody<T extends z.ZodSchema>(schema: T) {
 export function validateQuery<T extends z.ZodSchema>(schema: T) {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.query);
-    
+
     if (!result.success) {
       const errors = result.error.issues.map((issue) => ({
         field: issue.path.join('.'),
@@ -117,7 +117,7 @@ export function validateQuery<T extends z.ZodSchema>(schema: T) {
       }));
       return res.status(400).json({ error: 'Invalid query parameters', details: errors });
     }
-    
+
     (req as any).query = result.data;
     next();
   };
@@ -129,7 +129,7 @@ export function validateQuery<T extends z.ZodSchema>(schema: T) {
 export function validateParams<T extends z.ZodSchema>(schema: T) {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.params);
-    
+
     if (!result.success) {
       const errors = result.error.issues.map((issue) => ({
         field: issue.path.join('.'),
@@ -137,7 +137,7 @@ export function validateParams<T extends z.ZodSchema>(schema: T) {
       }));
       return res.status(400).json({ error: 'Invalid URL parameters', details: errors });
     }
-    
+
     (req as any).params = result.data;
     next();
   };

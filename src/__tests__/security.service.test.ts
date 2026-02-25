@@ -269,9 +269,7 @@ describe('security.service', () => {
       innerChain.eq = jest.fn<any>().mockReturnValue(innerChain);
       innerChain.order = jest.fn<any>().mockReturnValue(innerChain);
       innerChain.limit = jest.fn<any>().mockReturnValue(innerChain);
-      innerChain.in = jest.fn<any>().mockReturnValue(
-        Promise.resolve({ data: [], error: null })
-      );
+      innerChain.in = jest.fn<any>().mockReturnValue(Promise.resolve({ data: [], error: null }));
       mockFrom.mockReturnValue(innerChain);
 
       await getUserSecurityEvents('user-abc', {
@@ -292,7 +290,10 @@ describe('security.service', () => {
         { event_type: 'login', created_at: new Date().toISOString() },
         { event_type: 'failed_login', created_at: new Date().toISOString() },
         { event_type: 'mfa_enabled', created_at: new Date().toISOString() },
-        { event_type: 'password_changed', created_at: new Date(Date.now() - 86400000).toISOString() },
+        {
+          event_type: 'password_changed',
+          created_at: new Date(Date.now() - 86400000).toISOString(),
+        },
       ];
 
       // First query: events
@@ -324,8 +325,7 @@ describe('security.service', () => {
       });
 
       // The first query uses .order() as terminal
-      mockOrder.mockReturnValueOnce({ data: events, error: null })
-        .mockReturnValue(chain2);
+      mockOrder.mockReturnValueOnce({ data: events, error: null }).mockReturnValue(chain2);
 
       mockLimit.mockResolvedValue({ data: [], error: null });
 

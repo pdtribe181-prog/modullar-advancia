@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "build": "esbuild src/server.ts --bundle --platform=node --target=node20 --outfile=dist/server.js --format=esm --packages=external",
+    "build": "node esbuild.config.js",
     "postbuild": "node -e \"require('fs').copyFileSync('openapi.yaml', 'dist/openapi.yaml')\" && echo Build completed successfully",
     "start": "node dist/server.js",
     "dev": "tsx --watch src/server.ts",
@@ -69,6 +69,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",
+    "@sentry/esbuild-plugin": "^5.1.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
@@ -84,8 +85,8 @@
     "openapi-types": "^12.1.3",
     "pg": "^8.18.0",
     "supertest": "^7.2.2",
-    "ts-node": "^10.9.2",
     "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.0"

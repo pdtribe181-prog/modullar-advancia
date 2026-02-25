@@ -456,7 +456,12 @@ export const linkedWalletsService = {
   async update(
     walletId: string,
     userId: string,
-    updates: Partial<Pick<LinkedWallet, 'wallet_label' | 'payout_enabled' | 'min_payout_amount' | 'payout_currency'>>
+    updates: Partial<
+      Pick<
+        LinkedWallet,
+        'wallet_label' | 'payout_enabled' | 'min_payout_amount' | 'payout_currency'
+      >
+    >
   ): Promise<LinkedWallet> {
     const supabase = getSupabase();
 
@@ -504,10 +509,7 @@ export const linkedWalletsService = {
       throw new Error('Cannot unlink wallet with pending transactions');
     }
 
-    const { error } = await supabase
-      .from('linked_wallets')
-      .delete()
-      .eq('id', walletId);
+    const { error } = await supabase.from('linked_wallets').delete().eq('id', walletId);
 
     if (error) {
       throw new Error(`Failed to unlink wallet: ${error.message}`);
@@ -759,7 +761,9 @@ export function isValidWalletAddress(address: string, network: BlockchainNetwork
     case 'arbitrum':
       return /^0x[a-fA-F0-9]{40}$/.test(address);
     case 'solana':
-      return address.length >= 32 && address.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(address);
+      return (
+        address.length >= 32 && address.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(address)
+      );
     default:
       return false;
   }

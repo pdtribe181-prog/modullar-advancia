@@ -8,7 +8,12 @@ import {
   normalizeAddress,
   BlockchainNetwork,
 } from '../services/wallet.service.js';
-import { authenticate, authenticateWithProfile, requireRole, AuthenticatedRequest } from '../middleware/auth.middleware.js';
+import {
+  authenticate,
+  authenticateWithProfile,
+  requireRole,
+  AuthenticatedRequest,
+} from '../middleware/auth.middleware.js';
 import { supabase } from '../lib/supabase.js';
 import { apiLimiter, sensitiveLimiter } from '../middleware/rateLimit.middleware.js';
 import { asyncHandler, AppError } from '../utils/errors.js';
@@ -33,7 +38,13 @@ const router = Router();
  */
 
 // Supported networks
-const SUPPORTED_NETWORKS: BlockchainNetwork[] = ['ethereum', 'solana', 'polygon', 'base', 'arbitrum'];
+const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
+  'ethereum',
+  'solana',
+  'polygon',
+  'base',
+  'arbitrum',
+];
 
 // ============================================================
 // CHALLENGE GENERATION

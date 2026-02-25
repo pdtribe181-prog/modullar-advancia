@@ -52,7 +52,7 @@ describe('E2E Payment Flows', () => {
     const customer = await stripe.customers.create({
       email: testCustomer.email,
       name: testCustomer.name,
-      metadata: { test: 'true', e2e: 'true' }
+      metadata: { test: 'true', e2e: 'true' },
     });
     customerId = customer.id;
   });
@@ -149,7 +149,7 @@ describe('E2E Payment Flows', () => {
       // Create test product and price
       const product = await stripe.products.create({
         name: 'E2E Test Plan',
-        metadata: { test: 'true' }
+        metadata: { test: 'true' },
       });
       productId = product.id;
 
@@ -172,7 +172,7 @@ describe('E2E Payment Flows', () => {
 
       await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
       await stripe.customers.update(customerId, {
-        invoice_settings: { default_payment_method: paymentMethodId }
+        invoice_settings: { default_payment_method: paymentMethodId },
       });
     });
 
@@ -319,7 +319,7 @@ describe('E2E Payment Flows', () => {
       // Finalize
       const finalized = await stripe.invoices.finalizeInvoice(invoiceId);
       invoiceStatus = finalized.status!;
-      
+
       // Invoice can be 'open' or 'paid' depending on auto-pay settings
       expect(['open', 'paid']).toContain(finalized.status);
       // Total can be 0 if invoice items were consumed by a previous test's invoice

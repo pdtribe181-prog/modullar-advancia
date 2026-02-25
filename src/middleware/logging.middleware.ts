@@ -14,7 +14,7 @@ declare global {
  * Add unique request ID to each request for traceability
  */
 export function requestId(req: Request, res: Response, next: NextFunction) {
-  const id = req.headers['x-request-id'] as string || randomUUID();
+  const id = (req.headers['x-request-id'] as string) || randomUUID();
   req.requestId = id;
   res.setHeader('X-Request-ID', id);
   next();
@@ -25,45 +25,55 @@ export function requestId(req: Request, res: Response, next: NextFunction) {
  */
 export const logger = {
   info: (message: string, meta?: Record<string, any>) => {
-    console.log(JSON.stringify({
-      level: 'info',
-      timestamp: new Date().toISOString(),
-      message,
-      ...meta,
-    }));
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        timestamp: new Date().toISOString(),
+        message,
+        ...meta,
+      })
+    );
   },
 
   warn: (message: string, meta?: Record<string, any>) => {
-    console.warn(JSON.stringify({
-      level: 'warn',
-      timestamp: new Date().toISOString(),
-      message,
-      ...meta,
-    }));
+    console.warn(
+      JSON.stringify({
+        level: 'warn',
+        timestamp: new Date().toISOString(),
+        message,
+        ...meta,
+      })
+    );
   },
 
   error: (message: string, error?: Error, meta?: Record<string, any>) => {
-    console.error(JSON.stringify({
-      level: 'error',
-      timestamp: new Date().toISOString(),
-      message,
-      error: error ? {
-        name: error.name,
-        message: error.message,
-        stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined,
-      } : undefined,
-      ...meta,
-    }));
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        timestamp: new Date().toISOString(),
+        message,
+        error: error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined,
+            }
+          : undefined,
+        ...meta,
+      })
+    );
   },
 
   debug: (message: string, meta?: Record<string, any>) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(JSON.stringify({
-        level: 'debug',
-        timestamp: new Date().toISOString(),
-        message,
-        ...meta,
-      }));
+      console.log(
+        JSON.stringify({
+          level: 'debug',
+          timestamp: new Date().toISOString(),
+          message,
+          ...meta,
+        })
+      );
     }
   },
 };

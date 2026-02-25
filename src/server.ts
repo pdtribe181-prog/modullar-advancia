@@ -22,6 +22,7 @@ import { apiLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
 import { getRedisKind, redisHelpers } from './lib/redis.js';
 import { csrfProtection } from './middleware/csrf.middleware.js';
+import { sanitizeBody } from './middleware/sanitize.middleware.js';
 import { z } from 'zod';
 import { validateParams, uuidSchema } from './middleware/validation.middleware.js';
 
@@ -75,6 +76,13 @@ app.set('trust proxy', 1);
 // Sentry request handler (must be first middleware)
 app.use(sentryRequestHandler);
 
+// Body parser with size limit
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Basic XSS sanitization
+app.use(sanitizeBody);
+
 // Load OpenAPI spec
 let swaggerDocument: OpenAPIV3.Document | null = null;
 try {
@@ -108,9 +116,9 @@ app.use('/api/v1', apiLimiter);
 // Use raw body for Stripe webhook, JSON for everything else
 app.use((req, res, next) => {
   if (req.path === '/api/v1/stripe/webhook') {
-    express.raw({ type: 'application/json' })(req, res, next);
+    express.raw({ type: 'application/json', limit: '1mb' })(req, res, next);
   } else {
-    express.json()(req, res, next);
+    express.json({ limit: '10kb' })(req, res, next);
   }
 });
 

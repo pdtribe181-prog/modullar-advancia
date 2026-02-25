@@ -1,14 +1,14 @@
-import { 
-  emailSchema, 
-  passwordSchema, 
-  uuidSchema, 
-  amountSchema, 
+import {
+  emailSchema,
+  passwordSchema,
+  uuidSchema,
+  amountSchema,
   phoneSchema,
   signupSchema,
   signinSchema,
   createPaymentIntentSchema,
   refundSchema,
-  paginationSchema
+  paginationSchema,
 } from '../middleware/validation.middleware.js';
 
 describe('Validation Schemas', () => {

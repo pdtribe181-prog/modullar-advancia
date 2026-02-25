@@ -1,10 +1,10 @@
-import { 
-  AppError, 
-  getErrorMessage, 
-  getErrorStatusCode, 
-  isSupabaseError, 
+import {
+  AppError,
+  getErrorMessage,
+  getErrorStatusCode,
+  isSupabaseError,
   isStripeError,
-  tryCatch 
+  tryCatch,
 } from '../utils/errors.js';
 
 describe('AppError', () => {
@@ -182,7 +182,11 @@ describe('isStripeError', () => {
   });
 
   it('returns true for StripeInvalidRequestError', () => {
-    const error = { type: 'StripeInvalidRequestError', message: 'Invalid', code: 'resource_missing' };
+    const error = {
+      type: 'StripeInvalidRequestError',
+      message: 'Invalid',
+      code: 'resource_missing',
+    };
     expect(isStripeError(error)).toBe(true);
   });
 
@@ -221,10 +225,10 @@ describe('tryCatch', () => {
 
   it('handles complex async operations', async () => {
     const asyncOp = async () => {
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       return { id: 1, name: 'Test' };
     };
-    
+
     const result = await tryCatch(asyncOp);
     expect(result.data).toEqual({ id: 1, name: 'Test' });
     expect(result.error).toBeNull();

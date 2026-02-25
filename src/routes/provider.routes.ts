@@ -3,7 +3,11 @@ import Stripe from 'stripe';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { createServiceClient } from '../lib/supabase.js';
 import { stripeServices } from '../services/stripe.service.js';
-import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '../middleware/validation.middleware.js';
 import { asyncHandler, AppError } from '../utils/errors.js';
 import { logger } from '../middleware/logging.middleware.js';
 import { z } from 'zod';
@@ -27,7 +31,10 @@ interface AppointmentWithPatient {
 const updateProviderSchema = z.object({
   businessName: z.string().min(2).max(200).optional(),
   specialty: z.string().max(100).optional(),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
+  phone: z
+    .string()
+    .regex(/^\+?[1-9]\d{1,14}$/)
+    .optional(),
   email: z.string().email().optional(),
   consultationFee: z.number().positive().max(9999).optional(),
   bio: z.string().max(1000).optional(),
@@ -35,7 +42,10 @@ const updateProviderSchema = z.object({
 
 const appointmentsQuerySchema = z.object({
   status: z.enum(['scheduled', 'confirmed', 'completed', 'cancelled']).optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   upcoming: z.string().optional(),
 });
 
@@ -67,70 +77,86 @@ const completeAppointmentSchema = z.object({
 /**
  * Get provider profile for current user
  */
-router.get('/me', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
+router.get(
+  '/me',
+  authenticate,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
 
-  const { data: provider, error } = await supabase
-    .from('providers')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
+    const { data: provider, error } = await supabase
+      .from('providers')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-  if (error || !provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
+    if (error || !provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
 
-  res.json({ success: true, data: { provider } });
-}));
+    res.json({ success: true, data: { provider } });
+  })
+);
 
 /**
  * Update provider profile
  */
-router.put('/me', authenticate, validateBody(updateProviderSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { businessName, specialty, phone, email, consultationFee, bio } = req.body;
+router.put(
+  '/me',
+  authenticate,
+  validateBody(updateProviderSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { businessName, specialty, phone, email, consultationFee, bio } = req.body;
 
-  const { data: provider, error } = await supabase
-    .from('providers')
-    .update({
-      business_name: businessName,
-      specialty,
-      phone,
-      email,
-      consultation_fee: consultationFee,
-      bio,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-    .select()
-    .single();
+    const { data: provider, error } = await supabase
+      .from('providers')
+      .update({
+        business_name: businessName,
+        specialty,
+        phone,
+        email,
+        consultation_fee: consultationFee,
+        bio,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .select()
+      .single();
 
-  if (error) throw AppError.internal();
+    if (error) throw AppError.internal();
 
-  res.json({ success: true, data: { provider } });
-}));
+    res.json({ success: true, data: { provider } });
+  })
+);
 
 /**
  * Get provider's appointments
  */
-router.get('/appointments', authenticate, validateQuery(appointmentsQuerySchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { status, date, upcoming } = req.query as unknown as z.infer<typeof appointmentsQuerySchema>;
+router.get(
+  '/appointments',
+  authenticate,
+  validateQuery(appointmentsQuerySchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { status, date, upcoming } = req.query as unknown as z.infer<
+      typeof appointmentsQuerySchema
+    >;
 
-  // Get provider ID
-  const { data: provider } = await supabase
-    .from('providers')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
+    // Get provider ID
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
 
-  if (!provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
 
-  let query = supabase
-    .from('appointments')
-    .select(`
+    let query = supabase
+      .from('appointments')
+      .select(
+        `
       id,
       appointment_date,
       appointment_time,
@@ -139,338 +165,387 @@ router.get('/appointments', authenticate, validateQuery(appointmentsQuerySchema)
       status,
       payment_status,
       patient:patients(id, user_id)
-    `)
-    .eq('provider_id', provider.id)
-    .order('appointment_date', { ascending: true })
-    .order('appointment_time', { ascending: true });
+    `
+      )
+      .eq('provider_id', provider.id)
+      .order('appointment_date', { ascending: true })
+      .order('appointment_time', { ascending: true });
 
-  if (status) {
-    query = query.eq('status', status);
-  }
+    if (status) {
+      query = query.eq('status', status);
+    }
 
-  if (date) {
-    query = query.eq('appointment_date', date);
-  }
+    if (date) {
+      query = query.eq('appointment_date', date);
+    }
 
-  if (upcoming === 'true') {
-    query = query.gte('appointment_date', new Date().toISOString().split('T')[0]);
-  }
+    if (upcoming === 'true') {
+      query = query.gte('appointment_date', new Date().toISOString().split('T')[0]);
+    }
 
-  const { data: appointments, error } = await query;
+    const { data: appointments, error } = await query;
 
-  if (error) throw AppError.internal();
+    if (error) throw AppError.internal();
 
-  // Enrich with patient info
-  const enrichedAppointments = await Promise.all(
-    (appointments as AppointmentWithPatient[]).map(async (apt) => {
-      const patientData = Array.isArray(apt.patient) ? apt.patient[0] : apt.patient;
-      if (patientData?.user_id) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('full_name, email')
-          .eq('user_id', patientData.user_id)
-          .single();
-        
-        return {
-          ...apt,
-          patient: {
-            ...patientData,
-            name: profile?.full_name,
-            email: profile?.email,
-          },
-        };
-      }
-      return apt;
-    })
-  );
+    // Enrich with patient info
+    const enrichedAppointments = await Promise.all(
+      (appointments as AppointmentWithPatient[]).map(async (apt) => {
+        const patientData = Array.isArray(apt.patient) ? apt.patient[0] : apt.patient;
+        if (patientData?.user_id) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('full_name, email')
+            .eq('user_id', patientData.user_id)
+            .single();
 
-  res.json({ success: true, data: { appointments: enrichedAppointments } });
-}));
+          return {
+            ...apt,
+            patient: {
+              ...patientData,
+              name: profile?.full_name,
+              email: profile?.email,
+            },
+          };
+        }
+        return apt;
+      })
+    );
+
+    res.json({ success: true, data: { appointments: enrichedAppointments } });
+  })
+);
 
 /**
  * Get single appointment details
  */
-router.get('/appointments/:id', authenticate, validateParams(idParamsSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const appointmentId = req.params.id;
+router.get(
+  '/appointments/:id',
+  authenticate,
+  validateParams(idParamsSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const appointmentId = req.params.id;
 
-  // Get provider ID
-  const { data: provider } = await supabase
-    .from('providers')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
+    // Get provider ID
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
 
-  if (!provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
 
-  const { data: appointment, error } = await supabase
-    .from('appointments')
-    .select(`
+    const { data: appointment, error } = await supabase
+      .from('appointments')
+      .select(
+        `
       *,
       patient:patients(id, user_id)
-    `)
-    .eq('id', appointmentId)
-    .eq('provider_id', provider.id)
-    .single();
-
-  if (error || !appointment) {
-    throw AppError.notFound('Appointment not found');
-  }
-
-  // Get patient details
-  if (appointment.patient?.user_id) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('full_name, email, phone')
-      .eq('user_id', appointment.patient.user_id)
+    `
+      )
+      .eq('id', appointmentId)
+      .eq('provider_id', provider.id)
       .single();
-    
-    appointment.patient = {
-      ...appointment.patient,
-      name: profile?.full_name,
-      email: profile?.email,
-      phone: profile?.phone,
-    };
-  }
 
-  res.json({ success: true, data: { appointment } });
-}));
+    if (error || !appointment) {
+      throw AppError.notFound('Appointment not found');
+    }
+
+    // Get patient details
+    if (appointment.patient?.user_id) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('full_name, email, phone')
+        .eq('user_id', appointment.patient.user_id)
+        .single();
+
+      appointment.patient = {
+        ...appointment.patient,
+        name: profile?.full_name,
+        email: profile?.email,
+        phone: profile?.phone,
+      };
+    }
+
+    res.json({ success: true, data: { appointment } });
+  })
+);
 
 /**
  * Confirm an appointment
  */
-router.post('/appointments/:id/confirm', authenticate, validateParams(idParamsSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const appointmentId = req.params.id;
+router.post(
+  '/appointments/:id/confirm',
+  authenticate,
+  validateParams(idParamsSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const appointmentId = req.params.id;
 
-  // Get provider ID
-  const { data: provider } = await supabase
-    .from('providers')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
+    // Get provider ID
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
 
-  if (!provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
 
-  const { data: appointment, error } = await supabase
-    .from('appointments')
-    .update({
-      status: 'confirmed',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', appointmentId)
-    .eq('provider_id', provider.id)
-    .eq('status', 'scheduled')
-    .select()
-    .single();
+    const { data: appointment, error } = await supabase
+      .from('appointments')
+      .update({
+        status: 'confirmed',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', appointmentId)
+      .eq('provider_id', provider.id)
+      .eq('status', 'scheduled')
+      .select()
+      .single();
 
-  if (error || !appointment) {
-    throw AppError.notFound('Appointment not found or cannot be confirmed');
-  }
+    if (error || !appointment) {
+      throw AppError.notFound('Appointment not found or cannot be confirmed');
+    }
 
-  res.json({ success: true, data: { message: 'Appointment confirmed', appointment } });
-}));
+    res.json({ success: true, data: { message: 'Appointment confirmed', appointment } });
+  })
+);
 
 /**
  * Complete an appointment
  */
-router.post('/appointments/:id/complete', authenticate, validateParams(idParamsSchema), validateBody(completeAppointmentSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const appointmentId = req.params.id;
-  const { notes } = req.body;
+router.post(
+  '/appointments/:id/complete',
+  authenticate,
+  validateParams(idParamsSchema),
+  validateBody(completeAppointmentSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const appointmentId = req.params.id;
+    const { notes } = req.body;
 
-  // Get provider ID
-  const { data: provider } = await supabase
-    .from('providers')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
+    // Get provider ID
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
 
-  if (!provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
 
-  const { data: appointment, error } = await supabase
-    .from('appointments')
-    .update({
-      status: 'completed',
-      notes,
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', appointmentId)
-    .eq('provider_id', provider.id)
-    .in('status', ['scheduled', 'confirmed'])
-    .select()
-    .single();
+    const { data: appointment, error } = await supabase
+      .from('appointments')
+      .update({
+        status: 'completed',
+        notes,
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', appointmentId)
+      .eq('provider_id', provider.id)
+      .in('status', ['scheduled', 'confirmed'])
+      .select()
+      .single();
 
-  if (error || !appointment) {
-    throw AppError.notFound('Appointment not found or cannot be completed');
-  }
+    if (error || !appointment) {
+      throw AppError.notFound('Appointment not found or cannot be completed');
+    }
 
-  res.json({ success: true, data: { message: 'Appointment completed', appointment } });
-}));
+    res.json({ success: true, data: { message: 'Appointment completed', appointment } });
+  })
+);
 
 /**
  * Cancel an appointment (by provider)
  */
-router.post('/appointments/:id/cancel', authenticate, validateParams(idParamsSchema), validateBody(cancelAppointmentSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const appointmentId = req.params.id;
-  const { reason } = req.body;
+router.post(
+  '/appointments/:id/cancel',
+  authenticate,
+  validateParams(idParamsSchema),
+  validateBody(cancelAppointmentSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const appointmentId = req.params.id;
+    const { reason } = req.body;
 
-  // Get provider ID
-  const { data: provider } = await supabase
-    .from('providers')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
+    // Get provider ID
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
 
-  if (!provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
-
-  // Get appointment
-  const { data: appointment, error: fetchError } = await supabase
-    .from('appointments')
-    .select('*, stripe_payment_intent_id')
-    .eq('id', appointmentId)
-    .eq('provider_id', provider.id)
-    .single();
-
-  if (fetchError || !appointment) {
-    throw AppError.notFound('Appointment not found');
-  }
-
-  if (!['scheduled', 'confirmed'].includes(appointment.status)) {
-    throw AppError.badRequest('Cannot cancel this appointment');
-  }
-
-  // Process refund if payment was made
-  if (appointment.payment_status === 'paid' && appointment.stripe_payment_intent_id) {
-    try {
-      await stripeServices.refunds.createFull(
-        appointment.stripe_payment_intent_id,
-        'requested_by_customer'
-      );
-    } catch (refundError: unknown) {
-      logger.warn('Refund failed during appointment cancellation', { 
-        appointmentId, 
-        error: refundError instanceof Error ? refundError.message : 'Unknown error' 
-      });
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
     }
-  }
 
-  // Update appointment
-  const { data: updatedAppointment, error: updateError } = await supabase
-    .from('appointments')
-    .update({
-      status: 'cancelled',
-      cancellation_reason: reason,
-      cancelled_by: 'provider',
-      cancelled_at: new Date().toISOString(),
-    })
-    .eq('id', appointmentId)
-    .select()
-    .single();
+    // Get appointment
+    const { data: appointment, error: fetchError } = await supabase
+      .from('appointments')
+      .select('*, stripe_payment_intent_id')
+      .eq('id', appointmentId)
+      .eq('provider_id', provider.id)
+      .single();
 
-  if (updateError) throw updateError;
+    if (fetchError || !appointment) {
+      throw AppError.notFound('Appointment not found');
+    }
 
-  res.json({ success: true, data: { message: 'Appointment cancelled', appointment: updatedAppointment } });
-}));
+    if (!['scheduled', 'confirmed'].includes(appointment.status)) {
+      throw AppError.badRequest('Cannot cancel this appointment');
+    }
+
+    // Process refund if payment was made
+    if (appointment.payment_status === 'paid' && appointment.stripe_payment_intent_id) {
+      try {
+        await stripeServices.refunds.createFull(
+          appointment.stripe_payment_intent_id,
+          'requested_by_customer'
+        );
+      } catch (refundError: unknown) {
+        logger.warn('Refund failed during appointment cancellation', {
+          appointmentId,
+          error: refundError instanceof Error ? refundError.message : 'Unknown error',
+        });
+      }
+    }
+
+    // Update appointment
+    const { data: updatedAppointment, error: updateError } = await supabase
+      .from('appointments')
+      .update({
+        status: 'cancelled',
+        cancellation_reason: reason,
+        cancelled_by: 'provider',
+        cancelled_at: new Date().toISOString(),
+      })
+      .eq('id', appointmentId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    res.json({
+      success: true,
+      data: { message: 'Appointment cancelled', appointment: updatedAppointment },
+    });
+  })
+);
 
 /**
  * Get provider's earnings summary
  */
-router.get('/earnings', authenticate, validateQuery(earningsQuerySchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { period } = req.query as unknown as z.infer<typeof earningsQuerySchema>;
+router.get(
+  '/earnings',
+  authenticate,
+  validateQuery(earningsQuerySchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { period } = req.query as unknown as z.infer<typeof earningsQuerySchema>;
 
-  // Get provider
-  const { data: provider } = await supabase
-    .from('providers')
-    .select('id, stripe_account_id')
-    .eq('user_id', userId)
-    .single();
+    // Get provider
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id, stripe_account_id')
+      .eq('user_id', userId)
+      .single();
 
-  if (!provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
-
-  // Calculate date range
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - Number(period));
-
-  // Get completed appointments in period
-  const { data: appointments } = await supabase
-    .from('appointments')
-    .select('id, appointment_date, payment_status')
-    .eq('provider_id', provider.id)
-    .eq('status', 'completed')
-    .eq('payment_status', 'paid')
-    .gte('appointment_date', startDate.toISOString().split('T')[0])
-    .lte('appointment_date', endDate.toISOString().split('T')[0]);
-
-  // Get Stripe balance if connected
-  let stripeBalance = null;
-  if (provider.stripe_account_id) {
-    try {
-      stripeBalance = await stripeServices.connect.getBalance(provider.stripe_account_id);
-    } catch (e) {
-      logger.warn('Could not fetch Stripe balance', { accountId: provider.stripe_account_id });
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
     }
-  }
 
-  const { data: providerData } = await supabase
-    .from('providers')
-    .select('consultation_fee')
-    .eq('id', provider.id)
-    .single();
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - Number(period));
 
-  const completedCount = appointments?.length || 0;
-  const totalEarnings = completedCount * (providerData?.consultation_fee || 0);
+    // Get completed appointments in period
+    const { data: appointments } = await supabase
+      .from('appointments')
+      .select('id, appointment_date, payment_status')
+      .eq('provider_id', provider.id)
+      .eq('status', 'completed')
+      .eq('payment_status', 'paid')
+      .gte('appointment_date', startDate.toISOString().split('T')[0])
+      .lte('appointment_date', endDate.toISOString().split('T')[0]);
 
-  res.json({
-    success: true,
-    data: {
-      period: Number(period),
-      completedAppointments: completedCount,
-      totalEarnings,
-      stripeBalance: stripeBalance ? {
-        available: stripeBalance.available.reduce((sum: number, b: Stripe.Balance.Available) => sum + b.amount, 0) / 100,
-        pending: stripeBalance.pending.reduce((sum: number, b: Stripe.Balance.Pending) => sum + b.amount, 0) / 100,
-        currency: stripeBalance.available[0]?.currency || 'usd',
-      } : null,
-    },
-  });
-}));
+    // Get Stripe balance if connected
+    let stripeBalance = null;
+    if (provider.stripe_account_id) {
+      try {
+        stripeBalance = await stripeServices.connect.getBalance(provider.stripe_account_id);
+      } catch (e) {
+        logger.warn('Could not fetch Stripe balance', { accountId: provider.stripe_account_id });
+      }
+    }
+
+    const { data: providerData } = await supabase
+      .from('providers')
+      .select('consultation_fee')
+      .eq('id', provider.id)
+      .single();
+
+    const completedCount = appointments?.length || 0;
+    const totalEarnings = completedCount * (providerData?.consultation_fee || 0);
+
+    res.json({
+      success: true,
+      data: {
+        period: Number(period),
+        completedAppointments: completedCount,
+        totalEarnings,
+        stripeBalance: stripeBalance
+          ? {
+              available:
+                stripeBalance.available.reduce(
+                  (sum: number, b: Stripe.Balance.Available) => sum + b.amount,
+                  0
+                ) / 100,
+              pending:
+                stripeBalance.pending.reduce(
+                  (sum: number, b: Stripe.Balance.Pending) => sum + b.amount,
+                  0
+                ) / 100,
+              currency: stripeBalance.available[0]?.currency || 'usd',
+            }
+          : null,
+      },
+    });
+  })
+);
 
 /**
  * Get provider's schedule for a date range
  */
-router.get('/schedule', authenticate, validateQuery(scheduleQuerySchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { startDate, endDate } = req.query as unknown as z.infer<typeof scheduleQuerySchema>;
+router.get(
+  '/schedule',
+  authenticate,
+  validateQuery(scheduleQuerySchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { startDate, endDate } = req.query as unknown as z.infer<typeof scheduleQuerySchema>;
 
-  // Get provider ID
-  const { data: provider } = await supabase
-    .from('providers')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
+    // Get provider ID
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
 
-  if (!provider) {
-    throw AppError.notFound('Provider profile not found');
-  }
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
 
-  const { data: appointments, error } = await supabase
-    .from('appointments')
-    .select(`
+    const { data: appointments, error } = await supabase
+      .from('appointments')
+      .select(
+        `
       id,
       appointment_date,
       appointment_time,
@@ -478,32 +553,34 @@ router.get('/schedule', authenticate, validateQuery(scheduleQuerySchema), asyncH
       status,
       reason,
       patient:patients(id)
-    `)
-    .eq('provider_id', provider.id)
-    .gte('appointment_date', startDate)
-    .lte('appointment_date', endDate)
-    .in('status', ['scheduled', 'confirmed'])
-    .order('appointment_date', { ascending: true })
-    .order('appointment_time', { ascending: true });
+    `
+      )
+      .eq('provider_id', provider.id)
+      .gte('appointment_date', startDate)
+      .lte('appointment_date', endDate)
+      .in('status', ['scheduled', 'confirmed'])
+      .order('appointment_date', { ascending: true })
+      .order('appointment_time', { ascending: true });
 
-  if (error) throw AppError.internal();
+    if (error) throw AppError.internal();
 
-  // Group by date
-  const schedule: Record<string, any[]> = {};
-  appointments.forEach((apt) => {
-    if (!schedule[apt.appointment_date]) {
-      schedule[apt.appointment_date] = [];
-    }
-    schedule[apt.appointment_date].push({
-      id: apt.id,
-      time: apt.appointment_time,
-      duration: apt.duration_minutes,
-      status: apt.status,
-      reason: apt.reason,
+    // Group by date
+    const schedule: Record<string, any[]> = {};
+    appointments.forEach((apt) => {
+      if (!schedule[apt.appointment_date]) {
+        schedule[apt.appointment_date] = [];
+      }
+      schedule[apt.appointment_date].push({
+        id: apt.id,
+        time: apt.appointment_time,
+        duration: apt.duration_minutes,
+        status: apt.status,
+        reason: apt.reason,
+      });
     });
-  });
 
-  res.json({ success: true, data: { schedule } });
-}));
+    res.json({ success: true, data: { schedule } });
+  })
+);
 
 export default router;

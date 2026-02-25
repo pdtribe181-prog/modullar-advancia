@@ -94,7 +94,10 @@ export const customersService = {
   /**
    * Update a customer
    */
-  async update(customerId: string, params: Partial<CreateCustomerParams>): Promise<Stripe.Customer> {
+  async update(
+    customerId: string,
+    params: Partial<CreateCustomerParams>
+  ): Promise<Stripe.Customer> {
     return stripe.customers.update(customerId, {
       email: params.email,
       name: params.name,
@@ -213,7 +216,11 @@ export const refundsService = {
   /**
    * Create a partial refund
    */
-  async createPartial(paymentIntentId: string, amount: number, reason?: string): Promise<Stripe.Refund> {
+  async createPartial(
+    paymentIntentId: string,
+    amount: number,
+    reason?: string
+  ): Promise<Stripe.Refund> {
     return stripe.refunds.create({
       payment_intent: paymentIntentId,
       amount,
@@ -270,7 +277,11 @@ export const connectService = {
   /**
    * Create an account link for onboarding
    */
-  async createAccountLink(accountId: string, refreshUrl: string, returnUrl: string): Promise<Stripe.AccountLink> {
+  async createAccountLink(
+    accountId: string,
+    refreshUrl: string,
+    returnUrl: string
+  ): Promise<Stripe.AccountLink> {
     return stripe.accountLinks.create({
       account: accountId,
       refresh_url: refreshUrl,
@@ -341,7 +352,11 @@ export const transfersService = {
   /**
    * Create a transfer with source transaction (direct charge)
    */
-  async createFromCharge(chargeId: string, destinationAccountId: string, amount: number): Promise<Stripe.Transfer> {
+  async createFromCharge(
+    chargeId: string,
+    destinationAccountId: string,
+    amount: number
+  ): Promise<Stripe.Transfer> {
     return stripe.transfers.create({
       amount,
       currency: 'usd',
@@ -459,7 +474,11 @@ export const productsService = {
   /**
    * Create a product (e.g., consultation type)
    */
-  async create(name: string, description?: string, metadata?: Record<string, string>): Promise<Stripe.Product> {
+  async create(
+    name: string,
+    description?: string,
+    metadata?: Record<string, string>
+  ): Promise<Stripe.Product> {
     return stripe.products.create({
       name,
       description,
@@ -750,7 +769,10 @@ export const disputesService = {
   /**
    * Submit evidence for a dispute
    */
-  async submitEvidence(disputeId: string, evidence: Stripe.DisputeUpdateParams.Evidence): Promise<Stripe.Dispute> {
+  async submitEvidence(
+    disputeId: string,
+    evidence: Stripe.DisputeUpdateParams.Evidence
+  ): Promise<Stripe.Dispute> {
     return stripe.disputes.update(disputeId, {
       evidence,
       submit: true,
