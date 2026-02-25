@@ -16,6 +16,19 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 ## 1. Environment Configuration
 
+### Staging Readiness (Render + Supabase)
+
+- [x] Staging API hostname defined (`api-staging.advanciapayledger.com`)
+- [x] Staging Render service configured (`modullar-advancia.onrender.com`)
+- [x] `.env.staging.example` documented in repository
+- [ ] Dedicated Supabase staging project confirmed
+- [ ] Staging `SUPABASE_URL` configured in Render
+- [ ] Staging `SUPABASE_ANON_KEY` configured in Render
+- [ ] Staging `SUPABASE_SERVICE_ROLE_KEY` configured in Render
+- [ ] Staging migrations applied and verified
+- [ ] Staging webhook secrets separated from production
+- [ ] Staging smoke tests pass (`/health`, auth, payments-test flow)
+
 ### Backend Environment Variables
 
 - [x] `NODE_ENV=production`

@@ -88,6 +88,20 @@ Minimum required staging variables in Render:
 - `CORS_ORIGINS`
 - `SENTRY_DSN` and `SENTRY_ENVIRONMENT=staging`
 
+#### Render ↔ Supabase (Staging) Env Mapping
+
+| Render Environment Variable | Staging Value Source | Notes |
+| --- | --- | --- |
+| `SUPABASE_URL` | Supabase staging project URL | Must not point to production |
+| `SUPABASE_ANON_KEY` | Supabase staging API keys | Safe for client-facing use |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase staging API keys | Server only, never expose in frontend |
+| `SUPABASE_WEBHOOK_SECRET` | Staging secret value | Must match sender integration |
+| `DATABASE_URL` (if used) | Supabase staging connection string | Keep separate from prod DB |
+| `SUPABASE_ACCESS_TOKEN` (if used) | Supabase personal token | Use least privilege token |
+| `SENTRY_ENVIRONMENT` | `staging` | Keeps events separated from prod |
+| `STRIPE_SECRET_KEY` | Stripe test key (`sk_test_...`) | Never use live key in staging |
+| `STRIPE_WEBHOOK_SECRET` | Staging webhook endpoint secret | Separate from production webhook secret |
+
 ## Project Structure
 
 ```text
