@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -162,3 +162,26 @@ jobs:
           name: dist
           path: dist/
           retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB: Deploy to Render (Staging)
+  # Requires GitHub secret: RENDER_DEPLOY_HOOK_URL
+  # Set in: GitHub → Settings → Secrets → Actions → RENDER_DEPLOY_HOOK_URL
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Render (Staging)
+    runs-on: ubuntu-latest
+    needs: build
+    environment: staging
+
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          echo "Triggering Render staging deploy..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          echo "Render response: $response"
+          if [ "$response" != "200" ] && [ "$response" != "201" ]; then
+            echo "❌ Render deploy hook returned $response"
+            exit 1
+          fi
+          echo "✅ Render deploy triggered successfully"
