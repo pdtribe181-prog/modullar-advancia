@@ -18,9 +18,9 @@ services:
       - key: NODE_VERSION
         value: 22
       - key: SUPABASE_URL
-        sync: false
+        value: https://pikguczsvikzragmrojz.supabase.co
       - key: SUPABASE_ANON_KEY
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2d1Y3pzdmlrenJhZ21yb2p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDk1MDQsImV4cCI6MjA4NTk4NTUwNH0.ieMM1Rhvpb0KwxzP_w5wLEIIXu3f-p71oKzxQHXrLcY
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: STRIPE_SECRET_KEY
@@ -48,8 +48,8 @@ services:
       - key: TWILIO_PHONE_NUMBER
         sync: false
       - key: UPSTASH_REDIS_REST_URL
-        sync: false
+        value: https://top-quail-26520.upstash.io
       - key: UPSTASH_REDIS_REST_TOKEN
-        sync: false
+        value: AWeYAAIncDE0Yjk0MTZlY2QyZGY0ZWY5OGIwMmRlNDQyYTZkOTI5ZXAxMjY1MjA
       - key: SUPABASE_WEBHOOK_SECRET
         sync: false
