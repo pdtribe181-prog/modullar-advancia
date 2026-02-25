@@ -106,13 +106,13 @@ This checklist ensures all systems are production-ready before go-live. Complete
 **Webhooks**
 - [x] Production webhook endpoint added: `https://api.advanciapayledger.com/api/v1/stripe/webhook`
 - [x] Webhook signing secret obtained
-- [ ] Events subscribed:
-  - [ ] `payment_intent.succeeded`
-  - [ ] `payment_intent.payment_failed`
-  - [ ] `charge.refunded`
-  - [ ] `account.updated`
-  - [ ] `payout.paid`
-  - [ ] `payout.failed`
+- [x] Events subscribed (34 events covering all handled types)
+  - [x] `payment_intent.succeeded`
+  - [x] `payment_intent.payment_failed`
+  - [x] `charge.refunded`
+  - [x] `account.updated`
+  - [x] `payout.paid`
+  - [x] `payout.failed`
 - [ ] Webhook delivery tested
 - [ ] Webhook retry logic verified
 
@@ -400,16 +400,16 @@ This checklist ensures all systems are production-ready before go-live. Complete
 ### Application Security
 
 - [x] All dependencies updated
-- [ ] npm audit shows 0 high/critical vulnerabilities
+- [x] npm audit shows 0 vulnerabilities
 - [ ] Secrets not exposed in client-side code
 - [ ] Error messages don't leak sensitive info
 - [ ] File upload validation implemented
 - [ ] File size limits enforced
 - [ ] Input sanitization on all user inputs
 - [ ] Output encoding prevents XSS
-- [ ] SQL injection prevention (parameterized queries)
-- [ ] Command injection prevention
-- [ ] Path traversal prevention
+- [x] SQL injection prevention (Supabase parameterized queries)
+- [x] Command injection prevention (no shell exec)
+- [x] Path traversal prevention (no file system access from API)
 
 ### Authentication & Authorization
 
@@ -430,7 +430,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] Rate limiting active
 - [x] Request size limits enforced
 - [x] Security headers configured (Helmet.js)
-- [ ] API versioning in place
+- [x] API versioning in place (`/api/v1/` prefix)
 - [ ] Deprecated endpoints documented
 
 ### Infrastructure Security
@@ -511,11 +511,11 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 ### Log Management
 
-- [ ] Application logs structured (JSON)
+- [x] Application logs structured (JSON) — logger outputs `{level, timestamp, message, ...meta}`
 - [ ] Log aggregation configured (optional: Logtail, Papertrail)
 - [ ] Log retention policy defined
 - [ ] Log rotation configured
-- [ ] Sensitive data not logged (passwords, tokens)
+- [x] Sensitive data not logged (passwords, tokens) — request body excluded in production
 
 ### Alert Routing
 
@@ -645,7 +645,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [ ] Add request/response compression
 - [ ] Optimize database queries (add missing indexes)
 - [ ] Implement database connection pooling tuning
-- [ ] Add graceful shutdown handling
+- [x] Graceful shutdown handling (SIGTERM/SIGINT, 30s timeout, Sentry flush)
 - [ ] Implement circuit breaker for external API calls
 - [ ] Add API versioning support
 - [ ] Implement webhook retry logic
