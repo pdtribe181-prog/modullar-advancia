@@ -235,9 +235,9 @@ This checklist ensures all systems are production-ready before go-live. Complete
 ### DNS (Cloudflare)
 
 **Domain Configuration**
-- [ ] Domain added to Cloudflare
-- [ ] Nameservers updated at registrar
-- [ ] DNS propagation verified
+- [x] Domain added to Cloudflare
+- [x] Nameservers updated at registrar
+- [x] DNS propagation verified
 
 **DNS Records**
 - [x] A record: `api.advanciapayledger.com` → `76.13.77.8` (Proxy OFF)
@@ -250,12 +250,12 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 **Cloudflare Settings**
 - [ ] SSL/TLS mode: Full (Strict)
-- [ ] Always Use HTTPS: On
+- [x] Always Use HTTPS: On
 - [ ] Automatic HTTPS Rewrites: On
 - [ ] HTTP Strict Transport Security: Enabled
 - [ ] Minimum TLS Version: 1.2
 - [ ] TLS 1.3: Enabled
-- [ ] Universal SSL: Active
+- [x] Universal SSL: Active
 
 **Security Settings**
 - [ ] Security level: Medium (adjust based on traffic)
