@@ -60,6 +60,20 @@ Expected:
 
 ## 5) Functional Smoke Tests
 
+Preferred one-command check:
+
+```powershell
+./scripts/staging-smoke-check.ps1
+```
+
+Optional override (example):
+
+```powershell
+./scripts/staging-smoke-check.ps1 -ApiBaseUrl "https://api-staging.advanciapayledger.com" -DnsName "api-staging.advanciapayledger.com"
+```
+
+Manual fallback:
+
 Run:
 
 ```bash
