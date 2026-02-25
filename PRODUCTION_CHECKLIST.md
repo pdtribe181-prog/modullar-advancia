@@ -69,7 +69,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 ### Data Seeding
 
-- [ ] Email templates seeded (migration 027)
+- [x] Email templates seeded (7 system templates via psql: payment_confirmation, payment_failed, appointment_reminder, security_alert, invoice_notification, welcome, password_reset)
 - [ ] Initial admin user created
 - [ ] Test provider accounts created (for demo)
 - [ ] Subscription plans configured
@@ -178,11 +178,11 @@ This checklist ensures all systems are production-ready before go-live. Complete
 **Initial Setup**
 - [x] SSH access verified
 - [x] Root password changed
-- [ ] Non-root user created with sudo
+- [x] Non-root user created with sudo (`advancia` user, owns /var/www/advancia)
 - [x] SSH key-based authentication enabled
-- [ ] Password authentication disabled
+- [x] Password authentication disabled (sshd PasswordAuthentication no)
 - [x] Fail2ban installed and configured (3 jails: sshd, nginx-http-auth, nginx-limit-req)
-- [ ] Automatic security updates enabled
+- [x] Automatic security updates enabled (unattended-upgrades)
 
 **Software Installation**
 - [x] Node.js v24.13.1 installed
@@ -401,7 +401,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 - [x] All dependencies updated
 - [x] npm audit shows 0 vulnerabilities
-- [ ] Secrets not exposed in client-side code
+- [x] Secrets not exposed in client-side code (verified: no API keys, service role keys, or secrets in frontend/src)
 - [ ] Error messages don't leak sensitive info
 - [ ] File upload validation implemented
 - [ ] File size limits enforced
@@ -439,8 +439,8 @@ This checklist ensures all systems are production-ready before go-live. Complete
   - [x] SSH keys enabled
   - [x] Fail2ban active (3 jails)
   - [x] UFW configured (22, 80, 443, 4000)
-  - [ ] Automatic security updates
-  - [ ] Non-root user for application
+  - [x] Automatic security updates (unattended-upgrades)
+  - [x] Non-root user for application (`advancia`)
 - [x] Database security:
   - [x] Strong passwords
   - [x] Connection encryption (SSL)
@@ -514,7 +514,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] Application logs structured (JSON) — logger outputs `{level, timestamp, message, ...meta}`
 - [ ] Log aggregation configured (optional: Logtail, Papertrail)
 - [ ] Log retention policy defined
-- [ ] Log rotation configured
+- [x] Log rotation configured (pm2-logrotate: 10MB max, 7-day retention, compressed)
 - [x] Sensitive data not logged (passwords, tokens) — request body excluded in production
 
 ### Alert Routing
@@ -536,7 +536,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] DEPLOYMENT.md updated with production steps
 - [x] SECURITY.md reviewed
 - [x] DEV_SETUP.md for developers
-- [ ] API documentation (Swagger) accessible at `/docs`
+- [x] API documentation (Swagger) accessible at `/docs` (verified 200 OK)
 - [ ] Database schema documented
 - [ ] Environment variables documented
 - [ ] Deployment runbook created
@@ -642,7 +642,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [ ] Improve test coverage to >80%
 - [ ] Add API response caching for frequently accessed data
 - [ ] Implement rate limiting per user (currently per IP)
-- [ ] Add request/response compression
+- [x] Add request/response compression (nginx gzip enabled: all mime types)
 - [ ] Optimize database queries (add missing indexes)
 - [ ] Implement database connection pooling tuning
 - [x] Graceful shutdown handling (SIGTERM/SIGINT, 30s timeout, Sentry flush)
