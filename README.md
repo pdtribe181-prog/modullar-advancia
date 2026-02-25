@@ -11,9 +11,9 @@
 
 | Service  | URL                                      | Status     |
 | -------- | ---------------------------------------- | ---------- |
-| **App**  | <https://advanciapayledger.com>          | ⏳ Pending |
-| **API**  | <https://advanciapayledger.com/api>      | ⏳ Pending |
-| **Brand**| <https://advanciapayledger.com>          | ⏳ Pending |
+| **App**  | <https://advanciapayledger.com>          | ✅ Live    |
+| **API**  | <https://api.advanciapayledger.com/api/v1> | ✅ Live |
+| **Brand**| <https://advanciapayledger.com>          | ✅ Live    |
 
 ## Tech Stack
 
@@ -21,7 +21,7 @@
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
 - **Payments**: Stripe (card payments)
 - **Frontend**: React + Vite + TypeScript
-- **Hosting**: VPS with PM2 + Nginx (API) + Cloudflare Pages (Frontend)
+- **Hosting**: Hostinger VPS (Frontend + API) with Cloudflare proxy/CDN
 - **Monitoring**: Sentry
 - **Email**: Resend
 - **SMS**: Twilio
@@ -169,12 +169,32 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.
 ### Quick Deploy
 
 ```bash
-# Backend (VPS) — SSH in and pull + rebuild
+# Full stack on VPS (Nginx serves frontend, proxies API)
 ssh advancia-vps 'cd /var/www/advancia && git pull && npm ci && npm run build && pm2 reload advancia-api'
-
-# Frontend (Cloudflare Pages auto-deploys from main branch)
-git push origin main
 ```
+
+## DNS Configuration (Cloudflare)
+
+Current production DNS is managed in Cloudflare with Hostinger VPS as origin.
+
+| Type | Name | Target / Value | Proxy |
+| --- | --- | --- | --- |
+| A | `advanciapayledger.com` | `76.13.77.8` | Proxied |
+| A | `api` | `76.13.77.8` | Proxied |
+| CNAME | `api-staging` | `modullar-advancia.onrender.com` | Proxied |
+| MX | `advanciapayledger.com` | `route1/2/3.mx.cloudflare.net` | DNS only |
+| MX | `send` | `feedback-smtp.eu-west-1.amazonses.com` | DNS only |
+| TXT | `advanciapayledger.com` | SPF configured (`_spf.mx.cloudflare.net`) | DNS only |
+| TXT | `_dmarc` | DMARC configured (reporting enabled) | DNS only |
+| TXT | `resend._domainkey` | DKIM configured (Resend) | DNS only |
+| TXT | `cf2024-1._domainkey` | DKIM configured (Cloudflare Email Routing) | DNS only |
+| TXT | `20251219192150pm._domainkey` | DKIM configured | DNS only |
+
+Notes:
+
+- API and apex are proxied through Cloudflare (orange cloud).
+- Origin server for both frontend and API is Hostinger VPS (`76.13.77.8`).
+- Email deliverability/authentication records (SPF/DKIM/DMARC) are configured in DNS.
 
 ## Security Features
 
