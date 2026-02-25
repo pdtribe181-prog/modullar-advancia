@@ -356,10 +356,10 @@ describe('stripe.routes', () => {
       const res = await request(app)
         .post('/stripe/refunds')
         .set('Authorization', 'Bearer token')
-        .send({ paymentIntentId: 'pi_123', amount: 25 });
+        .send({ paymentIntentId: 'pi_123', amount: 2500 });
 
       expect(res.status).toBe(200);
-      expect(res.body.data.amount).toBe(25);
+      expect(res.body.data.amount).toBe(25); // 2500 cents → $25
       expect(mockRefundsCreatePartial).toHaveBeenCalledWith('pi_123', 2500, undefined);
     });
 

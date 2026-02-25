@@ -1,5 +1,6 @@
 import React, { useState, useEffect, CSSProperties, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { api } from '../services/api';
 import '../styles.css';
 
 interface InvoiceItem {
@@ -14,7 +15,7 @@ interface Invoice {
   invoiceNumber: string;
   date: string;
   dueDate: string;
-  status: 'paid' | 'pending' | 'overdue' | 'cancelled';
+  status: 'paid' | 'pending' | 'overdue' | 'cancelled' | 'refunded';
   provider: {
     name: string;
     address: string;
@@ -37,38 +38,56 @@ interface Invoice {
   notes?: string;
 }
 
-// Mock invoice data - replace with real API call
-const mockInvoice: Invoice = {
-  id: 'inv_001',
-  invoiceNumber: 'INV-2026-0142',
-  date: '2026-02-23',
-  dueDate: '2026-03-23',
-  status: 'paid',
-  provider: {
-    name: 'Quantum Health Center',
-    address: '456 Medical Plaza, Suite 200\nSan Francisco, CA 94102',
-    phone: '+1 (415) 555-0123',
-    email: 'billing@quantumhealth.com',
-    taxId: 'XX-XXXXXXX',
-  },
-  patient: {
-    name: 'John Doe',
-    email: 'john.doe@email.com',
-    address: '123 Main Street\nSan Francisco, CA 94101',
-  },
-  items: [
-    { description: 'MedBed Healing Session (60 min)', quantity: 1, unitPrice: 450.00, total: 450.00 },
-    { description: 'Quantum Diagnostic Scan', quantity: 1, unitPrice: 275.00, total: 275.00 },
-    { description: 'Consultation - Dr. Sarah Chen', quantity: 1, unitPrice: 150.00, total: 150.00 },
-  ],
-  subtotal: 875.00,
-  tax: 76.56,
-  taxRate: 8.75,
-  total: 951.56,
-  paymentMethod: 'Visa ****4242',
-  transactionId: 'txn_3PK8mN2eZvKYlo2C1kLmYnDf',
-  notes: 'Thank you for choosing Quantum Health Center. For questions about this invoice, please contact our billing department.',
-};
+// Map API response (snake_case) to frontend interface (camelCase)
+function mapApiInvoice(raw: Record<string, unknown>): Invoice {
+  const provider = raw.provider as Record<string, unknown> | null;
+  const patient = raw.patient as Record<string, unknown> | null;
+  const items = (raw.items as Record<string, unknown>[] | null) || [];
+  const transaction = raw.transaction as Record<string, unknown> | null;
+  const subtotal = Number(raw.subtotal || 0);
+  const taxAmount = Number(raw.tax_amount || 0);
+  const totalAmount = Number(raw.total_amount || 0);
+  const taxRate = subtotal > 0 ? Math.round((taxAmount / subtotal) * 10000) / 100 : 0;
+
+  // Normalize status: API may use 'sent'/'draft', frontend expects 'pending'
+  let status = raw.status as string;
+  if (status === 'sent' || status === 'draft') status = 'pending';
+
+  return {
+    id: raw.id as string,
+    invoiceNumber: raw.invoice_number as string,
+    date: raw.issue_date as string,
+    dueDate: raw.due_date as string,
+    status: status as Invoice['status'],
+    provider: {
+      name: (provider?.practice_name as string) || 'Unknown Provider',
+      address: (provider?.address as string) || '',
+      phone: (provider?.phone as string) || '',
+      email: (provider?.email as string) || '',
+      taxId: provider?.tax_id as string | undefined,
+    },
+    patient: {
+      name: patient
+        ? `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Unknown Patient'
+        : 'Unknown Patient',
+      email: (patient?.email as string) || '',
+      address: patient?.address as string | undefined,
+    },
+    items: items.map((item) => ({
+      description: item.description as string,
+      quantity: Number(item.quantity || 1),
+      unitPrice: Number(item.unit_price || 0),
+      total: Number(item.amount || 0),
+    })),
+    subtotal,
+    tax: taxAmount,
+    taxRate,
+    total: totalAmount,
+    paymentMethod: transaction?.payment_method as string | undefined,
+    transactionId: transaction?.stripe_payment_intent_id as string | undefined,
+    notes: raw.notes as string | undefined,
+  };
+}
 
 const pageStyle: CSSProperties = {
   minHeight: '100vh',
@@ -389,27 +408,30 @@ export const Invoices: React.FC = () => {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [invoiceList, setInvoiceList] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
-        // TODO: Replace with real API calls
-        // If specific invoice requested, fetch it
         if (invoiceId) {
-          // const response = await apiService.get(`/invoices/${invoiceId}`);
-          setInvoice(mockInvoice);
+          // Fetch single invoice with full detail
+          const res = await api.get<{ success: boolean; data: Record<string, unknown> }>(`/invoices/${invoiceId}`);
+          if (res.success && res.data) {
+            setInvoice(mapApiInvoice(res.data));
+          }
         }
-        // Fetch invoice list
-        // const listResponse = await apiService.get('/invoices');
-        setInvoiceList([
-          { ...mockInvoice },
-          { ...mockInvoice, id: 'inv_002', invoiceNumber: 'INV-2026-0141', status: 'pending', total: 275.00 },
-          { ...mockInvoice, id: 'inv_003', invoiceNumber: 'INV-2026-0140', status: 'paid', total: 1250.00 },
-        ]);
-      } catch (error) {
-        console.error('Failed to fetch invoices:', error);
+        // Always fetch the list
+        const listRes = await api.get<{ success: boolean; data: Record<string, unknown>[] }>('/invoices');
+        if (listRes.success && listRes.data) {
+          setInvoiceList(listRes.data.map(mapApiInvoice));
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch invoices';
+        console.error('Failed to fetch invoices:', err);
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -457,6 +479,25 @@ export const Invoices: React.FC = () => {
       <div style={pageStyle}>
         <div style={containerStyle}>
           <p style={{ color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={pageStyle}>
+        <div style={containerStyle}>
+          <div style={{ textAlign: 'center', padding: '48px' }}>
+            <p style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</p>
+            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '16px' }}>{error}</p>
+            <button
+              style={btnPrimaryStyle}
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );

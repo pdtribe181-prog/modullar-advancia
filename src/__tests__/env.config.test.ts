@@ -115,7 +115,7 @@ describe('Environment Configuration', () => {
     });
 
     it('should reject invalid NODE_ENV', () => {
-      const result = envSchema.safeParse({ ...validEnv, NODE_ENV: 'staging' });
+      const result = envSchema.safeParse({ ...validEnv, NODE_ENV: 'invalid_env' });
       expect(result.success).toBe(false);
     });
 
