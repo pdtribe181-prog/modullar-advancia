@@ -15,10 +15,7 @@ server {
     access_log /var/log/nginx/api-advancia.access.log;
     error_log /var/log/nginx/api-advancia.error.log;
 
-    # Security headers
-    add_header X-Frame-Options "DENY";
-    add_header X-XSS-Protection "1; mode=block";
-    add_header X-Content-Type-Options "nosniff";
+    # Security headers handled by Express/Helmet — only add HSTS here (not duplicated by Helmet)
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     # Proxy everything to Express

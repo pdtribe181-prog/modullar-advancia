@@ -94,5 +94,6 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "sql.linter.executablePath": "",
   "sql.format.enable": false,
-  "prisma.pinToPrisma6": true
+  "prisma.pinToPrisma6": true,
+  "php.validate.enable": false
 }

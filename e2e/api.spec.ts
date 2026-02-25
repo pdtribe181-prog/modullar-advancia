@@ -35,9 +35,10 @@ test.describe('API Health & Endpoints', () => {
   });
 
   test('API should have CORS headers', async ({ request }) => {
+    const origin = process.env.CORS_TEST_ORIGIN || 'https://advanciapayledger.com';
     const response = await request.get(`${API_ROOT}/health`, {
       headers: {
-        Origin: 'http://localhost:5173',
+        Origin: origin,
       },
     });
 
@@ -54,7 +55,7 @@ test.describe('API Health & Endpoints', () => {
 
     const headers = response.headers();
     // Helmet should set these headers
-    expect(headers['x-content-type-options']).toBe('nosniff');
+    expect(headers['x-content-type-options']).toContain('nosniff');
     expect(headers['x-frame-options']).toBeTruthy();
   });
 });
