@@ -31,7 +31,7 @@ export function configureSecurityHeaders(app: Express) {
           // Stripe elements require unsafe-inline for styles — acceptable tradeoff
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'", 'api.stripe.com', '*.supabase.co'],
+          connectSrc: ["'self'", 'api.stripe.com', '*.supabase.co', '*.ingest.sentry.io'],
           frameSrc: ["'self'", 'js.stripe.com', 'hooks.stripe.com'],
           fontSrc: ["'self'", 'https:', 'data:'],
         },

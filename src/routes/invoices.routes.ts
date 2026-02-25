@@ -110,7 +110,7 @@ router.get(
 
     const { data: invoices, error, count } = await query;
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     const total = count || 0;
     res.json({

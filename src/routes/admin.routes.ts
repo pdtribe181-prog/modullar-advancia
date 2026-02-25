@@ -153,7 +153,9 @@ router.get(
       query = query.eq('role', role);
     }
     if (search) {
-      query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
+      // Escape PostgREST special characters to prevent filter injection
+      const safeSearch = search.replace(/[().,\\]/g, '');
+      query = query.or(`email.ilike.%${safeSearch}%,full_name.ilike.%${safeSearch}%`);
     }
 
     const offset = (page - 1) * limit;
@@ -163,7 +165,7 @@ router.get(
       .range(offset, offset + limit - 1);
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({
@@ -196,7 +198,7 @@ router.get(
       .order('last_login', { ascending: false });
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({
@@ -259,7 +261,7 @@ router.put(
       .single();
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     // Log the action
@@ -322,7 +324,7 @@ router.get(
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     res.json({
       success: true,
@@ -361,7 +363,7 @@ router.get(
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
     if (!transaction) {
       throw AppError.notFound('Transaction not found');
     }
@@ -416,7 +418,7 @@ router.get(
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     res.json({
       success: true,
@@ -455,7 +457,7 @@ router.patch(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     // Log the action
     await supabase.from('compliance_logs').insert({
@@ -501,7 +503,7 @@ router.get(
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1);
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     res.json({
       success: true,
@@ -531,7 +533,7 @@ router.get(
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
     if (!provider?.stripe_account_id) {
       throw AppError.notFound('Provider has no Stripe account');
     }
@@ -580,7 +582,7 @@ router.get(
       .order('processed_at', { ascending: false })
       .range(offset, offset + limitNum - 1);
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     res.json({
       success: true,
@@ -623,7 +625,7 @@ router.get(
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1);
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     res.json({
       success: true,
@@ -657,7 +659,7 @@ router.get(
       .gte('created_at', startDate.toISOString())
       .eq('status', 'completed');
 
-    if (error) throw error;
+    if (error) throw AppError.internal();
 
     // Aggregate by day
     const dailyRevenue: Record<string, number> = {};
@@ -696,7 +698,9 @@ router.get(
     checks.supabase = {
       status: supabaseError ? 'error' : 'healthy',
       latency: Date.now() - supabaseStart,
-      error: supabaseError?.message,
+      ...(supabaseError && process.env.NODE_ENV !== 'production'
+        ? { error: supabaseError.message }
+        : {}),
     };
 
     // Check Stripe
@@ -711,7 +715,9 @@ router.get(
       checks.stripe = {
         status: 'error',
         latency: Date.now() - stripeStart,
-        error: stripeError instanceof Error ? stripeError.message : 'Unknown error',
+        ...(process.env.NODE_ENV !== 'production'
+          ? { error: stripeError instanceof Error ? stripeError.message : 'Unknown error' }
+          : {}),
       };
     }
 

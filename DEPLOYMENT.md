@@ -35,7 +35,8 @@
 1. SSH into the server:
 
    ```bash
-   ssh root@76.13.77.8
+   ssh advancia-vps
+   # or: ssh advancia@76.13.77.8
    ```
 
 2. Paste-run the full contents of `5-VPS-DEPLOY.sh`.
@@ -43,7 +44,7 @@
 3. Upload backend env (from your local machine):
 
    ```bash
-   scp 1-PAYLEDGER-BACKEND.env root@76.13.77.8:/var/www/advancia/.env
+   scp 1-PAYLEDGER-BACKEND.env advancia@76.13.77.8:/var/www/advancia/.env
    ```
 
 4. Reload and check logs:
@@ -219,11 +220,11 @@ npm run test:coverage
 
 ## 7. Custom Domain (Optional)
 
-### Frontend (Vercel)
+### Frontend (Cloudflare Pages)
 
-1. Vercel Dashboard → Settings → Domains
+1. Cloudflare Dashboard → Pages → Your project → Custom domains
 2. Add `app.advanciapayledger.com`
-3. DNS: `CNAME app → cname.vercel-dns.com`
+3. DNS: CNAME record is auto-configured by Cloudflare
 
 ### Backend (VPS)
 
@@ -240,7 +241,7 @@ npm run test:coverage
 - [x] Frontend deployed to Cloudflare Pages
 - [x] Backend deployed to VPS (PM2 + Nginx)
 - [x] Stripe webhook configured
-- [x] VITE_API_URL set in Vercel
+- [x] VITE_API_URL set in Cloudflare Pages
 - [x] Google OAuth enabled
 - [x] SMTP configured (Resend)
 - [x] Sentry monitoring enabled
@@ -316,8 +317,8 @@ Go to **Settings → Secrets and variables → Actions** and add:
 
 Deployments are automatic on push to `main`:
 
-- **Render** - Backend auto-deploys via GitHub integration
-- **Vercel** - Frontend auto-deploys via GitHub integration
+- **VPS** - Backend: SSH pull + build + PM2 reload (or use deploy script)
+- **Cloudflare Pages** - Frontend auto-deploys via GitHub integration
 
 ---
 

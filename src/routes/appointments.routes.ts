@@ -138,7 +138,7 @@ router.get('/providers', validateQuery(providersQuerySchema), asyncHandler(async
 
   const { data: providers, error } = await query;
 
-  if (error) throw error;
+  if (error) throw AppError.internal();
 
   res.json({
     success: true,
@@ -338,7 +338,7 @@ router.get('/my-appointments', authenticate, asyncHandler(async (req: Authentica
 
   const { data: appointments, error } = await query;
 
-  if (error) throw error;
+  if (error) throw AppError.internal();
 
   res.json({
     success: true,

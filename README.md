@@ -21,7 +21,7 @@
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
 - **Payments**: Stripe (card payments)
 - **Frontend**: React + Vite + TypeScript
-- **Hosting**: Render (API) + Vercel (Frontend)
+- **Hosting**: VPS with PM2 + Nginx (API) + Cloudflare Pages (Frontend)
 - **Monitoring**: Sentry
 - **Email**: Resend
 - **SMS**: Twilio
@@ -169,11 +169,11 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.
 ### Quick Deploy
 
 ```bash
-# Backend (Render auto-deploys from main branch)
-git push origin main
+# Backend (VPS) — SSH in and pull + rebuild
+ssh advancia-vps 'cd /var/www/advancia && git pull && npm ci && npm run build && pm2 reload advancia-api'
 
-# Frontend
-cd frontend && vercel --prod
+# Frontend (Cloudflare Pages auto-deploys from main branch)
+git push origin main
 ```
 
 ## Security Features

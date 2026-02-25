@@ -23,7 +23,7 @@ graph TB
     
     subgraph "CDN / Edge"
         CF[Cloudflare]
-        VERCEL[Vercel CDN]
+        CFPAGES[Cloudflare Pages]
     end
     
     subgraph "Frontend"
@@ -47,8 +47,8 @@ graph TB
     
     WEB --> CF
     MOBILE --> CF
-    CF --> VERCEL
-    VERCEL --> REACT
+    CF --> CFPAGES
+    CFPAGES --> REACT
     REACT --> NGINX
     NGINX --> PM2
     PM2 --> API
@@ -111,7 +111,7 @@ graph LR
             PM2 -.manages.-> API2
         end
         
-        subgraph "Vercel"
+        subgraph "Cloudflare Pages"
             FRONTEND[React SPA<br/>Static Assets]
         end
         

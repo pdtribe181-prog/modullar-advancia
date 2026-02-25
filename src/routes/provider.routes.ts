@@ -105,7 +105,7 @@ router.put('/me', authenticate, validateBody(updateProviderSchema), asyncHandler
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw AppError.internal();
 
   res.json({ success: true, data: { provider } });
 }));
@@ -158,7 +158,7 @@ router.get('/appointments', authenticate, validateQuery(appointmentsQuerySchema)
 
   const { data: appointments, error } = await query;
 
-  if (error) throw error;
+  if (error) throw AppError.internal();
 
   // Enrich with patient info
   const enrichedAppointments = await Promise.all(
@@ -486,7 +486,7 @@ router.get('/schedule', authenticate, validateQuery(scheduleQuerySchema), asyncH
     .order('appointment_date', { ascending: true })
     .order('appointment_time', { ascending: true });
 
-  if (error) throw error;
+  if (error) throw AppError.internal();
 
   // Group by date
   const schedule: Record<string, any[]> = {};

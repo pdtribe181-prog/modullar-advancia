@@ -402,10 +402,10 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] All dependencies updated
 - [x] npm audit shows 0 vulnerabilities
 - [x] Secrets not exposed in client-side code (verified: no API keys, service role keys, or secrets in frontend/src)
-- [ ] Error messages don't leak sensitive info
+- [x] Error messages don't leak sensitive info (sendErrorResponse env-aware, AppError.internal() generic in prod)
 - [ ] File upload validation implemented
 - [ ] File size limits enforced
-- [ ] Input sanitization on all user inputs
+- [x] Input sanitization on all user inputs (Zod validation on auth/admin/appointments/stripe/invoices/provider routes)
 - [ ] Output encoding prevents XSS
 - [x] SQL injection prevention (Supabase parameterized queries)
 - [x] Command injection prevention (no shell exec)
@@ -538,10 +538,10 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] DEV_SETUP.md for developers
 - [x] API documentation (Swagger) accessible at `/docs` (verified 200 OK)
 - [ ] Database schema documented
-- [ ] Environment variables documented
-- [ ] Deployment runbook created
-- [ ] Incident response plan documented
-- [ ] Disaster recovery plan documented
+- [x] Environment variables documented (.env.example + Zod validation in src/config/env.ts)
+- [x] Deployment runbook created (DEPLOYMENT_RUNBOOK.md)
+- [x] Incident response plan documented (in DEPLOYMENT_RUNBOOK.md §5)
+- [x] Disaster recovery plan documented (in DEPLOYMENT_RUNBOOK.md §8)
 
 ### User Documentation
 

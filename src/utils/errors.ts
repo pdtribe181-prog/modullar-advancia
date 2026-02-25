@@ -85,18 +85,15 @@ export function getErrorStatusCode(error: unknown): number {
  * Check if error is a Supabase error
  */
 export function isSupabaseError(error: unknown): error is { message: string; code: string } {
-  return (
-    error !== null &&
-    typeof error === 'object' &&
-    'message' in error &&
-    'code' in error
-  );
+  return error !== null && typeof error === 'object' && 'message' in error && 'code' in error;
 }
 
 /**
  * Check if error is a Stripe error
  */
-export function isStripeError(error: unknown): error is { type: string; message: string; code?: string } {
+export function isStripeError(
+  error: unknown
+): error is { type: string; message: string; code?: string } {
   return (
     error !== null &&
     typeof error === 'object' &&
@@ -107,16 +104,27 @@ export function isStripeError(error: unknown): error is { type: string; message:
 }
 
 /**
- * Send error response with consistent format
+ * Send error response with consistent format.
+ * In production, only intentional client-facing AppErrors with 4xx status expose their message.
+ * All 5xx errors and raw exceptions return a generic message to prevent information leaks.
  */
-export function sendErrorResponse(
-  res: Response,
-  error: unknown,
-  requestId?: string
-): Response {
-  const message = getErrorMessage(error);
+export function sendErrorResponse(res: Response, error: unknown, requestId?: string): Response {
   const statusCode = getErrorStatusCode(error);
-  
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Determine the message to send to the client
+  let message: string;
+  if (error instanceof AppError && statusCode < 500) {
+    // Developer-controlled client-facing message (4xx errors)
+    message = error.message;
+  } else if (!isProduction) {
+    // In development, show full error details for debugging
+    message = getErrorMessage(error);
+  } else {
+    // In production, never leak internal/5xx error details
+    message = 'An unexpected error occurred';
+  }
+
   const response: {
     success: false;
     error: string;
@@ -128,7 +136,8 @@ export function sendErrorResponse(
     error: message,
   };
 
-  if (error instanceof AppError) {
+  // Only expose error code/details for intentional 4xx AppErrors
+  if (error instanceof AppError && statusCode < 500) {
     if (error.code) response.code = error.code;
     if (error.details) response.details = error.details;
   }
@@ -164,6 +173,9 @@ export async function tryCatch<T>(
     const data = await fn();
     return { data, error: null };
   } catch (error) {
-    return { data: null, error: error instanceof Error ? error : new Error(getErrorMessage(error)) };
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error(getErrorMessage(error)),
+    };
   }
 }

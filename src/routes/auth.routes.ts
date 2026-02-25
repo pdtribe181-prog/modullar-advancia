@@ -79,11 +79,11 @@ router.get(
           .single();
 
         if (createError) {
-          throw AppError.internal(createError.message);
+          throw AppError.internal();
         }
         return res.json({ success: true, data: newProfile });
       }
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({ success: true, data: profile });
@@ -120,7 +120,7 @@ router.put(
       .single();
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({ success: true, data: profile });
@@ -287,7 +287,7 @@ router.post(
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({ success: true, message: 'Logged out successfully' });
@@ -576,7 +576,7 @@ router.post(
     });
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({
@@ -695,7 +695,7 @@ router.get(
     const { data, error } = await supabase.auth.mfa.listFactors();
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({
@@ -727,7 +727,7 @@ router.delete(
     });
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     // Log MFA disabled and notify user
@@ -766,7 +766,7 @@ router.get(
     const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({
@@ -939,7 +939,7 @@ router.get(
     const { data: userData, error } = await supabase.auth.getUser();
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     const identities = userData.user?.identities || [];
@@ -1016,7 +1016,7 @@ router.delete(
     const { data: userData, error: userError } = await supabase.auth.getUser();
 
     if (userError) {
-      throw AppError.internal(userError.message);
+      throw AppError.internal();
     }
 
     const identities = userData.user?.identities || [];
@@ -1036,7 +1036,7 @@ router.delete(
     const { error } = await supabase.auth.unlinkIdentity(identity);
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({
@@ -1232,7 +1232,7 @@ router.get(
       .single();
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     const defaults = {
@@ -1274,7 +1274,7 @@ router.put(
       .eq('id', userId);
 
     if (error) {
-      throw AppError.internal(error.message);
+      throw AppError.internal();
     }
 
     res.json({
