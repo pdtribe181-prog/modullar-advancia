@@ -213,6 +213,7 @@ ssh advancia-vps 'cd /var/www/advancia && git pull && npm ci && npm run build &&
 - Render blueprint file: [render.yaml](render.yaml)
 - Service target: `modullar-advancia.onrender.com`
 - Recommended DNS: `api-staging.advanciapayledger.com` CNAME to Render target (proxied via Cloudflare)
+- Operational guide: [STAGING_RUNBOOK.md](STAGING_RUNBOOK.md)
 
 ## DNS Configuration (Cloudflare)
 
