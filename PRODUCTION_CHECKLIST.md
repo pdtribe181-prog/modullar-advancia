@@ -584,7 +584,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 ### Customer Support
 
-- [ ] Support email configured: support@advanciapayledger.com
+- [ ] Support email configured: <support@advanciapayledger.com>
 - [ ] Support ticket system set up (optional)
 - [ ] Support team trained
 - [ ] Escalation process defined
@@ -683,6 +683,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 2. **Minute 0-5**: Notify team, assess severity
 3. **Minute 5-15**: Decision to fix forward or rollback
 4. **Rollback procedure**:
+
    ```bash
    # On VPS
    cd /var/www/advancia
@@ -691,6 +692,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
    npm run build
    pm2 reload ecosystem.config.cjs
    ```
+
 5. **Database rollback** (if needed):
    - Restore from Supabase backup
    - Verify data integrity
@@ -734,12 +736,12 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 | Role | Contact | Availability |
 |------|---------|--------------|
-| On-Call Engineer | contact@example.com | 24/7 |
-| DevOps Lead | contact@example.com | Business hours |
-| Security Team | security@advanciapayledger.com | 24/7 |
-| Supabase Support | https://supabase.com/support | 24/7 (Enterprise) |
-| Stripe Support | https://support.stripe.com | 24/7 |
-| Hostinger Support | https://www.hostinger.com/contact | 24/7 |
+| On-Call Engineer | <contact@example.com> | 24/7 |
+| DevOps Lead | <contact@example.com> | Business hours |
+| Security Team | <security@advanciapayledger.com> | 24/7 |
+| Supabase Support | <https://supabase.com/support> | 24/7 (Enterprise) |
+| Stripe Support | <https://support.stripe.com> | 24/7 |
+| Hostinger Support | <https://www.hostinger.com/contact> | 24/7 |
 
 ---
 

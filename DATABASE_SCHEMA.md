@@ -52,7 +52,8 @@
 
 ## Entity Relationship Summary
 
-```
+```mermaid
+graph TD
 auth.users (Supabase Auth)
   └─── user_profiles (1:1, id = auth.users.id)
          ├─── patients (1:1 via user_id)

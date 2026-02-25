@@ -1,14 +1,15 @@
 # 🚀 IMMEDIATE ACTION PLAN - COMPLETE MIGRATIONS NOW
 
 ## ✅ Your System Status
-- ✅ Backend running on http://localhost:3000
+- ✅ Backend running on <http://localhost:3000>
 - ✅ Core database tables created (001-011)
 - ✅ 21 remaining migrations ready to execute
 
 ## 🎯 IMMEDIATE NEXT STEPS (30 minutes)
 
 ### Step 1: Open Supabase SQL Editor
-```
+
+```text
 https://supabase.com/dashboard/project/pikguczsvikzragmrojz/sql/new
 ```
 
@@ -38,7 +39,8 @@ https://supabase.com/dashboard/project/pikguczsvikzragmrojz/sql/new
 21. ✅ 030_performance_indexes.sql
 
 **For each migration:**
-```
+
+```text
 1. File location: c:\Users\mucha.DESKTOP-H7T9NPM\modullar-advancia\migrations\[filename]
 2. Open file in VS Code or text editor
 3. Copy ALL content
@@ -49,6 +51,7 @@ https://supabase.com/dashboard/project/pikguczsvikzragmrojz/sql/new
 ```
 
 ### Step 3: Verify Completion
+
 ```bash
 npm run test:connection
 ```
@@ -59,7 +62,7 @@ Database will be 100% configured and ready for production.
 ---
 
 ## 💡 Why Manual Execution?
-Supabase REST API cannot execute complex PostgreSQL procedural code (`DO $$ ... $$` blocks). 
+Supabase REST API cannot execute complex PostgreSQL procedural code (`DO $$ ... $$` blocks).
 Direct SQL Editor execution bypasses this limitation.
 
 ---
@@ -78,4 +81,4 @@ Direct SQL Editor execution bypasses this limitation.
 
 ---
 
-**Start now:** https://supabase.com/dashboard/project/pikguczsvikzragmrojz/sql/new
+**Start now:** <https://supabase.com/dashboard/project/pikguczsvikzragmrojz/sql/new>

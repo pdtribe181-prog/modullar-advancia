@@ -4,3 +4,12 @@
 .dockerignore
 .env*
 *.sql
+
+# Ignore dependency and generated content
+node_modules/
+frontend/node_modules/
+coverage/
+playwright-report/
+**/node_modules/**
+**/coverage/**
+**/playwright-report/**

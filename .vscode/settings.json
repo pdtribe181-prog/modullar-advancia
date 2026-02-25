@@ -3,7 +3,13 @@
     "*.sql": "plaintext",
     ".gcloudignore": "ignore"
   },
-  "markdownlint.ignore": [".gcloudignore", ".gitignore", ".dockerignore"],
+  "markdownlint.ignore": [
+    ".gcloudignore",
+    ".gitignore",
+    ".dockerignore",
+    "../.ssh/config",
+    "c:/Users/mucha.DESKTOP-H7T9NPM/.ssh/config"
+  ],
   "eslint.validate": ["typescript", "javascript"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"

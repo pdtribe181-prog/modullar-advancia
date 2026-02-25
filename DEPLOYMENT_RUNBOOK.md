@@ -53,7 +53,7 @@ ssh advancia-vps 'pm2 logs advancia-api --lines 20 --nostream'
 
 ### Run Migration via Supabase SQL Editor
 
-1. Go to https://supabase.com/dashboard → SQL Editor
+1. Go to <https://supabase.com/dashboard> → SQL Editor
 2. Copy-paste the migration SQL file
 3. Run and verify output
 
@@ -130,7 +130,7 @@ ssh advancia-vps 'pm2 logs advancia-api --err --lines 50 --nostream'
 
 ### Sentry
 
-- Dashboard: https://sentry.io (check project `modullar-advancia`)
+- Dashboard: <https://sentry.io> (check project `modullar-advancia`)
 - Alerts are configured for error spikes
 
 ### Health Check Cron
@@ -164,17 +164,17 @@ A cron job runs every 5 minutes to check API health and auto-restart PM2 if down
 
 ### P1 — Payment Processing Failure
 
-1. **Check Stripe status**: https://status.stripe.com
+1. **Check Stripe status**: <https://status.stripe.com>
 2. **Check webhook delivery**: Stripe Dashboard → Developers → Webhooks
 3. **Check API logs for Stripe errors**: `ssh advancia-vps 'pm2 logs advancia-api --lines 100 --nostream | grep -i stripe'`
 4. **Verify Stripe key alignment**: `ssh advancia-vps 'grep STRIPE .env'`
 
 ### P1 — Database Unreachable
 
-1. **Check Supabase status**: https://status.supabase.com
+1. **Check Supabase status**: <https://status.supabase.com>
 2. **Check health endpoint**: `curl -s https://api.advanciapayledger.com/health | jq .checks.supabase`
 3. **Verify connection string**: `ssh advancia-vps 'grep SUPABASE_URL .env'`
-4. **Check Supabase dashboard**: https://supabase.com/dashboard
+4. **Check Supabase dashboard**: <https://supabase.com/dashboard>
 
 ---
 

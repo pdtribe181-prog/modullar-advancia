@@ -1,0 +1,12 @@
+{
+  "globs": [
+    "**/*.md",
+    "!**/node_modules/**",
+    "!coverage/**",
+    "!playwright-report/**",
+    "!.github/**",
+  ],
+  "config": {
+    "default": true,
+  },
+}
