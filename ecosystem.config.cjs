@@ -3,6 +3,7 @@ module.exports = {
     {
       name: "advancia-api",
       script: "./dist/server.js",
+      cwd: "/var/www/advancia",
       instances: "max", // Use all available CPU cores
       exec_mode: "cluster", // Cluster mode for load balancing
       env: {
