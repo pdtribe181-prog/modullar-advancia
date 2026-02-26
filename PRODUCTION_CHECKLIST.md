@@ -1,7 +1,7 @@
 # Production Pre-Flight Checklist
 
-**Date**: February 25, 2026 (Updated)  
-**Project**: Modullar Advancia (Advancia PayLedger)  
+**Date**: February 25, 2026 (Updated)
+**Project**: Modullar Advancia (Advancia PayLedger)
 **Version**: 1.0.0
 
 ---
@@ -20,14 +20,17 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 - [x] Staging API hostname defined (`api-staging.advanciapayledger.com`)
 - [x] Staging Render service configured (`modullar-advancia.onrender.com`)
+- [x] Staging custom domain added to Render service
+- [x] Cloudflare DNS configured (DNS-only mode, bypasses WAF)
 - [x] `.env.staging.example` documented in repository
+- [x] Staging smoke tests pass (DNS, HTTPS, `/health` endpoint validated)
 - [ ] Dedicated Supabase staging project confirmed
 - [ ] Staging `SUPABASE_URL` configured in Render
 - [ ] Staging `SUPABASE_ANON_KEY` configured in Render
 - [ ] Staging `SUPABASE_SERVICE_ROLE_KEY` configured in Render
 - [ ] Staging migrations applied and verified
 - [ ] Staging webhook secrets separated from production
-- [ ] Staging smoke tests pass (`/health`, auth, payments-test flow)
+- [ ] Full staging functional tests pass (auth, payments-test flow)
 
 ### Backend Environment Variables
 
@@ -764,8 +767,8 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 ---
 
-**Completion Date**: _______________  
-**Go-Live Date**: _______________  
+**Completion Date**: _______________
+**Go-Live Date**: _______________
 **Post-Launch Review Date**: _______________
 
 ---
