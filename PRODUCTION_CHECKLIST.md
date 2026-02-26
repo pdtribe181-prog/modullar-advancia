@@ -16,6 +16,13 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 ## 1. Environment Configuration
 
+### Secrets & Config Stores (ACTION)
+- [ ] GitHub Actions repository secrets set (CI/E2E): `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SENTRY_DSN`
+- [ ] VPS/PM2 `.env` matches production values: Supabase URLs/keys, Stripe keys+webhook, Resend, Twilio, Redis/Upstash, Sentry, `FRONTEND_URL`, CORS origins
+- [ ] Frontend build env (Vite) set: `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SENTRY_DSN`
+- [ ] Cloudflare Pages/Workers (if used) carry the same Stripe/Supabase/Sentry secrets
+- [ ] Secrets stored in password manager/backup vault and rotated from dev values
+
 ### Staging Readiness (Render + Supabase)
 
 - [x] Staging API hostname defined (`api-staging.advanciapayledger.com`)
