@@ -853,7 +853,7 @@ router.post(
     const { email } = req.body;
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.APP_URL || 'http://localhost:3000'}/reset-password`,
+      redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password`,
     });
 
     if (error) {
@@ -974,7 +974,7 @@ router.post(
   validateBody(linkIdentitySchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { provider } = req.body;
-    const redirectTo = `${process.env.APP_URL || 'http://localhost:3000'}/auth/callback`;
+    const redirectTo = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback`;
 
     const { data, error } = await supabase.auth.linkIdentity({
       provider,

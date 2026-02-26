@@ -4,11 +4,14 @@ import { useAuth } from '../providers/AuthProvider';
 
 /**
  * Handles OAuth callback redirects (e.g., Google sign-in).
- * Extracts session from URL hash/params and redirects to dashboard.
+ * Supabase appends the session to the URL hash after OAuth:
+ *   #access_token=xxx&expires_in=3600&token_type=bearer&type=bearer
+ * We extract the token, hydrate auth state via setTokenFromOAuth, then
+ * redirect to the dashboard.
  */
 export function AuthCallback() {
   const navigate = useNavigate();
-  const { refreshSession, loading } = useAuth();
+  const { setTokenFromOAuth, refreshSession, loading } = useAuth();
   const [searchParams] = useSearchParams();
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
@@ -16,11 +19,21 @@ export function AuthCallback() {
   useEffect(() => {
     if (error) return;
 
-    // Supabase puts the session in the URL hash after OAuth redirects.
-    // The Supabase client auto-detects it, so we just refresh the session.
     const handleCallback = async () => {
       try {
-        await refreshSession();
+        // Parse Supabase session from URL hash fragment
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const accessToken = hashParams.get('access_token');
+        const expiresIn = parseInt(hashParams.get('expires_in') || '3600', 10);
+
+        if (accessToken) {
+          // OAuth redirect: token is in the hash — hydrate auth state
+          await setTokenFromOAuth(accessToken, expiresIn);
+        } else {
+          // No hash token (e.g. page reload) — try restoring from localStorage
+          await refreshSession();
+        }
+
         navigate('/dashboard', { replace: true });
       } catch {
         navigate('/login?error=callback_failed', { replace: true });
@@ -28,7 +41,7 @@ export function AuthCallback() {
     };
 
     handleCallback();
-  }, [error, navigate, refreshSession]);
+  }, [error, navigate, setTokenFromOAuth, refreshSession]);
 
   if (error) {
     return (

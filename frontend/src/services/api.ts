@@ -1,6 +1,7 @@
 import { captureError } from '../lib/sentry';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+const hasExplicitApiBase = Boolean(import.meta.env.VITE_API_URL);
 
 /**
  * Custom API error with typed details
@@ -119,6 +120,11 @@ class ApiService {
     // Initialize token from localStorage if available
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('token');
+    }
+
+    if (!hasExplicitApiBase && typeof window !== 'undefined') {
+      // Helps catch misconfigured builds where VITE_API_URL is missing.
+      console.warn('[API] VITE_API_URL not set; defaulting to /api/v1');
     }
   }
 

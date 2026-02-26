@@ -39,7 +39,7 @@ import {
 } from './middleware/logging.middleware.js';
 import type { AuthenticatedRequest } from './types/express.types.js';
 import type { AuthenticatedRequest as AuthReqWithProfile } from './middleware/auth.middleware.js';
-import { getErrorMessage, sendErrorResponse, asyncHandler } from './utils/errors.js';
+import { getErrorMessage, sendErrorResponse, asyncHandler, AppError } from './utils/errors.js';
 import type { OpenAPIV3 } from 'openapi-types';
 import {
   initializeMonitoring,
@@ -199,7 +199,255 @@ apiRouter.patch(
     res.json({ success: true, data: profile });
   })
 );
+// ─── Transactions ─────────────────────────────────────────────────────────
+// GET /api/v1/transactions — list the authenticated user's transactions
+apiRouter.get(
+  '/transactions',
+  authenticateToken,
+  apiLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const limit = Math.min(parseInt(String(req.query.limit || '50'), 10), 200);
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
 
+    let transactions;
+    if (userRole === 'admin') {
+      // Admins can see all transactions
+      const { data, error } = await (
+        createServiceClient() as ReturnType<typeof createServiceClient>
+      )
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) throw AppError.internal('Failed to fetch transactions');
+      transactions = data;
+    } else if (userRole === 'provider') {
+      transactions = await apiServices.transactionsService.getByProvider(user.id);
+    } else {
+      transactions = await apiServices.transactionsService.getByPatient(user.id);
+    }
+
+    res.json({ success: true, data: transactions?.slice(0, limit) ?? [] });
+  })
+);
+
+// POST /api/v1/transactions/by-patient — also reachable under /api/v1
+apiRouter.post(
+  '/transactions/by-patient',
+  authenticateToken,
+  apiLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    const patientId =
+      userRole === 'admin' || userRole === 'provider' ? String(req.body.patientId) : user.id;
+    const transactions = await apiServices.transactionsService.getByPatient(patientId);
+    res.json({ success: true, data: transactions });
+  })
+);
+
+// POST /api/v1/transactions/by-provider
+apiRouter.post(
+  '/transactions/by-provider',
+  authenticateToken,
+  apiLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    const providerId = userRole === 'admin' ? String(req.body.providerId) : user.id;
+    const transactions = await apiServices.transactionsService.getByProvider(providerId);
+    res.json({ success: true, data: transactions });
+  })
+);
+
+// POST /api/v1/transactions — create
+apiRouter.post(
+  '/transactions',
+  authenticateToken,
+  paymentLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const transaction = await apiServices.transactionsService.create(req.body);
+    res.status(201).json({ success: true, data: transaction });
+  })
+);
+
+// ─── Notifications ─────────────────────────────────────────────────────────
+apiRouter.get(
+  '/notifications',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const notifications = await apiServices.notificationsService.getUnread(user.id);
+    res.json({ success: true, data: notifications });
+  })
+);
+
+apiRouter.patch(
+  '/notifications/:id/read',
+  authenticateToken,
+  validateParams(idParams),
+  asyncHandler(async (req: Request, res: Response) => {
+    const notification = await apiServices.notificationsService.markAsRead(String(req.params.id));
+    res.json({ success: true, data: notification });
+  })
+);
+
+// ─── Disputes ──────────────────────────────────────────────────────────────
+apiRouter.get(
+  '/disputes',
+  authenticateToken,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const disputes = await apiServices.disputesService.getAll();
+    res.json({ success: true, data: disputes });
+  })
+);
+
+apiRouter.get(
+  '/disputes/:id',
+  authenticateToken,
+  validateParams(idParams),
+  asyncHandler(async (req: Request, res: Response) => {
+    const dispute = await apiServices.disputesService.getById(String(req.params.id));
+    res.json({ success: true, data: dispute });
+  })
+);
+
+apiRouter.post(
+  '/disputes',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const dispute = await apiServices.disputesService.create(req.body);
+    res.status(201).json({ success: true, data: dispute });
+  })
+);
+
+// ─── Providers ─────────────────────────────────────────────────────────────
+apiRouter.get(
+  '/providers',
+  authenticateToken,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const providers = await apiServices.providersService.getAll();
+    res.json({ success: true, data: providers });
+  })
+);
+
+apiRouter.get(
+  '/providers/specialty/:specialty',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const providers = await apiServices.providersService.getBySpecialty(
+      String(req.params.specialty)
+    );
+    res.json({ success: true, data: providers });
+  })
+);
+
+apiRouter.get(
+  '/providers/:id',
+  authenticateToken,
+  validateParams(idParams),
+  asyncHandler(async (req: Request, res: Response) => {
+    const provider = await apiServices.providersService.getById(String(req.params.id));
+    res.json({ success: true, data: provider });
+  })
+);
+
+// ─── Patients ──────────────────────────────────────────────────────────────
+apiRouter.get(
+  '/patients',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole === 'admin') {
+      const patients = await apiServices.patientsService.getAll();
+      return res.json({ success: true, data: patients });
+    }
+    const patient = await apiServices.patientsService.getById(user.id);
+    res.json({ success: true, data: patient ? [patient] : [] });
+  })
+);
+
+apiRouter.get(
+  '/patients/:id',
+  authenticateToken,
+  validateParams(idParams),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const patientId = String(req.params.id);
+    const userRole = (req as AuthReqWithProfile).userProfile?.role;
+    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
+      return res
+        .status(403)
+        .json({ success: false, error: 'Forbidden: cannot access other patient records' });
+    }
+    const patient = await apiServices.patientsService.getById(patientId);
+    res.json({ success: true, data: patient });
+  })
+);
+
+// ─── Webhooks ──────────────────────────────────────────────────────────────
+apiRouter.get(
+  '/webhooks',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const webhooks = await apiServices.webhooksService.getByUser(user.id);
+    res.json({ success: true, data: webhooks });
+  })
+);
+
+apiRouter.post(
+  '/webhooks',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const webhook = await apiServices.webhooksService.create({ ...req.body, user_id: user.id });
+    res.status(201).json({ success: true, data: webhook });
+  })
+);
+
+apiRouter.delete(
+  '/webhooks/:id',
+  authenticateToken,
+  validateParams(idParams),
+  asyncHandler(async (req: Request, res: Response) => {
+    await apiServices.webhooksService.delete(String(req.params.id));
+    res.status(204).send();
+  })
+);
+
+// ─── API Keys ──────────────────────────────────────────────────────────────
+apiRouter.get(
+  '/api-keys',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const apiKeys = await apiServices.apiKeysService.getByUser(user.id);
+    res.json({ success: true, data: apiKeys });
+  })
+);
+
+apiRouter.post(
+  '/api-keys',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req as AuthenticatedRequest;
+    const apiKey = await apiServices.apiKeysService.create({ ...req.body, user_id: user.id });
+    res.status(201).json({ success: true, data: apiKey });
+  })
+);
+
+apiRouter.delete(
+  '/api-keys/:id',
+  authenticateToken,
+  validateParams(idParams),
+  asyncHandler(async (req: Request, res: Response) => {
+    await apiServices.apiKeysService.revoke(String(req.params.id));
+    res.status(204).send();
+  })
+);
 const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
   try {
     // Use service role to perform a real, lightweight PostgREST query.
@@ -234,357 +482,6 @@ app.get('/health', async (_req, res) => {
 if (swaggerDocument) {
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 }
-
-// Auth routes (REMOVED: duplicate weak routes — use /api/v1/auth/* instead)
-// The apiRouter versions in auth.routes.ts include validation, security logging,
-// user status checks, and MFA support that these duplicates lacked.
-
-// User profile routes
-app.get(
-  '/profile',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const profile = await apiServices.userProfilesService.getById(user.id);
-    res.json({ success: true, data: profile });
-  })
-);
-
-app.patch(
-  '/profile',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    // Whitelist allowed fields to prevent mass assignment (e.g., role escalation)
-    const { full_name, phone, avatar_url, date_of_birth, address } = req.body;
-    const allowedUpdates = Object.fromEntries(
-      Object.entries({ full_name, phone, avatar_url, date_of_birth, address }).filter(
-        ([, v]) => v !== undefined
-      )
-    );
-    const profile = await apiServices.userProfilesService.update(user.id, allowedUpdates);
-    res.json({ success: true, data: profile });
-  })
-);
-
-// Provider routes (authenticated — protects provider data exposure)
-app.get(
-  '/providers',
-  authenticateToken,
-  asyncHandler(async (_req: Request, res: Response) => {
-    const providers = await apiServices.providersService.getAll();
-    res.json({ success: true, data: providers });
-  })
-);
-
-app.get(
-  '/providers/:id',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const provider = await apiServices.providersService.getById(String(req.params.id));
-    res.json({ success: true, data: provider });
-  })
-);
-
-app.get(
-  '/providers/specialty/:specialty',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const providers = await apiServices.providersService.getBySpecialty(
-      String(req.params.specialty)
-    );
-    res.json({ success: true, data: providers });
-  })
-);
-
-// Patient routes (requires auth + IDOR protection)
-app.get(
-  '/patients',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    // Admins can list all; others only see their own patient record
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole === 'admin') {
-      const patients = await apiServices.patientsService.getAll();
-      return res.json({ success: true, data: patients });
-    }
-    const patient = await apiServices.patientsService.getById(user.id);
-    res.json({ success: true, data: patient ? [patient] : [] });
-  })
-);
-
-app.get(
-  '/patients/:id',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const patientId = String(req.params.id);
-    // IDOR protection: users can only access their own patient record (admins/providers exempt)
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
-      return res
-        .status(403)
-        .json({ success: false, error: 'Forbidden: cannot access other patient records' });
-    }
-    const patient = await apiServices.patientsService.getById(patientId);
-    res.json({ success: true, data: patient });
-  })
-);
-
-// Appointment routes (with IDOR protection)
-app.get(
-  '/appointments/patient/:patientId',
-  authenticateToken,
-  validateParams(patientIdParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const patientId = String(req.params.patientId);
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
-      return res.status(403).json({ success: false, error: 'Forbidden' });
-    }
-    const appointments = await apiServices.appointmentsService.getByPatient(patientId);
-    res.json({ success: true, data: appointments });
-  })
-);
-
-app.get(
-  '/appointments/provider/:providerId',
-  authenticateToken,
-  validateParams(providerIdParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const providerId = String(req.params.providerId);
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole !== 'admin' && user.id !== providerId) {
-      return res.status(403).json({ success: false, error: 'Forbidden' });
-    }
-    const appointments = await apiServices.appointmentsService.getByProvider(providerId);
-    res.json({ success: true, data: appointments });
-  })
-);
-
-app.post(
-  '/appointments',
-  authenticateToken,
-  apiLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const appointment = await apiServices.appointmentsService.create(req.body);
-    res.status(201).json({ success: true, data: appointment });
-  })
-);
-
-app.patch(
-  '/appointments/:id/status',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { status } = req.body;
-    const appointment = await apiServices.appointmentsService.updateStatus(
-      String(req.params.id),
-      status
-    );
-    res.json({ success: true, data: appointment });
-  })
-);
-
-// Transaction routes
-app.post(
-  '/transactions/by-patient',
-  authenticateToken,
-  apiLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { patientId } = req.body;
-    const transactions = await apiServices.transactionsService.getByPatient(String(patientId));
-    res.json({ success: true, data: transactions });
-  })
-);
-
-app.post(
-  '/transactions/by-provider',
-  authenticateToken,
-  apiLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { providerId } = req.body;
-    const transactions = await apiServices.transactionsService.getByProvider(String(providerId));
-    res.json({ success: true, data: transactions });
-  })
-);
-
-app.post(
-  '/transactions',
-  authenticateToken,
-  paymentLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const transaction = await apiServices.transactionsService.create(req.body);
-    res.status(201).json({ success: true, data: transaction });
-  })
-);
-
-// Invoice routes (with IDOR protection)
-app.get(
-  '/invoices/patient/:patientId',
-  authenticateToken,
-  validateParams(patientIdParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const patientId = String(req.params.patientId);
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
-      return res.status(403).json({ success: false, error: 'Forbidden' });
-    }
-    const invoices = await apiServices.invoicesService.getByPatient(patientId);
-    res.json({ success: true, data: invoices });
-  })
-);
-
-app.get(
-  '/invoices/provider/:providerId',
-  authenticateToken,
-  validateParams(providerIdParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const providerId = String(req.params.providerId);
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole !== 'admin' && user.id !== providerId) {
-      return res.status(403).json({ success: false, error: 'Forbidden' });
-    }
-    const invoices = await apiServices.invoicesService.getByProvider(providerId);
-    res.json({ success: true, data: invoices });
-  })
-);
-
-app.post(
-  '/invoices',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const invoice = await apiServices.invoicesService.create(req.body);
-    res.status(201).json({ success: true, data: invoice });
-  })
-);
-
-app.patch(
-  '/invoices/:id/status',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { status } = req.body;
-    const invoice = await apiServices.invoicesService.updateStatus(String(req.params.id), status);
-    res.json({ success: true, data: invoice });
-  })
-);
-
-// Notification routes
-app.get(
-  '/notifications',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const notifications = await apiServices.notificationsService.getUnread(user.id);
-    res.json({ success: true, data: notifications });
-  })
-);
-
-app.patch(
-  '/notifications/:id/read',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const notification = await apiServices.notificationsService.markAsRead(String(req.params.id));
-    res.json({ success: true, data: notification });
-  })
-);
-
-// Dispute routes
-app.get(
-  '/disputes',
-  authenticateToken,
-  asyncHandler(async (_req: Request, res: Response) => {
-    const disputes = await apiServices.disputesService.getAll();
-    res.json({ success: true, data: disputes });
-  })
-);
-
-app.get(
-  '/disputes/:id',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const dispute = await apiServices.disputesService.getById(String(req.params.id));
-    res.json({ success: true, data: dispute });
-  })
-);
-
-app.post(
-  '/disputes',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const dispute = await apiServices.disputesService.create(req.body);
-    res.status(201).json({ success: true, data: dispute });
-  })
-);
-
-// Webhook routes
-app.get(
-  '/webhooks',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const webhooks = await apiServices.webhooksService.getByUser(user.id);
-    res.json({ success: true, data: webhooks });
-  })
-);
-
-app.post(
-  '/webhooks',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const webhook = await apiServices.webhooksService.create({ ...req.body, user_id: user.id });
-    res.status(201).json({ success: true, data: webhook });
-  })
-);
-
-app.delete(
-  '/webhooks/:id',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    await apiServices.webhooksService.delete(String(req.params.id));
-    res.status(204).send();
-  })
-);
-
-// API Keys routes
-app.get(
-  '/api-keys',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const apiKeys = await apiServices.apiKeysService.getByUser(user.id);
-    res.json({ success: true, data: apiKeys });
-  })
-);
-
-app.post(
-  '/api-keys',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const apiKey = await apiServices.apiKeysService.create({ ...req.body, user_id: user.id });
-    res.status(201).json({ success: true, data: apiKey });
-  })
-);
-
-app.delete(
-  '/api-keys/:id',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    await apiServices.apiKeysService.revoke(String(req.params.id));
-    res.status(204).send();
-  })
-);
 
 // 404 handler (must be before error handler)
 app.use(notFoundHandler);

@@ -60,9 +60,13 @@ jobs:
         run: npm run test:coverage -- --ci --forceExit
         env:
           NODE_ENV: test
-          SUPABASE_URL: https://test.supabase.co
-          SUPABASE_ANON_KEY: test-anon-key
-          SUPABASE_SERVICE_ROLE_KEY: test-service-key
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-anon-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-service-key' }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_placeholder00000000000000' }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder00000000000000' }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_test_placeholder' }}
+          FRONTEND_URL: http://localhost:5173
 
       - name: Upload coverage report
         if: always()
@@ -107,6 +111,9 @@ jobs:
         env:
           VITE_API_URL: https://api.advanciapayledger.com/api/v1
           VITE_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+          VITE_SUPABASE_URL: https://test.supabase.co
+          VITE_SUPABASE_ANON_KEY: test-anon-key
+          VITE_SENTRY_DSN: ''
 
   security-scan:
     name: Security Scan

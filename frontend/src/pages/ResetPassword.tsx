@@ -1,22 +1,25 @@
 import { useState, FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 /**
  * Password reset page — user lands here from the email link.
- * Supabase appends `access_token` and `type=recovery` to the URL.
+ * Supabase appends `#access_token=xxx&type=recovery` to the URL.
+ * We extract the token, set it as the Bearer token, then call PUT /auth/password.
  */
 export function ResetPassword() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const tokenType = searchParams.get('type');
-  const hasToken = tokenType === 'recovery' || window.location.hash.includes('type=recovery');
+  // Supabase puts the recovery token in the URL hash fragment
+  const hashParams = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = hashParams.get('access_token');
+  const tokenType = hashParams.get('type');
+  const hasToken = tokenType === 'recovery' && !!accessToken;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -34,7 +37,9 @@ export function ResetPassword() {
 
     setLoading(true);
     try {
-      await api.post('/auth/update-password', { password });
+      // Authenticate with the recovery token before calling the protected endpoint
+      api.setToken(accessToken!);
+      await api.put('/auth/password', { password });
       setSuccess(true);
     } catch (err: any) {
       setError(err?.message || 'Failed to reset password. The link may have expired.');

@@ -83,6 +83,15 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     return;
   }
 
+  // SPA clients authenticating via Authorization: Bearer do not need CSRF tokens.
+  // CSRF attacks rely on the browser automatically sending credentials (cookies).
+  // A Bearer token in the Authorization header cannot be injected by a cross-origin
+  // attacker, so CSRF is already mitigated for these requests.
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    next();
+    return;
+  }
+
   const clientToken = req.headers['x-csrf-token'] as string | undefined;
   if (!clientToken) {
     logger.warn('CSRF token missing', { method: req.method, path: req.path });

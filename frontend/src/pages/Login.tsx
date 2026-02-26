@@ -16,6 +16,7 @@ export function Login() {
   const routeMode = useMemo(() => (location.pathname === '/signup' ? 'signup' : 'login'), [location.pathname]);
   const [isSignup, setIsSignup] = useState(routeMode === 'signup');
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
@@ -31,6 +32,7 @@ export function Login() {
 
   useEffect(() => {
     setIsSignup(routeMode === 'signup');
+    setFullName('');
     setFieldErrors([]);
     setError('');
     setOtpSent(false);
@@ -43,7 +45,7 @@ export function Login() {
 
     // Client-side validation
     const validation = isSignup
-      ? validateSignupForm({ email, password })
+      ? validateSignupForm({ email, password, fullName: fullName || undefined })
       : validateLoginForm({ email, password });
 
     if (!validation.success && validation.errors) {
@@ -55,7 +57,7 @@ export function Login() {
 
     try {
       if (isSignup) {
-        await signup(email, password);
+        await signup(email, password, fullName || undefined);
       } else {
         await login(email, password);
       }
@@ -108,6 +110,7 @@ export function Login() {
 
   const emailError = getFieldError(fieldErrors, 'email');
   const passwordError = getFieldError(fieldErrors, 'password');
+  const fullNameError = getFieldError(fieldErrors, 'fullName');
 
   return (
     <div className="login-page">
@@ -140,6 +143,23 @@ export function Login() {
         {/* Email Form */}
         {authMethod === 'email' && (
           <form onSubmit={handleEmailSubmit}>
+            {isSignup && (
+              <div className={`form-group ${fullNameError ? 'has-error' : ''}`}>
+                <label htmlFor="fullName">Full Name</label>
+                <input
+                  type="text"
+                  id="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  aria-invalid={!!fullNameError}
+                  aria-describedby={fullNameError ? 'fullName-error' : undefined}
+                  placeholder="Jane Doe"
+                  autoComplete="name"
+                />
+                {fullNameError && <span id="fullName-error" className="field-error">{fullNameError}</span>}
+              </div>
+            )}
+
             <div className={`form-group ${emailError ? 'has-error' : ''}`}>
               <label htmlFor="email">Email</label>
               <input

@@ -50,7 +50,7 @@ const appointmentsQuerySchema = z.object({
 });
 
 const earningsQuerySchema = z.object({
-  period: z.enum(['day', 'week', 'month', 'year']).default('month'),
+  period: z.coerce.number().int().min(1).max(365).default(30),
 });
 
 const scheduleQuerySchema = z.object({

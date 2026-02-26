@@ -14,9 +14,9 @@ $prodUrl = "https://api.advanciapayledger.com"
 $stagingUrl = "https://api-staging.advanciapayledger.com"
 $results = @{
     Security = @{}
-    API = @{}
-    Staging = @{}
-    Manual = @{}
+    API      = @{}
+    Staging  = @{}
+    Manual   = @{}
 }
 
 Write-Host "`n========================================" -ForegroundColor Cyan
@@ -41,16 +41,17 @@ try {
     $warningCount = ([regex]::Matches($secOutput, "⚠")).Count
     
     $results.Security = @{
-        Passed = $passedCount
-        Failed = $failedCount
+        Passed   = $passedCount
+        Failed   = $failedCount
         Warnings = $warningCount
-        Status = if ($failedCount -eq 0) { "PASS" } else { "FAIL" }
+        Status   = if ($failedCount -eq 0) { "PASS" } else { "FAIL" }
     }
     
     Write-Host "   ✓ Passed: $passedCount" -ForegroundColor Green
     if ($warningCount -gt 0) { Write-Host "   ⚠ Warnings: $warningCount" -ForegroundColor Yellow }
     if ($failedCount -gt 0) { Write-Host "   ✗ Failed: $failedCount" -ForegroundColor Red }
-} catch {
+}
+catch {
     $results.Security.Status = "ERROR"
     Write-Host "   ✗ Security verification error: $_" -ForegroundColor Red
 }
@@ -69,16 +70,17 @@ try {
     $warningCount = ([regex]::Matches($apiOutput, "⚠")).Count
     
     $results.API = @{
-        Passed = $passedCount
-        Failed = $failedCount
+        Passed   = $passedCount
+        Failed   = $failedCount
         Warnings = $warningCount
-        Status = if ($failedCount -le 4) { "PASS" } else { "FAIL" }  # 4 unimplemented endpoints expected
+        Status   = if ($failedCount -le 4) { "PASS" } else { "FAIL" }  # 4 unimplemented endpoints expected
     }
     
     Write-Host "   ✓ Passed: $passedCount" -ForegroundColor Green
     if ($warningCount -gt 0) { Write-Host "   ⚠ Warnings: $warningCount" -ForegroundColor Yellow }
     if ($failedCount -gt 0) { Write-Host "   ⚠ Failed: $failedCount (4 unimplemented endpoints expected)" -ForegroundColor Yellow }
-} catch {
+}
+catch {
     $results.API.Status = "ERROR"
     Write-Host "   ✗ API verification error: $_" -ForegroundColor Red
 }
@@ -103,7 +105,8 @@ try {
     
     Write-Host "   ✓ Passed: $passedCount" -ForegroundColor Green
     if ($failedCount -gt 0) { Write-Host "   ✗ Failed: $failedCount" -ForegroundColor Red }
-} catch {
+}
+catch {
     $results.Staging.Status = "ERROR"
     Write-Host "   ✗ Staging check error: $_" -ForegroundColor Red
 }
@@ -116,54 +119,54 @@ Write-Host "   Please confirm the following:`n" -ForegroundColor Gray
 
 $manualChecks = @(
     @{
-        Name = "Cloudflare SSL/TLS"
+        Name     = "Cloudflare SSL/TLS"
         Question = "Is SSL/TLS mode set to 'Full (Strict)' in Cloudflare?"
-        Check = "cloudflare_ssl"
+        Check    = "cloudflare_ssl"
     },
     @{
-        Name = "Cloudflare Bot Fight"
+        Name     = "Cloudflare Bot Fight"
         Question = "Is Bot Fight Mode enabled in Cloudflare?"
-        Check = "cloudflare_bot"
+        Check    = "cloudflare_bot"
     },
     @{
-        Name = "DMARC Record"
+        Name     = "DMARC Record"
         Question = "Is DMARC DNS record added (_dmarc TXT record)?"
-        Check = "dmarc"
+        Check    = "dmarc"
     },
     @{
-        Name = "Stripe Production"
+        Name     = "Stripe Production"
         Question = "Is Stripe account activated for production mode?"
-        Check = "stripe_prod"
+        Check    = "stripe_prod"
     },
     @{
-        Name = "Stripe Webhooks"
+        Name     = "Stripe Webhooks"
         Question = "Have you tested Stripe webhook delivery?"
-        Check = "stripe_webhook"
+        Check    = "stripe_webhook"
     },
     @{
-        Name = "Email Testing"
+        Name     = "Email Testing"
         Question = "Have you sent test emails via Resend?"
-        Check = "email_test"
+        Check    = "email_test"
     },
     @{
-        Name = "User Registration"
+        Name     = "User Registration"
         Question = "Have you tested full user registration flow?"
-        Check = "user_reg"
+        Check    = "user_reg"
     },
     @{
-        Name = "Authentication"
+        Name     = "Authentication"
         Question = "Have you tested login/logout flow?"
-        Check = "auth_flow"
+        Check    = "auth_flow"
     },
     @{
-        Name = "Secrets Audit"
+        Name     = "Secrets Audit"
         Question = "Have you verified all production secrets differ from dev?"
-        Check = "secrets"
+        Check    = "secrets"
     },
     @{
-        Name = "Backup Created"
+        Name     = "Backup Created"
         Question = "Have you backed up production .env file securely?"
-        Check = "backup"
+        Check    = "backup"
     }
 )
 
@@ -172,7 +175,7 @@ foreach ($check in $manualChecks) {
     $response = Read-Host "     (y/n)"
     
     $results.Manual[$check.Check] = @{
-        Name = $check.Name
+        Name   = $check.Name
         Status = if ($response -eq "y") { "YES" } else { "NO" }
     }
 }
@@ -189,21 +192,24 @@ Write-Host "AUTOMATED TESTS:" -ForegroundColor White
 Write-Host "  Security Verification: " -NoNewline
 if ($results.Security.Status -eq "PASS") {
     Write-Host "✓ PASS ($($results.Security.Passed)/$($results.Security.Passed + $results.Security.Failed))" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "✗ FAIL ($($results.Security.Passed)/$($results.Security.Passed + $results.Security.Failed))" -ForegroundColor Red
 }
 
 Write-Host "  API Endpoints:         " -NoNewline
 if ($results.API.Status -eq "PASS") {
     Write-Host "✓ PASS ($($results.API.Passed)/$($results.API.Passed + $results.API.Failed))" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "✗ FAIL ($($results.API.Passed)/$($results.API.Passed + $results.API.Failed))" -ForegroundColor Red
 }
 
 Write-Host "  Staging Environment:   " -NoNewline
 if ($results.Staging.Status -eq "PASS") {
     Write-Host "✓ PASS ($($results.Staging.Passed)/$($results.Staging.Passed + $results.Staging.Failed))" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "✗ FAIL ($($results.Staging.Passed)/$($results.Staging.Passed + $results.Staging.Failed))" -ForegroundColor Red
 }
 
@@ -219,7 +225,8 @@ foreach ($check in $results.Manual.GetEnumerator()) {
     if ($status -eq "YES") {
         Write-Host "  ✓ $name" -ForegroundColor Green
         $manualPassed++
-    } else {
+    }
+    else {
         Write-Host "  ✗ $name" -ForegroundColor Red
         $manualFailed++
     }
@@ -227,12 +234,12 @@ foreach ($check in $results.Manual.GetEnumerator()) {
 
 # Calculate Overall Status
 $automatedPass = ($results.Security.Status -eq "PASS") -and 
-                 ($results.API.Status -eq "PASS") -and 
-                 ($results.Staging.Status -eq "PASS")
+($results.API.Status -eq "PASS") -and 
+($results.Staging.Status -eq "PASS")
 
 $criticalManualPass = ($results.Manual.stripe_prod.Status -eq "YES") -and
-                      ($results.Manual.auth_flow.Status -eq "YES") -and
-                      ($results.Manual.secrets.Status -eq "YES")
+($results.Manual.auth_flow.Status -eq "YES") -and
+($results.Manual.secrets.Status -eq "YES")
 
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "OVERALL STATUS: " -NoNewline
@@ -242,7 +249,8 @@ if ($automatedPass -and $criticalManualPass) {
     Write-Host "========================================`n" -ForegroundColor Cyan
     Write-Host "All critical checks passed. Ready for production deployment!" -ForegroundColor Green
     exit 0
-} elseif ($automatedPass) {
+}
+elseif ($automatedPass) {
     Write-Host "🟡 MANUAL ITEMS PENDING" -ForegroundColor Yellow
     Write-Host "========================================`n" -ForegroundColor Cyan
     Write-Host "Automated tests passed, but manual items need completion:" -ForegroundColor Yellow
@@ -253,7 +261,8 @@ if ($automatedPass -and $criticalManualPass) {
         }
     }
     exit 1
-} else {
+}
+else {
     Write-Host "🔴 NO-GO" -ForegroundColor Red
     Write-Host "========================================`n" -ForegroundColor Cyan
     Write-Host "Critical issues found. Review logs above for details." -ForegroundColor Red

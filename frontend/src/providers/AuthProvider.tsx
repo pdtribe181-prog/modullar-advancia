@@ -77,9 +77,11 @@ interface AuthContextType {
   mfaRequired: boolean;
   mfaFactorId: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, role?: string) => Promise<void>;
+  signup: (email: string, password: string, fullName?: string, role?: string) => Promise<void>;
   logout: () => void;
   refreshSession: () => Promise<void>;
+  /** Hydrate auth state from an OAuth access_token (e.g. after Supabase redirect). */
+  setTokenFromOAuth: (accessToken: string, expiresIn?: number) => Promise<void>;
   // Phone auth
   sendPhoneOtp: (phone: string) => Promise<void>;
   verifyPhoneOtp: (phone: string, code: string) => Promise<void>;
@@ -260,10 +262,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuth(newToken, profileRes.data, expiresAt);
   };
 
-  const signup = async (email: string, password: string, role = 'patient') => {
+  const signup = async (email: string, password: string, fullName?: string, role = 'patient') => {
     const registerRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/register', {
       email,
       password,
+      fullName,
       role,
     });
 
@@ -292,6 +295,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshSession = useCallback(async () => {
     await validateSession();
   }, [validateSession]);
+
+  /**
+   * Set auth state from an OAuth redirect access_token.
+   * Called by AuthCallback after Supabase redirects back with the token in the URL hash.
+   */
+  const setTokenFromOAuth = useCallback(async (accessToken: string, expiresIn = 3600) => {
+    const expiresAt = Date.now() + expiresIn * 1000;
+    api.setToken(accessToken);
+    const profileRes = await api.get<ProfileResponse>('/profile');
+    setAuth(accessToken, profileRes.data, expiresAt);
+  }, [setAuth]);
 
   // Phone auth methods
   const sendPhoneOtp = async (phone: string) => {
@@ -360,6 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signup,
       logout,
       refreshSession,
+      setTokenFromOAuth,
       // Phone auth
       sendPhoneOtp,
       verifyPhoneOtp,
