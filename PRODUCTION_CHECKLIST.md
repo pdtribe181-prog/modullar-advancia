@@ -23,6 +23,22 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [ ] Cloudflare Pages/Workers (if used) carry the same Stripe/Supabase/Sentry secrets
 - [ ] Secrets stored in password manager/backup vault and rotated from dev values
 
+**GitHub CLI helper (replace placeholders):**
+```
+gh secret set STRIPE_SECRET_KEY --body "sk_live_..."
+gh secret set STRIPE_PUBLISHABLE_KEY --body "pk_live_..."
+gh secret set STRIPE_WEBHOOK_SECRET --body "whsec_..."
+gh secret set SUPABASE_URL --body "https://<project>.supabase.co"
+gh secret set SUPABASE_ANON_KEY --body "<anon>"
+gh secret set SUPABASE_SERVICE_ROLE_KEY --body "<service_role>"
+gh secret set RESEND_API_KEY --body "re_..."
+gh secret set TWILIO_ACCOUNT_SID --body "AC..."
+gh secret set TWILIO_AUTH_TOKEN --body "..."
+gh secret set UPSTASH_REDIS_REST_URL --body "https://...upstash.io"
+gh secret set UPSTASH_REDIS_REST_TOKEN --body "..."
+gh secret set SENTRY_DSN --body "https://..."
+```
+
 ### Staging Readiness (Render + Supabase)
 
 - [x] Staging API hostname defined (`api-staging.advanciapayledger.com`)
