@@ -63,6 +63,8 @@ This checklist ensures all systems are production-ready before go-live. Complete
 ### Security Verification
 
 - [x] No `.env` files committed to repository
+- [x] Production security verified (11/13 checks passed - see `scripts/verify-production-security.ps1`)
+- [x] Security headers configured (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
 - [ ] All production secrets rotated from development
 - [ ] Environment variables backed up securely
 - [ ] API keys follow principle of least privilege
@@ -135,10 +137,10 @@ This checklist ensures all systems are production-ready before go-live. Complete
 ### Email (Resend)
 
 - [x] Production API key obtained
-- [ ] Domain verified: `advanciapayledger.com`
-- [ ] SPF record configured
-- [ ] DKIM record configured
-- [ ] DMARC record configured
+- [x] Domain verified: `advanciapayledger.com`
+- [x] SPF record configured
+- [x] DKIM record configured
+- [ ] DMARC record configured (add: `v=DMARC1; p=quarantine; rua=mailto:dmarc@advanciapayledger.com`)
 - [ ] Email templates tested:
   - [ ] Welcome email
   - [ ] Password reset
@@ -265,21 +267,21 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [x] TXT record: DMARC
 
 **Cloudflare Settings**
-- [ ] SSL/TLS mode: Full (Strict)
+- [ ] SSL/TLS mode: Full (Strict) - **ACTION REQUIRED** (currently Full or Flexible)
 - [x] Always Use HTTPS: On
 - [ ] Automatic HTTPS Rewrites: On
-- [ ] HTTP Strict Transport Security: Enabled
+- [x] HTTP Strict Transport Security: Enabled (verified: max-age=31536000; includeSubDomains; preload)
 - [x] Minimum TLS Version: 1.2
 - [x] TLS 1.3: Enabled
 - [x] Universal SSL: Active
 
 **Security Settings**
-- [ ] Security level: Medium (adjust based on traffic)
-- [ ] Bot Fight Mode: Enabled
+- [ ] Security level: Medium (adjust based on traffic) - **ACTION REQUIRED**
+- [ ] Bot Fight Mode: Enabled - **ACTION REQUIRED**
 - [ ] Challenge passage: 30 minutes
 - [ ] Browser integrity check: On
-- [ ] Rate limiting rules configured
-- [ ] Firewall rules configured (if needed)
+- [ ] Rate limiting rules configured - **ACTION REQUIRED** (not detected in tests)
+- [ ] Firewall rules configured (optional, as needed)
 
 **Performance**
 - [ ] Caching level: Standard
