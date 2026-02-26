@@ -35,7 +35,7 @@ test.describe('API Health & Endpoints', () => {
   });
 
   test('API should have CORS headers', async ({ request }) => {
-    const origin = process.env.CORS_TEST_ORIGIN || 'https://advanciapayledger.com';
+    const origin = process.env.CORS_TEST_ORIGIN || 'http://localhost:5173';
     const response = await request.get(`${API_ROOT}/health`, {
       headers: {
         Origin: origin,
