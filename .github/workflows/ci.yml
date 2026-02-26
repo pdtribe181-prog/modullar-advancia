@@ -175,6 +175,8 @@ jobs:
           CI: true
           NODE_ENV: test
           PORT: 3000
+          FRONTEND_URL: http://localhost:5173
+          CORS_TEST_ORIGIN: http://localhost:5173
           # Use real secrets if present; otherwise fall back to safe placeholders.
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-anon-key' }}

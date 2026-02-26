@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: ['18', '20', '22']
+        node-version: ['20', '22']
 
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +88,7 @@ jobs:
           JWT_SECRET: test-jwt-secret-min-32-chars-long-enough
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./coverage/lcov.info
@@ -160,6 +160,8 @@ jobs:
           CI: true
           NODE_ENV: test
           PORT: 3000
+          FRONTEND_URL: http://localhost:5173
+          CORS_TEST_ORIGIN: http://localhost:5173
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-anon-key' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-service-key' }}
