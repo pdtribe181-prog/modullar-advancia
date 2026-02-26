@@ -58,15 +58,31 @@ Expected:
 - DNS resolves to Cloudflare-proxied IPs (if proxy ON) or Render target.
 - HTTPS responds `200` (or expected status), valid certificate chain.
 
-If Cloudflare returns `403` for staging `/health`, use automation script:
+If Cloudflare returns `403` for staging `/health`, choose one of the following:
+
+### Option A: Disable Cloudflare Proxy for Staging (Recommended for Free Plan)
+
+Staging doesn't need edge protection; bypass Cloudflare WAF/firewall:
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/) → **advanciapayledger.com**
+2. Navigate to **DNS** → **Records**
+3. Find `api-staging` record (CNAME pointing to Render)
+4. Click **Edit** → Toggle proxy status to **DNS only** (gray cloud icon)
+5. **Save**
+
+Staging traffic now bypasses Cloudflare edge, going directly to Render origin.
+
+### Option B: API Automation (Requires Pro Plan or Token with WAF Edit Permission)
 
 ```powershell
 # Check if allow rule exists
 ./scripts/cloudflare-allow-staging-health.ps1 -Mode Check
 
-# Create allow rule (requires CF_ZONE_ID + CF_API_TOKEN)
+# Create allow rule (requires CF_ZONE_ID + CF_API_TOKEN with WAF/firewall edit scope)
 ./scripts/cloudflare-allow-staging-health.ps1 -Mode Apply
 ```
+
+**Note:** Free plan tokens have limited API access for WAF/firewall rules. Automation requires Cloudflare Pro plan or higher.
 
 ## 5) Functional Smoke Tests
 
