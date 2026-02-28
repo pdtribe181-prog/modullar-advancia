@@ -6,37 +6,37 @@ Configure these rules at **Settings → Branches → Add branch protection rule*
 
 ## `main` Branch (Production)
 
-| Setting | Value |
-| --- | --- |
-| **Pattern** | `main` |
-| Require a pull request before merging | Yes |
-| Required approvals | 1 |
-| Dismiss stale reviews on new push | Yes |
-| Require review from code owners | Yes (if CODEOWNERS defined) |
-| Require status checks to pass | Yes |
-| Required checks | `lint`, `test-backend`, `test-frontend`, `All Tests Passed` |
-| Require up-to-date branch | Yes |
-| Require signed commits | Yes (recommended) |
-| Require linear history | Yes (squash merges) |
-| Include administrators | Yes |
-| Restrict who can push | `pdtribe181-prog`, GitHub Actions bot |
-| Allow force pushes | No |
-| Allow deletions | No |
+| Setting                               | Value                                                       |
+| ------------------------------------- | ----------------------------------------------------------- |
+| **Pattern**                           | `main`                                                      |
+| Require a pull request before merging | Yes                                                         |
+| Required approvals                    | 1                                                           |
+| Dismiss stale reviews on new push     | Yes                                                         |
+| Require review from code owners       | Yes (if CODEOWNERS defined)                                 |
+| Require status checks to pass         | Yes                                                         |
+| Required checks                       | `lint`, `test-backend`, `test-frontend`, `All Tests Passed` |
+| Require up-to-date branch             | Yes                                                         |
+| Require signed commits                | Yes (recommended)                                           |
+| Require linear history                | Yes (squash merges)                                         |
+| Include administrators                | Yes                                                         |
+| Restrict who can push                 | `pdtribe181-prog`, GitHub Actions bot                       |
+| Allow force pushes                    | No                                                          |
+| Allow deletions                       | No                                                          |
 
 ---
 
 ## `develop` Branch (Staging)
 
-| Setting | Value |
-| --- | --- |
-| **Pattern** | `develop` |
-| Require a pull request before merging | Yes |
-| Required approvals | 0 (self-merge allowed for solo dev) |
-| Require status checks to pass | Yes |
-| Required checks | `lint`, `test-backend`, `All Tests Passed` |
-| Require up-to-date branch | Yes |
-| Allow force pushes | No |
-| Allow deletions | No |
+| Setting                               | Value                                      |
+| ------------------------------------- | ------------------------------------------ |
+| **Pattern**                           | `develop`                                  |
+| Require a pull request before merging | Yes                                        |
+| Required approvals                    | 0 (self-merge allowed for solo dev)        |
+| Require status checks to pass         | Yes                                        |
+| Required checks                       | `lint`, `test-backend`, `All Tests Passed` |
+| Require up-to-date branch             | Yes                                        |
+| Allow force pushes                    | No                                         |
+| Allow deletions                       | No                                         |
 
 ---
 
@@ -59,7 +59,7 @@ main      → tag     (manual: git tag v1.2.3 && git push --tags)
 These job names must match exactly what appears in the CI workflow:
 
 - `Lint & Type Check`
-- `Backend Tests`  
+- `Backend Tests`
 - `Frontend Tests`
 - `All Tests Passed`
 - `Build`

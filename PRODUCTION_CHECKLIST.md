@@ -17,6 +17,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 ## 1. Environment Configuration
 
 ### Secrets & Config Stores (ACTION)
+
 - [ ] GitHub Actions repository secrets set (CI/E2E): `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SENTRY_DSN`
 - [ ] VPS/PM2 `.env` matches production values: Supabase URLs/keys, Stripe keys+webhook, Resend, Twilio, Redis/Upstash, Sentry, `FRONTEND_URL`, CORS origins
 - [ ] Frontend build env (Vite) set: `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SENTRY_DSN`
@@ -24,6 +25,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [ ] Secrets stored in password manager/backup vault and rotated from dev values
 
 **GitHub CLI helper (replace placeholders):**
+
 ```
 gh secret set STRIPE_SECRET_KEY --body "sk_live_..."
 gh secret set STRIPE_PUBLISHABLE_KEY --body "pk_live_..."
@@ -130,6 +132,7 @@ gh secret set SENTRY_DSN --body "https://..."
 ### Stripe Configuration
 
 **Payment Processing**
+
 - [ ] Stripe account in production mode
 - [ ] Business details completed
 - [ ] Bank account verified
@@ -138,6 +141,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Tax calculation configured (if applicable)
 
 **Stripe Connect (Providers)**
+
 - [ ] Connect platform activated
 - [ ] Platform fee structure defined
 - [ ] Payout schedule configured
@@ -145,6 +149,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Express account application reviewed
 
 **Webhooks**
+
 - [x] Production webhook endpoint added: `https://api.advanciapayledger.com/api/v1/stripe/webhook`
 - [x] Webhook signing secret obtained
 - [x] Events subscribed (34 events covering all handled types)
@@ -217,6 +222,7 @@ gh secret set SENTRY_DSN --body "https://..."
 ### VPS (Hostinger - 76.13.77.8)
 
 **Initial Setup**
+
 - [x] SSH access verified
 - [x] Root password changed
 - [x] Non-root user created with sudo (`advancia` user, owns /var/www/advancia)
@@ -226,6 +232,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Automatic security updates enabled (unattended-upgrades)
 
 **Software Installation**
+
 - [x] Node.js v24.13.1 installed
 - [x] npm updated to latest
 - [x] PM2 installed globally
@@ -235,6 +242,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Build tools installed (gcc, make, etc.)
 
 **Firewall Configuration**
+
 - [x] UFW enabled
 - [x] SSH port allowed (22)
 - [x] HTTP allowed (80)
@@ -243,6 +251,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Rate limiting configured for SSH (fail2ban)
 
 **Application Deployment**
+
 - [x] Repository cloned to `/var/www/advancia`
 - [x] Dependencies installed (`npm ci --production`)
 - [x] Application built (`npm run build`)
@@ -253,6 +262,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] PM2 startup script enabled
 
 **Nginx Configuration**
+
 - [x] Nginx configuration file created
 - [x] Server block configured for API subdomain
 - [x] Proxy headers set correctly (trust proxy)
@@ -265,6 +275,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Nginx reloaded
 
 **SSL/TLS Setup**
+
 - [x] Certbot certificates obtained (advanciapayledger.com + api.advanciapayledger.com)
 - [x] Auto-renewal configured (daily at 3am cron)
 - [x] HTTPS redirect enabled
@@ -276,11 +287,13 @@ gh secret set SENTRY_DSN --body "https://..."
 ### DNS (Cloudflare)
 
 **Domain Configuration**
+
 - [x] Domain added to Cloudflare
 - [x] Nameservers updated at registrar
 - [x] DNS propagation verified
 
 **DNS Records**
+
 - [x] A record: `api.advanciapayledger.com` → `76.13.77.8` (Proxy ON)
 - [ ] CNAME record: `www` → `advanciapayledger.com`
 - [ ] A/CNAME record: `app` → Hostinger VPS or selected app host
@@ -290,6 +303,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] TXT record: DMARC
 
 **Cloudflare Settings**
+
 - [ ] SSL/TLS mode: Full (Strict) - **ACTION REQUIRED** (currently Full or Flexible)
 - [x] Always Use HTTPS: On
 - [ ] Automatic HTTPS Rewrites: On
@@ -299,6 +313,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Universal SSL: Active
 
 **Security Settings**
+
 - [ ] Security level: Medium (adjust based on traffic) - **ACTION REQUIRED**
 - [ ] Bot Fight Mode: Enabled - **ACTION REQUIRED**
 - [ ] Challenge passage: 30 minutes
@@ -307,6 +322,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Firewall rules configured (optional, as needed)
 
 **Performance**
+
 - [ ] Caching level: Standard
 - [ ] Browser cache TTL: Respect existing headers
 - [ ] Auto Minify: HTML, CSS, JS
@@ -331,12 +347,14 @@ gh secret set SENTRY_DSN --body "https://..."
 ### Backend API Testing
 
 **Health Checks**
+
 - [x] `GET /health` returns 200 OK
 - [x] Database connection verified
 - [x] Monitoring service connected
 - [x] Redis connection verified (Upstash)
 
 **Core API (11/15 endpoints validated via `scripts/test-production-api.ps1`)**
+
 - [x] Authentication endpoints secured (register/login require data, logout requires auth)
 - [x] Admin endpoints properly protected (401 without authentication)
 - [x] Stripe webhook endpoint exists (returns 500 without signature - expected)
@@ -345,12 +363,14 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] JSON content-type headers configured
 
 **Endpoints Not Yet Implemented (expected at launch):**
+
 - [x] `POST /api/v1/auth/forgot-password` — Implemented (alias for `/auth/password/reset`)
 - [x] `POST /api/v1/connect/account` — Implemented (creates Stripe Connect account)
 - [x] `POST /api/v1/connect/account-link` — Implemented (generates onboarding link)
 - [x] `GET /api/v1/provider` — Implemented (paginated list with search/filter)
 
 **Authentication Endpoints**
+
 - [x] User registration endpoint exists
 - [ ] Email verification works
 - [x] Login endpoint exists (password)
@@ -362,6 +382,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] MFA verification works
 
 **Payment Endpoints**
+
 - [ ] Create payment intent works
 - [ ] Retrieve payment intent works
 - [ ] Confirm payment works
@@ -371,6 +392,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Webhook signature verification works
 
 **Provider Endpoints**
+
 - [ ] Provider onboarding flow works
 - [ ] Stripe Connect account creation works
 - [ ] Account link generation works
@@ -378,12 +400,14 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Balance retrieval works
 
 **Admin Endpoints**
+
 - [ ] Dashboard stats accessible (admin only)
 - [ ] Transaction list accessible
 - [ ] Dispute management works
 - [ ] Analytics reports generate
 
 **Security Testing**
+
 - [ ] Unauthorized requests return 401
 - [ ] Forbidden actions return 403
 - [x] CSRF protection active (Synchronizer Token Pattern via Redis, X-CSRF-Token header)
@@ -395,6 +419,7 @@ gh secret set SENTRY_DSN --body "https://..."
 ### Frontend Testing
 
 **Page Load Testing**
+
 - [ ] Home page loads
 - [ ] Login page loads
 - [ ] Dashboard loads (authenticated)
@@ -403,6 +428,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Admin console loads
 
 **User Flows**
+
 - [ ] User registration flow completes
 - [ ] User login flow completes
 - [ ] Password reset flow completes
@@ -412,6 +438,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Provider onboarding works
 
 **Browser Compatibility**
+
 - [ ] Chrome (latest)
 - [ ] Firefox (latest)
 - [ ] Safari (latest)
@@ -420,6 +447,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Mobile Safari
 
 **Performance**
+
 - [ ] Lighthouse score > 90 (Performance)
 - [ ] Lighthouse score > 90 (Accessibility)
 - [ ] Lighthouse score > 90 (Best Practices)
@@ -720,17 +748,20 @@ gh secret set SENTRY_DSN --body "https://..."
 ### If Issues Are Detected Post-Launch
 
 **Level 1: Minor Issues (non-critical)**
+
 - Monitor closely
 - Create hotfix if necessary
 - Deploy during maintenance window
 
 **Level 2: Moderate Issues (affecting some users)**
+
 1. Put system in maintenance mode
 2. Investigate root cause
 3. Apply hotfix or rollback to previous version
 4. Communicate with affected users
 
 **Level 3: Critical Issues (system down or data corruption)**
+
 1. **Immediate**: Enable maintenance mode
 2. **Minute 0-5**: Notify team, assess severity
 3. **Minute 5-15**: Decision to fix forward or rollback
@@ -760,40 +791,40 @@ gh secret set SENTRY_DSN --body "https://..."
 ### Technical Team
 
 - [ ] **Backend Lead**: Verified all backend systems operational
-  - Name: _______________ Date: _______________
+  - Name: ******\_\_\_****** Date: ******\_\_\_******
 
 - [ ] **Frontend Lead**: Verified all frontend systems operational
-  - Name: _______________ Date: _______________
+  - Name: ******\_\_\_****** Date: ******\_\_\_******
 
 - [ ] **DevOps Lead**: Verified all infrastructure operational
-  - Name: _______________ Date: _______________
+  - Name: ******\_\_\_****** Date: ******\_\_\_******
 
 - [ ] **QA Lead**: Verified all testing completed successfully
-  - Name: _______________ Date: _______________
+  - Name: ******\_\_\_****** Date: ******\_\_\_******
 
 - [ ] **Security Lead**: Verified security audit completed
-  - Name: _______________ Date: _______________
+  - Name: ******\_\_\_****** Date: ******\_\_\_******
 
 ### Management
 
 - [ ] **Product Manager**: Approved for production launch
-  - Name: _______________ Date: _______________
+  - Name: ******\_\_\_****** Date: ******\_\_\_******
 
 - [ ] **CTO/Technical Director**: Final approval
-  - Name: _______________ Date: _______________
+  - Name: ******\_\_\_****** Date: ******\_\_\_******
 
 ---
 
 ## 14. Support Contacts
 
-| Role | Contact | Availability |
-|------|---------|--------------|
-| On-Call Engineer | <contact@example.com> | 24/7 |
-| DevOps Lead | <contact@example.com> | Business hours |
-| Security Team | <security@advanciapayledger.com> | 24/7 |
-| Supabase Support | <https://supabase.com/support> | 24/7 (Enterprise) |
-| Stripe Support | <https://support.stripe.com> | 24/7 |
-| Hostinger Support | <https://www.hostinger.com/contact> | 24/7 |
+| Role              | Contact                             | Availability      |
+| ----------------- | ----------------------------------- | ----------------- |
+| On-Call Engineer  | <contact@example.com>               | 24/7              |
+| DevOps Lead       | <contact@example.com>               | Business hours    |
+| Security Team     | <security@advanciapayledger.com>    | 24/7              |
+| Supabase Support  | <https://supabase.com/support>      | 24/7 (Enterprise) |
+| Stripe Support    | <https://support.stripe.com>        | 24/7              |
+| Hostinger Support | <https://www.hostinger.com/contact> | 24/7              |
 
 ---
 
@@ -808,13 +839,14 @@ gh secret set SENTRY_DSN --body "https://..."
 
 ---
 
-**Completion Date**: _______________
-**Go-Live Date**: _______________
-**Post-Launch Review Date**: _______________
+**Completion Date**: ******\_\_\_******
+**Go-Live Date**: ******\_\_\_******
+**Post-Launch Review Date**: ******\_\_\_******
 
 ---
 
 **Notes**:
+
 - This checklist should be updated after each deployment
 - Items marked with [x] are verified complete
 - Items marked with [ ] require action

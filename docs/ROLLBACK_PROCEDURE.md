@@ -4,12 +4,12 @@
 
 ## Quick Reference
 
-| Step | Command | When |
-|------|---------|------|
-| Identify the bad deploy | `pm2 logs --lines 200` | Immediately after detecting issue |
-| Rollback backend | `git checkout <last-good-sha> && npm ci && npm run build && pm2 reload ecosystem.config.cjs` | < 5 min |
-| Rollback frontend | Revert Cloudflare Pages deployment from dashboard | < 2 min |
-| Rollback database | Supabase PITR (point-in-time recovery) | 5–30 min |
+| Step                    | Command                                                                                      | When                              |
+| ----------------------- | -------------------------------------------------------------------------------------------- | --------------------------------- |
+| Identify the bad deploy | `pm2 logs --lines 200`                                                                       | Immediately after detecting issue |
+| Rollback backend        | `git checkout <last-good-sha> && npm ci && npm run build && pm2 reload ecosystem.config.cjs` | < 5 min                           |
+| Rollback frontend       | Revert Cloudflare Pages deployment from dashboard                                            | < 2 min                           |
+| Rollback database       | Supabase PITR (point-in-time recovery)                                                       | 5–30 min                          |
 
 ---
 
@@ -53,6 +53,7 @@ curl -s http://localhost:3000/health | jq .status
 ```
 
 ### Timing
+
 - Steps 1-6: **~2 minutes**
 - DNS/CDN cache may add 30-60s propagation
 
@@ -106,11 +107,13 @@ npx tsx scripts/run-migration-rest.ts migrations/012_seed_data.sql
 ## 5. Frontend Rollback
 
 ### Cloudflare Pages
+
 1. Go to **Cloudflare Dashboard** → Pages → `advanciapayledger` project
 2. Click **Deployments**
 3. Find the last good deployment → click **⋯** → **Rollback to this deploy**
 
 ### Manual Build
+
 ```bash
 cd frontend
 git checkout <GOOD_SHA>
@@ -121,6 +124,7 @@ npm ci && npm run build
 ## 6. Stripe Webhook Rollback
 
 If webhook endpoint URL changed:
+
 1. Go to **Stripe Dashboard** → Developers → Webhooks
 2. Update endpoint URL back to the previous value
 3. Test with `stripe trigger payment_intent.succeeded`

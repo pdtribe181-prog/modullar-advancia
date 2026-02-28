@@ -27,15 +27,16 @@ curl -s http://localhost:3000/metrics/json | jq '.endpoints | sort_by(-.latency.
 
 ### Caching Strategy
 
-| Endpoint Pattern | TTL | Reason |
-|-----------------|-----|--------|
-| GET /auth/me | 30s | User profile rarely changes |
-| GET /provider | 60s | Provider data is semi-static |
-| GET /appointments | 30s | Time-sensitive but not real-time |
-| GET /transactions | 15s | Financial data — short TTL |
-| GET /admin/stats | 120s | Aggregate data — expensive query |
+| Endpoint Pattern  | TTL  | Reason                           |
+| ----------------- | ---- | -------------------------------- |
+| GET /auth/me      | 30s  | User profile rarely changes      |
+| GET /provider     | 60s  | Provider data is semi-static     |
+| GET /appointments | 30s  | Time-sensitive but not real-time |
+| GET /transactions | 15s  | Financial data — short TTL       |
+| GET /admin/stats  | 120s | Aggregate data — expensive query |
 
 Already implemented in `src/middleware/cache.middleware.ts`. Adjust TTLs via:
+
 ```typescript
 import { cacheResponse } from '../middleware/cache.middleware.js';
 router.get('/', cacheResponse(60), handler); // 60 second TTL
@@ -44,6 +45,7 @@ router.get('/', cacheResponse(60), handler); // 60 second TTL
 ### N+1 Query Prevention
 
 Bad:
+
 ```typescript
 const patients = await supabase.from('patients').select('*');
 for (const p of patients) {
@@ -52,10 +54,9 @@ for (const p of patients) {
 ```
 
 Good:
+
 ```typescript
-const { data } = await supabase
-  .from('patients')
-  .select('*, transactions(*)');  // Single query with join
+const { data } = await supabase.from('patients').select('*, transactions(*)'); // Single query with join
 ```
 
 ## 2. Database Performance
@@ -71,6 +72,7 @@ Pool Size: 15 (default, good for most workloads)
 ```
 
 For high-concurrency workloads:
+
 ```
 Pool Size: 25  (if you see "too many connections" errors)
 ```
@@ -124,6 +126,7 @@ ORDER BY tablename;
 ```
 
 Optimization tips:
+
 - Use `auth.uid()` (indexed) instead of sub-selects where possible
 - Avoid `EXISTS (SELECT ... FROM large_table)` in RLS policies
 - Add indexes on columns used in RLS conditions
@@ -132,13 +135,13 @@ Optimization tips:
 
 ### Common Patterns & Fixes
 
-| Pattern | Issue | Fix |
-|---------|-------|-----|
-| `SELECT *` | Fetches unnecessary columns | `SELECT id, name, email` |
-| Missing `LIMIT` | Returns unbounded rows | Add `.limit(100)` |
-| `ILIKE '%search%'` | Full table scan | Use `pg_trgm` GIN index |
-| Large `IN (...)` | Poor plan | Use `ANY($1::uuid[])` |
-| `ORDER BY` on non-indexed col | Sort in memory | Add index |
+| Pattern                       | Issue                       | Fix                      |
+| ----------------------------- | --------------------------- | ------------------------ |
+| `SELECT *`                    | Fetches unnecessary columns | `SELECT id, name, email` |
+| Missing `LIMIT`               | Returns unbounded rows      | Add `.limit(100)`        |
+| `ILIKE '%search%'`            | Full table scan             | Use `pg_trgm` GIN index  |
+| Large `IN (...)`              | Poor plan                   | Use `ANY($1::uuid[])`    |
+| `ORDER BY` on non-indexed col | Sort in memory              | Add index                |
 
 ### Full-Text Search Optimization
 
@@ -163,6 +166,7 @@ Target: **> 85% hit rate**
 ### Cache Warming
 
 For critical endpoints that must be fast on first access:
+
 ```typescript
 // Warm cache on server start
 async function warmCache() {
@@ -179,12 +183,12 @@ Upstash default: `allkeys-lru` (Least Recently Used) — optimal for API caching
 
 ### Bundle Size Targets
 
-| Metric | Target | Current Check |
-|--------|--------|---------------|
-| Initial JS (gzipped) | < 150 KB | `npm run build -- --report` |
-| Total bundle (gzipped) | < 500 KB | Check Vite output |
-| First Contentful Paint | < 1.8s | Lighthouse |
-| Time to Interactive | < 3.8s | Lighthouse |
+| Metric                 | Target   | Current Check               |
+| ---------------------- | -------- | --------------------------- |
+| Initial JS (gzipped)   | < 150 KB | `npm run build -- --report` |
+| Total bundle (gzipped) | < 500 KB | Check Vite output           |
+| First Contentful Paint | < 1.8s   | Lighthouse                  |
+| Time to Interactive    | < 3.8s   | Lighthouse                  |
 
 ### Optimization Techniques
 
@@ -197,6 +201,7 @@ const Dashboard = lazy(() => import(/* webpackChunkName: "dashboard" */ './pages
 ```
 
 ### Image Optimization
+
 - Use WebP format for all images
 - Lazy load below-the-fold images
 - Set explicit `width` and `height` to prevent layout shift
@@ -222,7 +227,9 @@ proxy_busy_buffers_size 256k;
 ```
 
 ### HTTP/2
+
 Ensure Nginx is configured with HTTP/2:
+
 ```nginx
 listen 443 ssl http2;
 ```
@@ -232,21 +239,23 @@ listen 443 ssl http2;
 ```javascript
 // ecosystem.config.cjs — optimized
 module.exports = {
-  apps: [{
-    name: 'healthcare-api',
-    script: './dist/server.js',
-    instances: 'max',          // Use all CPU cores
-    exec_mode: 'cluster',
-    max_memory_restart: '500M',
-    node_args: '--max-old-space-size=512',
-    env: {
-      NODE_ENV: 'production',
+  apps: [
+    {
+      name: 'healthcare-api',
+      script: './dist/server.js',
+      instances: 'max', // Use all CPU cores
+      exec_mode: 'cluster',
+      max_memory_restart: '500M',
+      node_args: '--max-old-space-size=512',
+      env: {
+        NODE_ENV: 'production',
+      },
+      // Graceful restart settings
+      kill_timeout: 5000,
+      listen_timeout: 10000,
+      shutdown_with_message: true,
     },
-    // Graceful restart settings
-    kill_timeout: 5000,
-    listen_timeout: 10000,
-    shutdown_with_message: true,
-  }]
+  ],
 };
 ```
 
@@ -269,10 +278,10 @@ ab -n 1000 -c 50 http://localhost:3000/health
 
 ### Performance Budget
 
-| Endpoint | p50 Target | p95 Target | p99 Target |
-|----------|-----------|-----------|-----------|
-| /health | < 5ms | < 20ms | < 50ms |
-| GET (cached) | < 10ms | < 50ms | < 100ms |
-| GET (DB query) | < 50ms | < 200ms | < 500ms |
-| POST (write) | < 100ms | < 300ms | < 1000ms |
-| POST (payment) | < 500ms | < 1500ms | < 3000ms |
+| Endpoint       | p50 Target | p95 Target | p99 Target |
+| -------------- | ---------- | ---------- | ---------- |
+| /health        | < 5ms      | < 20ms     | < 50ms     |
+| GET (cached)   | < 10ms     | < 50ms     | < 100ms    |
+| GET (DB query) | < 50ms     | < 200ms    | < 500ms    |
+| POST (write)   | < 100ms    | < 300ms    | < 1000ms   |
+| POST (payment) | < 500ms    | < 1500ms   | < 3000ms   |

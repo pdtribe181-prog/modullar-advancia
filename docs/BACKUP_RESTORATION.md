@@ -4,20 +4,21 @@
 
 ## Backup Strategy Overview
 
-| Component | Method | Frequency | Retention |
-|-----------|--------|-----------|-----------|
-| PostgreSQL (Supabase) | Automated daily + PITR | Continuous | 7 days (Pro plan) |
-| Application Code | Git (GitHub) | Every push | Indefinite |
-| Environment Secrets | Password manager vault | On change | Indefinite |
-| File Uploads (Storage) | Supabase Storage (S3-backed) | Automatic | Indefinite |
-| Redis (Upstash) | Upstash automated | Daily | 7 days |
-| PM2 Configuration | `ecosystem.config.cjs` in repo | Every push | Indefinite |
+| Component              | Method                         | Frequency  | Retention         |
+| ---------------------- | ------------------------------ | ---------- | ----------------- |
+| PostgreSQL (Supabase)  | Automated daily + PITR         | Continuous | 7 days (Pro plan) |
+| Application Code       | Git (GitHub)                   | Every push | Indefinite        |
+| Environment Secrets    | Password manager vault         | On change  | Indefinite        |
+| File Uploads (Storage) | Supabase Storage (S3-backed)   | Automatic  | Indefinite        |
+| Redis (Upstash)        | Upstash automated              | Daily      | 7 days            |
+| PM2 Configuration      | `ecosystem.config.cjs` in repo | Every push | Indefinite        |
 
 ---
 
 ## 1. Database Backup
 
 ### Automatic Backups (Supabase Pro)
+
 - Supabase performs daily automated backups
 - Point-in-time recovery (PITR) captures WAL logs continuously
 - Retention: 7 days on Pro plan
@@ -152,20 +153,20 @@ redis-cli -u "$UPSTASH_REDIS_REST_URL" --rdb backup_redis_$(date +%Y%m%d).rdb
 
 ### Recovery Time Objectives
 
-| Scenario | RTO | RPO |
-|----------|-----|-----|
-| Application crash | < 1 min (PM2 auto-restart) | 0 |
-| Bad deployment | < 5 min (rollback) | 0 |
-| VPS failure | < 30 min | < 5 min (PITR) |
-| Data corruption | < 1 hour | < 5 min (PITR) |
-| Full disaster | < 4 hours | < 24 hours |
+| Scenario          | RTO                        | RPO            |
+| ----------------- | -------------------------- | -------------- |
+| Application crash | < 1 min (PM2 auto-restart) | 0              |
+| Bad deployment    | < 5 min (rollback)         | 0              |
+| VPS failure       | < 30 min                   | < 5 min (PITR) |
+| Data corruption   | < 1 hour                   | < 5 min (PITR) |
+| Full disaster     | < 4 hours                  | < 24 hours     |
 
 ## 8. Backup Verification Schedule
 
-| Task | Frequency | Owner |
-|------|-----------|-------|
-| Verify Supabase backup exists | Weekly | DevOps |
-| Test PITR restore (staging) | Monthly | DevOps |
-| Rotate encrypted env backup | On change | Security |
-| Verify Git tag history | Monthly | Lead Dev |
-| Test full disaster recovery | Quarterly | Team |
+| Task                          | Frequency | Owner    |
+| ----------------------------- | --------- | -------- |
+| Verify Supabase backup exists | Weekly    | DevOps   |
+| Test PITR restore (staging)   | Monthly   | DevOps   |
+| Rotate encrypted env backup   | On change | Security |
+| Verify Git tag history        | Monthly   | Lead Dev |
+| Test full disaster recovery   | Quarterly | Team     |

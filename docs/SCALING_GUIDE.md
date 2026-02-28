@@ -32,30 +32,34 @@
 
 ### 1. Vertical Scaling (Scale Up)
 
-| Component | Current | Next Step | When |
-|-----------|---------|-----------|------|
-| VPS | 2 vCPU / 4 GB | 4 vCPU / 8 GB | CPU > 80% sustained |
-| Supabase | Pro (8 GB) | Pro+ (16 GB) | DB size > 6 GB or connections > 200 |
-| Redis (Upstash) | Pay-as-you-go | Pro 256 MB | Cache hit rate < 85% |
+| Component       | Current       | Next Step     | When                                |
+| --------------- | ------------- | ------------- | ----------------------------------- |
+| VPS             | 2 vCPU / 4 GB | 4 vCPU / 8 GB | CPU > 80% sustained                 |
+| Supabase        | Pro (8 GB)    | Pro+ (16 GB)  | DB size > 6 GB or connections > 200 |
+| Redis (Upstash) | Pay-as-you-go | Pro 256 MB    | Cache hit rate < 85%                |
 
 ### 2. Horizontal Scaling (Scale Out)
 
 #### PM2 Cluster Mode
 
 Current config (2 instances):
+
 ```javascript
 // ecosystem.config.cjs
 module.exports = {
-  apps: [{
-    name: 'healthcare-api',
-    instances: 2,          // ← increase this
-    exec_mode: 'cluster',
-    max_memory_restart: '500M',
-  }]
+  apps: [
+    {
+      name: 'healthcare-api',
+      instances: 2, // ← increase this
+      exec_mode: 'cluster',
+      max_memory_restart: '500M',
+    },
+  ],
 };
 ```
 
 Scale to match CPU cores:
+
 ```bash
 # Scale to 4 instances
 pm2 scale healthcare-api 4
@@ -95,19 +99,25 @@ server {
 ### 3. Database Scaling
 
 #### Connection Pooling
+
 Already configured via Supabase PgBouncer:
+
 - Transaction mode pooling (default)
 - Max ~200 connections per project (Pro plan)
 
 #### Read Replicas (Supabase Pro+)
+
 For read-heavy workloads:
+
 ```sql
 -- Route analytics/reporting queries to read replica
 -- Configure via Supabase Dashboard → Database → Read Replicas
 ```
 
 #### Table Partitioning (Future)
+
 For tables exceeding 10M rows:
+
 ```sql
 -- Example: partition transactions by month
 CREATE TABLE transactions_partitioned (
@@ -122,14 +132,16 @@ CREATE TABLE transactions_2025_01 PARTITION OF transactions_partitioned
 
 #### Redis Cache Tiers
 
-| Traffic | Redis Plan | Max Memory | Strategy |
-|---------|-----------|------------|----------|
-| < 1K req/min | Upstash Free | 256 MB | Cache hot paths |
-| 1K-10K req/min | Upstash Pro | 1 GB | Cache all GETs |
-| > 10K req/min | Upstash Enterprise | 10 GB | Multi-region |
+| Traffic        | Redis Plan         | Max Memory | Strategy        |
+| -------------- | ------------------ | ---------- | --------------- |
+| < 1K req/min   | Upstash Free       | 256 MB     | Cache hot paths |
+| 1K-10K req/min | Upstash Pro        | 1 GB       | Cache all GETs  |
+| > 10K req/min  | Upstash Enterprise | 10 GB      | Multi-region    |
 
 #### Cache Key Strategy
+
 Already implemented in `src/middleware/cache.middleware.ts`:
+
 - Role-aware keys prevent data leakage
 - TTL-based invalidation (60s default)
 - Manual invalidation on writes
@@ -137,26 +149,28 @@ Already implemented in `src/middleware/cache.middleware.ts`:
 ### 5. CDN / Edge Scaling
 
 Cloudflare (already configured) handles:
+
 - Static asset caching (frontend)
 - DDoS mitigation
 - Geographic distribution
 
 For API-level edge caching:
+
 ```
 Cloudflare → Cache Rules → /api/v1/public/* → Cache 5 min
 ```
 
 ## Scaling Triggers & Thresholds
 
-| Metric | Warning | Critical | Action |
-|--------|---------|----------|--------|
-| CPU usage | > 70% for 5 min | > 90% for 2 min | Add PM2 instances / upgrade VPS |
-| Memory usage | > 80% | > 95% | Increase `max_memory_restart` / upgrade VPS |
-| Response time (p95) | > 500ms | > 2000ms | Check DB queries, add caching |
-| DB connections | > 150 | > 190 | Enable PgBouncer / upgrade plan |
-| Error rate | > 1% | > 5% | Investigate + scale if load-related |
-| Redis memory | > 75% | > 90% | Upgrade Upstash plan |
-| Disk usage | > 70% | > 85% | Clean logs / upgrade disk |
+| Metric              | Warning         | Critical        | Action                                      |
+| ------------------- | --------------- | --------------- | ------------------------------------------- |
+| CPU usage           | > 70% for 5 min | > 90% for 2 min | Add PM2 instances / upgrade VPS             |
+| Memory usage        | > 80%           | > 95%           | Increase `max_memory_restart` / upgrade VPS |
+| Response time (p95) | > 500ms         | > 2000ms        | Check DB queries, add caching               |
+| DB connections      | > 150           | > 190           | Enable PgBouncer / upgrade plan             |
+| Error rate          | > 1%            | > 5%            | Investigate + scale if load-related         |
+| Redis memory        | > 75%           | > 90%           | Upgrade Upstash plan                        |
+| Disk usage          | > 70%           | > 85%           | Clean logs / upgrade disk                   |
 
 ## Monitoring Commands
 
@@ -179,9 +193,9 @@ curl -s http://localhost:3000/metrics
 
 ## Cost Projections
 
-| Scale Tier | Users | Monthly Est. |
-|-----------|-------|-------------|
-| Starter | < 500 | $40 (VPS $10 + Supabase $25 + Redis free + Cloudflare free) |
-| Growth | 500-5K | $120 (VPS $20 + Supabase $25 + Redis $10 + Cloudflare $20 + Sentry $30) |
-| Scale | 5K-50K | $400 (VPS $80 + Supabase $100 + Redis $50 + Cloudflare $20 + Sentry $80) |
-| Enterprise | 50K+ | Custom (multi-VPS, read replicas, dedicated support) |
+| Scale Tier | Users  | Monthly Est.                                                             |
+| ---------- | ------ | ------------------------------------------------------------------------ |
+| Starter    | < 500  | $40 (VPS $10 + Supabase $25 + Redis free + Cloudflare free)              |
+| Growth     | 500-5K | $120 (VPS $20 + Supabase $25 + Redis $10 + Cloudflare $20 + Sentry $30)  |
+| Scale      | 5K-50K | $400 (VPS $80 + Supabase $100 + Redis $50 + Cloudflare $20 + Sentry $80) |
+| Enterprise | 50K+   | Custom (multi-VPS, read replicas, dedicated support)                     |

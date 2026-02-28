@@ -35,12 +35,12 @@ After verifying your email:
 
 Your dashboard shows a summary of your healthcare activity:
 
-| Section | Description |
-|---------|-------------|
+| Section                   | Description                           |
+| ------------------------- | ------------------------------------- |
 | **Upcoming Appointments** | Next 7 days of scheduled appointments |
-| **Recent Payments** | Last 5 transactions |
-| **Outstanding Balance** | Any unpaid invoices |
-| **Notifications** | Alerts requiring your attention |
+| **Recent Payments**       | Last 5 transactions                   |
+| **Outstanding Balance**   | Any unpaid invoices                   |
+| **Notifications**         | Alerts requiring your attention       |
 
 ---
 
@@ -173,13 +173,13 @@ If you believe a charge is incorrect:
 
 ### Notification Types
 
-| Type | Channel |
-|------|---------|
-| Payment confirmation | Email + In-app |
+| Type                 | Channel                   |
+| -------------------- | ------------------------- |
+| Payment confirmation | Email + In-app            |
 | Appointment reminder | SMS + In-app (24h before) |
-| Invoice due | Email + In-app |
-| Security alert | Email + SMS |
-| Dispute update | Email + In-app |
+| Invoice due          | Email + In-app            |
+| Security alert       | Email + SMS               |
+| Dispute update       | Email + In-app            |
 
 ### Manage Preferences
 

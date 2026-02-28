@@ -19,6 +19,7 @@ Advancia PayLedger is a healthcare payment and compliance management platform th
 ### What devices are supported?
 
 PayLedger works on any modern web browser:
+
 - Chrome, Firefox, Safari, Edge (latest versions)
 - Mobile browsers (responsive design)
 - No native app required — it's a web application
@@ -64,6 +65,7 @@ Use one of your saved backup codes to log in, then re-configure MFA with your ne
 ### Is my data secure?
 
 Yes. We employ multiple layers of security:
+
 - **Encryption at rest**: AES-256 encryption for all stored data
 - **Encryption in transit**: TLS 1.3 for all connections
 - **HIPAA compliance**: Full compliance with healthcare data regulations
@@ -77,10 +79,10 @@ Yes. We employ multiple layers of security:
 
 ### What payment methods are accepted?
 
-| Method | Details |
-|--------|---------|
-| **Credit Card** | Visa, Mastercard, American Express |
-| **Debit Card** | Visa, Mastercard |
+| Method             | Details                                        |
+| ------------------ | ---------------------------------------------- |
+| **Credit Card**    | Visa, Mastercard, American Express             |
+| **Debit Card**     | Visa, Mastercard                               |
 | **Cryptocurrency** | Bitcoin (BTC), Ethereum (ETH), USD Coin (USDC) |
 
 ### How long do payments take to process?
@@ -112,6 +114,7 @@ Go to **Payments** → **History** → click any transaction → **Download Rece
 ### When do providers receive payouts?
 
 Providers receive payouts on their configured schedule:
+
 - **Daily**, **Weekly** (default: Monday), or **Monthly**
 - Minimum payout: $25
 - Funds arrive in 1-2 business days after scheduled payout
@@ -131,12 +134,14 @@ Providers receive payouts on their configured schedule:
 ### Can I cancel an appointment?
 
 Yes. Go to **Appointments** → **Upcoming** → select the appointment → **Cancel**.
+
 - Cancellations 24+ hours before: Free
 - Cancellations within 24 hours: May incur a fee (set by provider)
 
 ### Do I get appointment reminders?
 
 Yes. You'll receive:
+
 - An email confirmation immediately after booking
 - An SMS reminder 24 hours before
 - An in-app notification 30 minutes before
@@ -168,6 +173,7 @@ Go to **Profile** → **Privacy** → **Export My Data**. You'll receive a JSON 
 ### How can I delete my account?
 
 Go to **Profile** → **Privacy** → **Delete My Account**. This will:
+
 - Permanently delete your personal data
 - Anonymize financial records (required by law for 7 years)
 - Remove your authentication credentials
@@ -178,6 +184,7 @@ This action cannot be undone.
 ### What data do you collect?
 
 We collect only the data necessary to provide our services:
+
 - **Account data**: Name, email, phone, password (hashed)
 - **Health data**: Appointment details, provider notes (encrypted)
 - **Financial data**: Transaction records, invoice data (payment cards stored by Stripe, not us)
@@ -185,18 +192,19 @@ We collect only the data necessary to provide our services:
 
 ### What cookies do you use?
 
-| Cookie Type | Purpose | Required? |
-|-------------|---------|-----------|
-| **Necessary** | Session, CSRF protection, authentication | Yes (cannot disable) |
-| **Analytics** | Sentry error tracking, usage metrics | Optional |
-| **Preferences** | Theme, language, notification settings | Optional |
-| **Marketing** | Ad conversion tracking | Optional (off by default) |
+| Cookie Type     | Purpose                                  | Required?                 |
+| --------------- | ---------------------------------------- | ------------------------- |
+| **Necessary**   | Session, CSRF protection, authentication | Yes (cannot disable)      |
+| **Analytics**   | Sentry error tracking, usage metrics     | Optional                  |
+| **Preferences** | Theme, language, notification settings   | Optional                  |
+| **Marketing**   | Ad conversion tracking                   | Optional (off by default) |
 
 You can manage cookie preferences by clicking the cookie icon in the footer.
 
 ### Do you comply with GDPR?
 
 Yes. We are fully GDPR compliant:
+
 - Right to access (data export)
 - Right to erasure (account deletion)
 - Right to rectification (profile editing)
@@ -207,6 +215,7 @@ Yes. We are fully GDPR compliant:
 ### Do you comply with HIPAA?
 
 Yes. All protected health information (PHI) is:
+
 - Encrypted at rest and in transit
 - Accessible only through role-based permissions
 - Subject to audit logging
@@ -266,6 +275,7 @@ Crypto payments can be refunded at the provider's discretion. Refunds are proces
 ### My payment failed
 
 Common reasons:
+
 - **Insufficient funds**: Check your card/wallet balance
 - **Card declined**: Contact your bank
 - **3D Secure required**: Complete the authentication in the popup

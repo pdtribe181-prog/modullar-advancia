@@ -18,13 +18,13 @@ Only users with the `admin` role can access the Admin Console.
 
 ### Dashboard Panels
 
-| Panel | Shows |
-|-------|-------|
-| **System Health** | API status, database status, Redis status, circuit breaker states |
-| **User Stats** | Total users, new registrations (7d), active users (24h) |
-| **Financial Summary** | Total revenue (MTD), transaction count, average payment size |
-| **Active Disputes** | Open disputes requiring attention |
-| **Error Rate** | Current 5xx error rate from `/metrics` |
+| Panel                 | Shows                                                             |
+| --------------------- | ----------------------------------------------------------------- |
+| **System Health**     | API status, database status, Redis status, circuit breaker states |
+| **User Stats**        | Total users, new registrations (7d), active users (24h)           |
+| **Financial Summary** | Total revenue (MTD), transaction count, average payment size      |
+| **Active Disputes**   | Open disputes requiring attention                                 |
+| **Error Rate**        | Current 5xx error rate from `/metrics`                            |
 
 ---
 
@@ -39,22 +39,22 @@ Only users with the `admin` role can access the Admin Console.
 
 ### User Actions
 
-| Action | Description | How |
-|--------|-------------|-----|
-| **View Profile** | See full user details + activity log | Click user row |
-| **Change Role** | Promote/demote user | User detail → Edit → Role dropdown |
-| **Suspend** | Temporarily disable account | User detail → Actions → Suspend |
-| **Delete** | Permanently remove (GDPR erasure) | User detail → Actions → Delete → Confirm |
-| **Reset Password** | Send password reset email | User detail → Actions → Reset Password |
+| Action             | Description                          | How                                      |
+| ------------------ | ------------------------------------ | ---------------------------------------- |
+| **View Profile**   | See full user details + activity log | Click user row                           |
+| **Change Role**    | Promote/demote user                  | User detail → Edit → Role dropdown       |
+| **Suspend**        | Temporarily disable account          | User detail → Actions → Suspend          |
+| **Delete**         | Permanently remove (GDPR erasure)    | User detail → Actions → Delete → Confirm |
+| **Reset Password** | Send password reset email            | User detail → Actions → Reset Password   |
 
 ### Role Definitions
 
-| Role | Permissions |
-|------|-------------|
-| `patient` | View own data, make payments, book appointments |
+| Role       | Permissions                                                                      |
+| ---------- | -------------------------------------------------------------------------------- |
+| `patient`  | View own data, make payments, book appointments                                  |
 | `provider` | All patient permissions + manage appointments, view own patients, issue invoices |
-| `staff` | View reports, manage appointments, limited admin |
-| `admin` | Full access to all features + admin console |
+| `staff`    | View reports, manage appointments, limited admin                                 |
+| `admin`    | Full access to all features + admin console                                      |
 
 ---
 
@@ -116,22 +116,24 @@ New provider registrations require verification:
 
 ### Available Admin Reports
 
-| Report | API Endpoint | Description |
-|--------|-------------|-------------|
-| Dashboard Stats | `GET /api/v1/admin/stats` | Overview metrics |
+| Report             | API Endpoint                     | Description                   |
+| ------------------ | -------------------------------- | ----------------------------- |
+| Dashboard Stats    | `GET /api/v1/admin/stats`        | Overview metrics              |
 | Transaction Report | `GET /api/v1/admin/transactions` | All transactions with filters |
-| User Growth | `GET /api/v1/admin/users/growth` | Registration trends |
-| Revenue Report | `GET /api/v1/admin/revenue` | Revenue breakdown by period |
-| Dispute Report | `GET /api/v1/admin/disputes` | Dispute rate and outcomes |
+| User Growth        | `GET /api/v1/admin/users/growth` | Registration trends           |
+| Revenue Report     | `GET /api/v1/admin/revenue`      | Revenue breakdown by period   |
+| Dispute Report     | `GET /api/v1/admin/disputes`     | Dispute rate and outcomes     |
 
 ### Custom Metrics Dashboard
 
 Access application metrics:
+
 - **Prometheus format**: `GET /metrics` (for automated scrapers)
 - **JSON format**: `GET /metrics/json` (admin authenticated)
 - **Persist snapshot**: `POST /metrics/persist` (writes to DB for historical tracking)
 
 Key metrics tracked:
+
 - Transaction volume and success rate
 - API response times (p50/p95/p99 per endpoint)
 - Active users (5-minute and 1-hour windows)
@@ -163,20 +165,22 @@ curl https://api.advanciapayledger.com/metrics
 
 Process data subject requests:
 
-| Request Type | Endpoint | SLA |
-|-------------|----------|-----|
-| Data Export | `GET /api/v1/gdpr/export?userId={id}` | 30 days |
-| Data Erasure | `POST /api/v1/gdpr/erasure` | 30 days |
+| Request Type  | Endpoint                                | SLA       |
+| ------------- | --------------------------------------- | --------- |
+| Data Export   | `GET /api/v1/gdpr/export?userId={id}`   | 30 days   |
+| Data Erasure  | `POST /api/v1/gdpr/erasure`             | 30 days   |
 | Consent Check | `GET /api/v1/gdpr/consents?userId={id}` | Immediate |
 
 ### Audit Logs
 
 All API operations are logged automatically:
+
 - Access audit logs (who accessed what, when)
 - Compliance logs (GDPR actions, financial operations)
 - Security events (failed logins, role changes, suspicious activity)
 
 View in **Supabase Dashboard** → Tables:
+
 - `access_audit_logs`
 - `compliance_logs`
 - `security_events`
@@ -191,21 +195,21 @@ Or via the admin audit log page: https://advanciapayledger.com/admin/audit-log
 
 Current limits (configurable in `src/middleware/rateLimit.middleware.ts`):
 
-| Tier | Limit | Window |
-|------|-------|--------|
-| General API | 100 requests | 15 minutes |
-| Payment endpoints | 20 requests | 15 minutes |
-| Auth endpoints | 5 requests | 15 minutes |
+| Tier              | Limit        | Window     |
+| ----------------- | ------------ | ---------- |
+| General API       | 100 requests | 15 minutes |
+| Payment endpoints | 20 requests  | 15 minutes |
+| Auth endpoints    | 5 requests   | 15 minutes |
 
 ### Circuit Breakers
 
 Monitor external service health:
 
-| Service | Failure Threshold | Recovery Time |
-|---------|-------------------|---------------|
-| Stripe | 5 failures | 30 seconds |
-| Resend (email) | 3 failures | 60 seconds |
-| Twilio (SMS) | 3 failures | 60 seconds |
+| Service        | Failure Threshold | Recovery Time |
+| -------------- | ----------------- | ------------- |
+| Stripe         | 5 failures        | 30 seconds    |
+| Resend (email) | 3 failures        | 60 seconds    |
+| Twilio (SMS)   | 3 failures        | 60 seconds    |
 
 Status visible at `GET /health` → `circuitBreakers` field.
 
@@ -248,21 +252,21 @@ npx tsx scripts/run-migration-rest.ts migrations/<filename>.sql
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `SUPABASE_URL` | Supabase project URL | Yes |
-| `SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
-| `STRIPE_SECRET_KEY` | Stripe API secret key | Yes |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | Yes |
-| `RESEND_API_KEY` | Resend email API key | Yes |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID | Yes |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token | Yes |
-| `UPSTASH_REDIS_REST_URL` | Redis REST URL | Yes |
-| `UPSTASH_REDIS_REST_TOKEN` | Redis REST token | Yes |
-| `SENTRY_DSN` | Sentry error tracking DSN | Yes |
-| `FRONTEND_URL` | Frontend origin for CORS | Yes |
-| `PORT` | API server port (default: 3000) | No |
+| Variable                    | Description                     | Required |
+| --------------------------- | ------------------------------- | -------- |
+| `SUPABASE_URL`              | Supabase project URL            | Yes      |
+| `SUPABASE_ANON_KEY`         | Supabase anonymous key          | Yes      |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key       | Yes      |
+| `STRIPE_SECRET_KEY`         | Stripe API secret key           | Yes      |
+| `STRIPE_WEBHOOK_SECRET`     | Stripe webhook signing secret   | Yes      |
+| `RESEND_API_KEY`            | Resend email API key            | Yes      |
+| `TWILIO_ACCOUNT_SID`        | Twilio account SID              | Yes      |
+| `TWILIO_AUTH_TOKEN`         | Twilio auth token               | Yes      |
+| `UPSTASH_REDIS_REST_URL`    | Redis REST URL                  | Yes      |
+| `UPSTASH_REDIS_REST_TOKEN`  | Redis REST token                | Yes      |
+| `SENTRY_DSN`                | Sentry error tracking DSN       | Yes      |
+| `FRONTEND_URL`              | Frontend origin for CORS        | Yes      |
+| `PORT`                      | API server port (default: 3000) | No       |
 
 ---
 

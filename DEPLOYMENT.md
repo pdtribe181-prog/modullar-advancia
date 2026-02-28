@@ -20,11 +20,11 @@
 
 ## Live URLs
 
-| Service  | URL                                           | Status       |
-| -------- | --------------------------------------------- | ------------ |
-| App      | <https://advanciapayledger.com>               | ⏳ Pending   |
-| API      | <https://api.advanciapayledger.com/api/v1>    | ⏳ Pending   |
-| Database | <https://pikguczsvikzragmrojz.supabase.co>    | ✅ Connected |
+| Service  | URL                                        | Status       |
+| -------- | ------------------------------------------ | ------------ |
+| App      | <https://advanciapayledger.com>            | ⏳ Pending   |
+| API      | <https://api.advanciapayledger.com/api/v1> | ⏳ Pending   |
+| Database | <https://pikguczsvikzragmrojz.supabase.co> | ✅ Connected |
 
 ---
 
@@ -263,12 +263,12 @@ npm run test:coverage
 
 The marketing site at `advanciapayledger.com` (built with Rocket.new) needs updated links:
 
-| Current Link          | Should Point To                                          |
-| --------------------- | -------------------------------------------------------- |
-| `/signup`             | `https://app.advanciapayledger.com/login?mode=signup`    |
-| `/login`              | `https://app.advanciapayledger.com/login`                |
-| "Get Started" button  | `https://app.advanciapayledger.com`                      |
-| "Create Free Account" | `https://app.advanciapayledger.com/login?mode=signup`    |
+| Current Link          | Should Point To                                       |
+| --------------------- | ----------------------------------------------------- |
+| `/signup`             | `https://app.advanciapayledger.com/login?mode=signup` |
+| `/login`              | `https://app.advanciapayledger.com/login`             |
+| "Get Started" button  | `https://app.advanciapayledger.com`                   |
+| "Create Free Account" | `https://app.advanciapayledger.com/login?mode=signup` |
 
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
 
@@ -283,25 +283,25 @@ The marketing site at `advanciapayledger.com` (built with Rocket.new) needs upda
 
 The repository includes a comprehensive CI/CD pipeline (`.github/workflows/ci.yml`) that runs:
 
-| Job               | Description                              |
-| ----------------- | ---------------------------------------- |
-| **Lint**          | TypeScript check + ESLint                |
-| **Backend Tests** | Jest tests with mock env vars            |
-| **Frontend Tests**| Vitest tests                             |
-| **Security Scan** | npm audit + secrets detection            |
-| **E2E Tests**     | Playwright with Chromium                 |
+| Job                | Description                   |
+| ------------------ | ----------------------------- |
+| **Lint**           | TypeScript check + ESLint     |
+| **Backend Tests**  | Jest tests with mock env vars |
+| **Frontend Tests** | Vitest tests                  |
+| **Security Scan**  | npm audit + secrets detection |
+| **E2E Tests**      | Playwright with Chromium      |
 
 ### Required GitHub Secrets
 
 Go to **Settings → Secrets and variables → Actions** and add:
 
-| Secret Name | Description |
-| --- | --- |
-| `SUPABASE_URL` | `https://pikguczsvikzragmrojz.supabase.co` |
-| `SUPABASE_ANON_KEY` | Your Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
-| `STRIPE_SECRET_KEY` | Your Stripe secret key |
-| `STRIPE_PUBLISHABLE_KEY` | Your Stripe publishable key |
+| Secret Name                 | Description                                |
+| --------------------------- | ------------------------------------------ |
+| `SUPABASE_URL`              | `https://pikguczsvikzragmrojz.supabase.co` |
+| `SUPABASE_ANON_KEY`         | Your Supabase anon key                     |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key             |
+| `STRIPE_SECRET_KEY`         | Your Stripe secret key                     |
+| `STRIPE_PUBLISHABLE_KEY`    | Your Stripe publishable key                |
 
 ### Branch Protection (Recommended)
 

@@ -14,6 +14,7 @@ Proxy: DNS only (gray cloud)
 ```
 
 **What this does:**
+
 - `p=quarantine`: Suspicious emails go to spam
 - `rua=mailto:...`: Send aggregate reports to this email
 - `pct=100`: Apply policy to 100% of mail

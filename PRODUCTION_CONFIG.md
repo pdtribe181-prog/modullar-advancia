@@ -25,6 +25,7 @@ STRIPE_WEBHOOK_SECRET=whsec_... (from Stripe Dashboard)
 **Production Webhook URL:** `https://advanciapayledger.com/api/v1/stripe/webhook`
 
 Configure this URL in Stripe Dashboard → Developers → Webhooks:
+
 1. Add endpoint: `https://advanciapayledger.com/api/v1/stripe/webhook`
 2. Select events:
    - `payment_intent.succeeded`
@@ -67,6 +68,7 @@ npx tsx scripts/create-admin.ts
 ```
 
 Default credentials:
+
 - **Email:** <admin@advanciapayledger.com>
 - **Password:** AdvanciaAdmin2026!
 
@@ -89,6 +91,7 @@ curl https://advanciapayledger.com/api/v1/health
 ```
 
 ### Production URLs
+
 - **Frontend:** <https://advanciapayledger.com>
 - **API:** <https://advanciapayledger.com/api/v1>
 - **Admin Console:** <https://advanciapayledger.com/admin>
@@ -131,6 +134,7 @@ curl https://advanciapayledger.com/api/v1/health
 ## Monitoring
 
 ### Sentry Dashboard
+
 Monitor errors and performance at: <https://sentry.io>
 
 ### PM2 Monitoring

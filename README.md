@@ -9,11 +9,11 @@
 
 ## Live URLs
 
-| Service  | URL                                      | Status     |
-| -------- | ---------------------------------------- | ---------- |
-| **App**  | <https://advanciapayledger.com>          | ✅ Live    |
-| **API**  | <https://api.advanciapayledger.com/api/v1> | ✅ Live |
-| **Brand**| <https://advanciapayledger.com>          | ✅ Live    |
+| Service   | URL                                        | Status  |
+| --------- | ------------------------------------------ | ------- |
+| **App**   | <https://advanciapayledger.com>            | ✅ Live |
+| **API**   | <https://api.advanciapayledger.com/api/v1> | ✅ Live |
+| **Brand** | <https://advanciapayledger.com>            | ✅ Live |
 
 ## Tech Stack
 
@@ -90,17 +90,17 @@ Minimum required staging variables in Render:
 
 #### Render ↔ Supabase (Staging) Env Mapping
 
-| Render Environment Variable | Staging Value Source | Notes |
-| --- | --- | --- |
-| `SUPABASE_URL` | Supabase staging project URL | Must not point to production |
-| `SUPABASE_ANON_KEY` | Supabase staging API keys | Safe for client-facing use |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase staging API keys | Server only, never expose in frontend |
-| `SUPABASE_WEBHOOK_SECRET` | Staging secret value | Must match sender integration |
-| `DATABASE_URL` (if used) | Supabase staging connection string | Keep separate from prod DB |
-| `SUPABASE_ACCESS_TOKEN` (if used) | Supabase personal token | Use least privilege token |
-| `SENTRY_ENVIRONMENT` | `staging` | Keeps events separated from prod |
-| `STRIPE_SECRET_KEY` | Stripe test key (`sk_test_...`) | Never use live key in staging |
-| `STRIPE_WEBHOOK_SECRET` | Staging webhook endpoint secret | Separate from production webhook secret |
+| Render Environment Variable       | Staging Value Source               | Notes                                   |
+| --------------------------------- | ---------------------------------- | --------------------------------------- |
+| `SUPABASE_URL`                    | Supabase staging project URL       | Must not point to production            |
+| `SUPABASE_ANON_KEY`               | Supabase staging API keys          | Safe for client-facing use              |
+| `SUPABASE_SERVICE_ROLE_KEY`       | Supabase staging API keys          | Server only, never expose in frontend   |
+| `SUPABASE_WEBHOOK_SECRET`         | Staging secret value               | Must match sender integration           |
+| `DATABASE_URL` (if used)          | Supabase staging connection string | Keep separate from prod DB              |
+| `SUPABASE_ACCESS_TOKEN` (if used) | Supabase personal token            | Use least privilege token               |
+| `SENTRY_ENVIRONMENT`              | `staging`                          | Keeps events separated from prod        |
+| `STRIPE_SECRET_KEY`               | Stripe test key (`sk_test_...`)    | Never use live key in staging           |
+| `STRIPE_WEBHOOK_SECRET`           | Staging webhook endpoint secret    | Separate from production webhook secret |
 
 ## Project Structure
 
@@ -219,18 +219,18 @@ ssh advancia-vps 'cd /var/www/advancia && git pull && npm ci && npm run build &&
 
 Current production DNS is managed in Cloudflare with Hostinger VPS as origin.
 
-| Type | Name | Target / Value | Proxy |
-| --- | --- | --- | --- |
-| A | `advanciapayledger.com` | `76.13.77.8` | Proxied |
-| A | `api` | `76.13.77.8` | Proxied |
-| CNAME | `api-staging` | `modullar-advancia.onrender.com` | Proxied |
-| MX | `advanciapayledger.com` | `route1/2/3.mx.cloudflare.net` | DNS only |
-| MX | `send` | `feedback-smtp.eu-west-1.amazonses.com` | DNS only |
-| TXT | `advanciapayledger.com` | SPF configured (`_spf.mx.cloudflare.net`) | DNS only |
-| TXT | `_dmarc` | DMARC configured (reporting enabled) | DNS only |
-| TXT | `resend._domainkey` | DKIM configured (Resend) | DNS only |
-| TXT | `cf2024-1._domainkey` | DKIM configured (Cloudflare Email Routing) | DNS only |
-| TXT | `20251219192150pm._domainkey` | DKIM configured | DNS only |
+| Type  | Name                          | Target / Value                             | Proxy    |
+| ----- | ----------------------------- | ------------------------------------------ | -------- |
+| A     | `advanciapayledger.com`       | `76.13.77.8`                               | Proxied  |
+| A     | `api`                         | `76.13.77.8`                               | Proxied  |
+| CNAME | `api-staging`                 | `modullar-advancia.onrender.com`           | Proxied  |
+| MX    | `advanciapayledger.com`       | `route1/2/3.mx.cloudflare.net`             | DNS only |
+| MX    | `send`                        | `feedback-smtp.eu-west-1.amazonses.com`    | DNS only |
+| TXT   | `advanciapayledger.com`       | SPF configured (`_spf.mx.cloudflare.net`)  | DNS only |
+| TXT   | `_dmarc`                      | DMARC configured (reporting enabled)       | DNS only |
+| TXT   | `resend._domainkey`           | DKIM configured (Resend)                   | DNS only |
+| TXT   | `cf2024-1._domainkey`         | DKIM configured (Cloudflare Email Routing) | DNS only |
+| TXT   | `20251219192150pm._domainkey` | DKIM configured                            | DNS only |
 
 Notes:
 

@@ -2,18 +2,18 @@
 
 ## Quick Reference
 
-| Item | Value |
-|---|---|
-| VPS IP | `76.13.77.8` |
-| SSH Alias | `advancia-vps` |
-| SSH User | `advancia` (sudo) |
-| App Path | `/var/www/advancia` |
-| PM2 Process | `advancia-api` |
-| API URL | `https://api.advanciapayledger.com/api/v1` |
-| Frontend | Cloudflare Pages (auto-deploys from `main`) |
-| Database | Supabase (`pikguczsvikzragmrojz`) |
-| Health Check | `https://api.advanciapayledger.com/health` |
-| Swagger Docs | `https://api.advanciapayledger.com/docs/` |
+| Item         | Value                                       |
+| ------------ | ------------------------------------------- |
+| VPS IP       | `76.13.77.8`                                |
+| SSH Alias    | `advancia-vps`                              |
+| SSH User     | `advancia` (sudo)                           |
+| App Path     | `/var/www/advancia`                         |
+| PM2 Process  | `advancia-api`                              |
+| API URL      | `https://api.advanciapayledger.com/api/v1`  |
+| Frontend     | Cloudflare Pages (auto-deploys from `main`) |
+| Database     | Supabase (`pikguczsvikzragmrojz`)           |
+| Health Check | `https://api.advanciapayledger.com/health`  |
+| Swagger Docs | `https://api.advanciapayledger.com/docs/`   |
 
 ---
 
@@ -66,6 +66,7 @@ ssh advancia-vps 'cd /var/www/advancia && npx tsx scripts/run-migration-rest.ts 
 ### Rollback
 
 Migrations do not have automatic rollback. For critical issues:
+
 1. Restore from the latest daily backup (retained 7 days)
 2. Backup location on VPS: `/var/backups/advancia/`
 3. Manual restore: `psql $DATABASE_URL < /var/backups/advancia/advancia-YYYY-MM-DD.sql.gz`
@@ -120,13 +121,13 @@ ssh advancia-vps 'pm2 logs advancia-api --err --lines 50 --nostream'
 
 ### Log Files
 
-| Log | Location |
-|---|---|
-| PM2 stdout | `/home/advancia/.pm2/logs/advancia-api-out.log` |
-| PM2 stderr | `/home/advancia/.pm2/logs/advancia-api-error.log` |
-| Nginx access | `/var/log/nginx/access.log` |
-| Nginx error | `/var/log/nginx/error.log` |
-| PM2 logrotate | 10MB max, 7-day retention, compressed |
+| Log           | Location                                          |
+| ------------- | ------------------------------------------------- |
+| PM2 stdout    | `/home/advancia/.pm2/logs/advancia-api-out.log`   |
+| PM2 stderr    | `/home/advancia/.pm2/logs/advancia-api-error.log` |
+| Nginx access  | `/var/log/nginx/access.log`                       |
+| Nginx error   | `/var/log/nginx/error.log`                        |
+| PM2 logrotate | 10MB max, 7-day retention, compressed             |
 
 ### Sentry
 
@@ -136,6 +137,7 @@ ssh advancia-vps 'pm2 logs advancia-api --err --lines 50 --nostream'
 ### Health Check Cron
 
 A cron job runs every 5 minutes to check API health and auto-restart PM2 if down:
+
 - Script: `/usr/local/bin/advancia-healthcheck.sh`
 - Logs: `/var/log/advancia-healthcheck.log`
 
@@ -145,12 +147,12 @@ A cron job runs every 5 minutes to check API health and auto-restart PM2 if down
 
 ### Severity Levels
 
-| Level | Description | Response Time |
-|---|---|---|
-| P1 - Critical | API fully down, payments broken | Immediate |
-| P2 - High | Degraded performance, partial outage | < 1 hour |
-| P3 - Medium | Non-critical feature broken | < 4 hours |
-| P4 - Low | Cosmetic / minor bug | Next business day |
+| Level         | Description                          | Response Time     |
+| ------------- | ------------------------------------ | ----------------- |
+| P1 - Critical | API fully down, payments broken      | Immediate         |
+| P2 - High     | Degraded performance, partial outage | < 1 hour          |
+| P3 - Medium   | Non-critical feature broken          | < 4 hours         |
+| P4 - Low      | Cosmetic / minor bug                 | Next business day |
 
 ### P1 — API Down
 
@@ -182,11 +184,11 @@ A cron job runs every 5 minutes to check API health and auto-restart PM2 if down
 
 ### Daily (Automated)
 
-| Time (Server) | Task | Script |
-|---|---|---|
-| 2:00 AM | Database backup (pg_dump) | `/usr/local/bin/advancia-backup.sh` |
-| 3:00 AM | SSL cert renewal check | Certbot cron |
-| Every 5 min | Health check + auto-restart | `/usr/local/bin/advancia-healthcheck.sh` |
+| Time (Server) | Task                        | Script                                   |
+| ------------- | --------------------------- | ---------------------------------------- |
+| 2:00 AM       | Database backup (pg_dump)   | `/usr/local/bin/advancia-backup.sh`      |
+| 3:00 AM       | SSL cert renewal check      | Certbot cron                             |
+| Every 5 min   | Health check + auto-restart | `/usr/local/bin/advancia-healthcheck.sh` |
 
 ### Weekly (Manual)
 
@@ -206,6 +208,7 @@ A cron job runs every 5 minutes to check API health and auto-restart PM2 if down
 ## 7. Environment Variables
 
 All env vars are documented in:
+
 - Backend: `.env.example` (root)
 - Frontend: `frontend/.env.example`
 - Zod validation: `src/config/env.ts` (validates at startup)
@@ -284,11 +287,11 @@ ssh advancia-vps 'gunzip -c /var/backups/advancia/advancia-YYYY-MM-DD.sql.gz | p
 
 ## 10. Contacts
 
-| Role | Contact |
-|---|---|
-| VPS Provider | Hostinger Support |
-| Database | Supabase Dashboard / Support |
-| Payments | Stripe Dashboard / Support |
-| DNS/CDN | Cloudflare Dashboard |
-| Error Tracking | Sentry Dashboard |
-| Email | Resend Dashboard |
+| Role           | Contact                      |
+| -------------- | ---------------------------- |
+| VPS Provider   | Hostinger Support            |
+| Database       | Supabase Dashboard / Support |
+| Payments       | Stripe Dashboard / Support   |
+| DNS/CDN        | Cloudflare Dashboard         |
+| Error Tracking | Sentry Dashboard             |
+| Email          | Resend Dashboard             |

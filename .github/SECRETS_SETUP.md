@@ -8,8 +8,8 @@ All secrets are stored in GitHub. Go to **Settings → Secrets and variables →
 
 These are used by CI jobs that don't require environment-specific credentials.
 
-| Secret | Where to get it | Required |
-| --- | --- | --- |
+| Secret          | Where to get it                                | Required |
+| --------------- | ---------------------------------------------- | -------- |
 | `CODECOV_TOKEN` | [codecov.io](https://codecov.io) repo settings | Optional |
 
 ---
@@ -18,17 +18,17 @@ These are used by CI jobs that don't require environment-specific credentials.
 
 Go to **Settings → Environments → staging → Add secret**:
 
-| Secret | Description | Example format |
-| --- | --- | --- |
-| `SUPABASE_URL` | Supabase project URL | `https://xxxx.supabase.co` |
-| `SUPABASE_ANON_KEY` | Public anon key | `eyJhbGci...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key, keep private! | `eyJhbGci...` |
-| `STRIPE_SECRET_KEY` | Stripe **test** secret key | `sk_test_51...` |
-| `STRIPE_PUBLISHABLE_KEY` | Stripe **test** publishable key | `pk_test_51...` |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | `whsec_...` |
-| `RENDER_STAGING_DEPLOY_HOOK_URL` | Render deploy hook URL | `https://api.render.com/deploy/...` |
-| `JWT_SECRET` | Min 32-char random string | `openssl rand -hex 32` |
-| `RESEND_API_KEY` | Resend email API key | `re_...` |
+| Secret                           | Description                     | Example format                      |
+| -------------------------------- | ------------------------------- | ----------------------------------- |
+| `SUPABASE_URL`                   | Supabase project URL            | `https://xxxx.supabase.co`          |
+| `SUPABASE_ANON_KEY`              | Public anon key                 | `eyJhbGci...`                       |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Service role key, keep private! | `eyJhbGci...`                       |
+| `STRIPE_SECRET_KEY`              | Stripe **test** secret key      | `sk_test_51...`                     |
+| `STRIPE_PUBLISHABLE_KEY`         | Stripe **test** publishable key | `pk_test_51...`                     |
+| `STRIPE_WEBHOOK_SECRET`          | Stripe webhook signing secret   | `whsec_...`                         |
+| `RENDER_STAGING_DEPLOY_HOOK_URL` | Render deploy hook URL          | `https://api.render.com/deploy/...` |
+| `JWT_SECRET`                     | Min 32-char random string       | `openssl rand -hex 32`              |
+| `RESEND_API_KEY`                 | Resend email API key            | `re_...`                            |
 
 ---
 
@@ -36,21 +36,21 @@ Go to **Settings → Environments → staging → Add secret**:
 
 Go to **Settings → Environments → production → Add secret**:
 
-| Secret | Description | Example format |
-| --- | --- | --- |
-| `SUPABASE_URL` | Production Supabase URL | `https://pikguczsvikzragmrojz.supabase.co` |
-| `SUPABASE_ANON_KEY` | Production anon key | `eyJhbGci...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Production service role key | `eyJhbGci...` |
-| `STRIPE_SECRET_KEY` | Stripe **live** secret key | `sk_live_51...` |
-| `STRIPE_PUBLISHABLE_KEY` | Stripe **live** publishable key | `pk_live_51...` |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | `whsec_...` |
-| `RENDER_DEPLOY_HOOK_URL` | Render deploy hook URL | `https://api.render.com/deploy/...` |
-| `JWT_SECRET` | Min 32-char random string (different from staging!) | `openssl rand -hex 32` |
-| `RESEND_API_KEY` | Resend email API key | `re_...` |
-| `SENTRY_DSN` | Sentry error tracking DSN | `https://xxx@yyy.ingest.sentry.io/zzz` |
-| `TWILIO_ACCOUNT_SID` | Twilio SMS account SID | `ACxxxx` |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token | `...` |
-| `TWILIO_FROM_NUMBER` | Twilio phone number | `+1234567890` |
+| Secret                      | Description                                         | Example format                             |
+| --------------------------- | --------------------------------------------------- | ------------------------------------------ |
+| `SUPABASE_URL`              | Production Supabase URL                             | `https://pikguczsvikzragmrojz.supabase.co` |
+| `SUPABASE_ANON_KEY`         | Production anon key                                 | `eyJhbGci...`                              |
+| `SUPABASE_SERVICE_ROLE_KEY` | Production service role key                         | `eyJhbGci...`                              |
+| `STRIPE_SECRET_KEY`         | Stripe **live** secret key                          | `sk_live_51...`                            |
+| `STRIPE_PUBLISHABLE_KEY`    | Stripe **live** publishable key                     | `pk_live_51...`                            |
+| `STRIPE_WEBHOOK_SECRET`     | Stripe webhook signing secret                       | `whsec_...`                                |
+| `RENDER_DEPLOY_HOOK_URL`    | Render deploy hook URL                              | `https://api.render.com/deploy/...`        |
+| `JWT_SECRET`                | Min 32-char random string (different from staging!) | `openssl rand -hex 32`                     |
+| `RESEND_API_KEY`            | Resend email API key                                | `re_...`                                   |
+| `SENTRY_DSN`                | Sentry error tracking DSN                           | `https://xxx@yyy.ingest.sentry.io/zzz`     |
+| `TWILIO_ACCOUNT_SID`        | Twilio SMS account SID                              | `ACxxxx`                                   |
+| `TWILIO_AUTH_TOKEN`         | Twilio auth token                                   | `...`                                      |
+| `TWILIO_FROM_NUMBER`        | Twilio phone number                                 | `+1234567890`                              |
 
 ---
 

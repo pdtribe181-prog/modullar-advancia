@@ -7,6 +7,7 @@
 ## Overview
 
 As a healthcare provider on Advancia PayLedger, you can:
+
 - Accept payments from patients (card + crypto)
 - Manage appointments and scheduling
 - Track revenue, invoices, and payouts
@@ -58,6 +59,7 @@ PayLedger uses **Stripe Connect** for secure payment processing:
 4. You'll receive an email when your account is activated
 
 **Status tracking**: Go to **Provider Dashboard** → **Account Status** to see:
+
 - ✅ Verified — Ready to accept payments
 - ⏳ Pending — Stripe is reviewing your documents
 - ❌ Action Required — Additional documents needed (check email for details)
@@ -68,13 +70,13 @@ PayLedger uses **Stripe Connect** for secure payment processing:
 
 ### Overview Panel
 
-| Metric | Description |
-|--------|-------------|
-| **Today's Revenue** | Payments collected today |
-| **Monthly Revenue** | Current month total |
-| **Pending Payouts** | Amount waiting to be transferred to your bank |
-| **Upcoming Appointments** | Next 7 days |
-| **Outstanding Invoices** | Unpaid patient invoices |
+| Metric                    | Description                                   |
+| ------------------------- | --------------------------------------------- |
+| **Today's Revenue**       | Payments collected today                      |
+| **Monthly Revenue**       | Current month total                           |
+| **Pending Payouts**       | Amount waiting to be transferred to your bank |
+| **Upcoming Appointments** | Next 7 days                                   |
+| **Outstanding Invoices**  | Unpaid patient invoices                       |
 
 ### Revenue Chart
 
@@ -89,6 +91,7 @@ PayLedger uses **Stripe Connect** for secure payment processing:
 ### Automatic Payment Collection
 
 When a patient pays for an appointment:
+
 1. Payment is processed through Stripe
 2. Platform fee is deducted (see fee schedule below)
 3. Net amount is added to your pending payout balance
@@ -96,10 +99,10 @@ When a patient pays for an appointment:
 
 ### Fee Schedule
 
-| Payment Type | Platform Fee | Processing Fee | Total |
-|-------------|-------------|----------------|-------|
-| Card Payment | 2.5% | 2.9% + $0.30 (Stripe) | ~5.4% + $0.30 |
-| Crypto Payment | 1.5% | Network gas fee | ~1.5% + gas |
+| Payment Type   | Platform Fee | Processing Fee        | Total         |
+| -------------- | ------------ | --------------------- | ------------- |
+| Card Payment   | 2.5%         | 2.9% + $0.30 (Stripe) | ~5.4% + $0.30 |
+| Crypto Payment | 1.5%         | Network gas fee       | ~1.5% + gas   |
 
 ### Payout Schedule
 
@@ -132,6 +135,7 @@ When a patient pays for an appointment:
 ### Appointment Notifications
 
 You'll receive notifications for:
+
 - New booking (email + in-app)
 - Cancellation by patient (email + in-app)
 - Upcoming appointment (30 min before — in-app)
@@ -157,18 +161,19 @@ The patient receives an email with a link to pay online.
 
 ### Invoice Statuses
 
-| Status | Meaning |
-|--------|---------|
-| **Draft** | Not yet sent to patient |
-| **Sent** | Emailed to patient, awaiting payment |
-| **Viewed** | Patient has opened the invoice |
-| **Paid** | Payment received |
-| **Overdue** | Past due date, unpaid |
-| **Void** | Cancelled by provider |
+| Status      | Meaning                              |
+| ----------- | ------------------------------------ |
+| **Draft**   | Not yet sent to patient              |
+| **Sent**    | Emailed to patient, awaiting payment |
+| **Viewed**  | Patient has opened the invoice       |
+| **Paid**    | Payment received                     |
+| **Overdue** | Past due date, unpaid                |
+| **Void**    | Cancelled by provider                |
 
 ### Auto-Invoicing
 
 Enable auto-invoicing for appointments:
+
 1. Go to **Settings** → **Invoicing**
 2. Toggle **Auto-Generate Invoice After Appointment**
 3. Set default consultation fee
@@ -181,6 +186,7 @@ Enable auto-invoicing for appointments:
 ### Disputes
 
 When a patient disputes a charge:
+
 1. You'll receive an email notification
 2. Go to **Provider Dashboard** → **Disputes**
 3. Review the dispute details
@@ -203,13 +209,13 @@ Refunds are typically processed within 5-7 business days back to the patient's o
 
 ### Available Reports
 
-| Report | Description |
-|--------|-------------|
-| **Revenue Summary** | Total revenue by period |
-| **Payment Breakdown** | Revenue by payment method |
-| **Patient Analytics** | New vs. returning patients |
+| Report                  | Description                                   |
+| ----------------------- | --------------------------------------------- |
+| **Revenue Summary**     | Total revenue by period                       |
+| **Payment Breakdown**   | Revenue by payment method                     |
+| **Patient Analytics**   | New vs. returning patients                    |
 | **Appointment Metrics** | Booking rate, no-show rate, cancellation rate |
-| **Payout History** | All bank transfers with dates and amounts |
+| **Payout History**      | All bank transfers with dates and amounts     |
 
 ### Export Data
 
