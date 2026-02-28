@@ -7,6 +7,32 @@ let _supabase: SupabaseClient | null = null;
 let _serviceClient: SupabaseClient | null = null;
 
 /**
+ * Shared client options for connection reuse and performance.
+ *
+ * PostgREST-based Supabase uses HTTP, so "connection pooling" here means:
+ *   1. DB schema targeting (`db.schema`)
+ *   2. HTTP keep-alive via the global fetch agent (Node 18+)
+ *   3. Reasonable statement timeout (realtime + REST)
+ *
+ * True PostgreSQL connection pooling is handled server-side by PgBouncer
+ * in the Supabase dashboard (Settings → Database → Connection Pooling):
+ *   - Pool mode: Transaction (recommended for serverless / short-lived)
+ *   - Max pool size: 15 (default) — increase for high-throughput
+ *   - Connection string: use the "Pooler" connection string when connecting
+ *     directly via pg / Prisma (not relevant for JS client).
+ */
+const SHARED_DB_OPTIONS = {
+  db: {
+    schema: 'public' as const,
+  },
+  global: {
+    headers: {
+      'x-connection-pool': 'transaction', // hint for edge/proxy routing
+    },
+  },
+};
+
+/**
  * Get the Supabase anon client (for user-authenticated operations)
  */
 export function getSupabaseClient(): SupabaseClient {
@@ -18,6 +44,7 @@ export function getSupabaseClient(): SupabaseClient {
         persistSession: false,
         detectSessionInUrl: false,
       },
+      ...SHARED_DB_OPTIONS,
     });
   }
   return _supabase;
@@ -35,6 +62,7 @@ export const createServiceClient = (): SupabaseClient => {
         autoRefreshToken: false,
         persistSession: false,
       },
+      ...SHARED_DB_OPTIONS,
     });
   }
   return _serviceClient;

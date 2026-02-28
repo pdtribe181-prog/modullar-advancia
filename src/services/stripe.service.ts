@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { getEnv } from '../config/env.js';
+import { stripeBreaker } from '../utils/circuit-breaker.js';
 
 // Lazy initialization to ensure env is validated first
 let _stripe: Stripe | null = null;
@@ -15,10 +16,26 @@ function getStripe(): Stripe {
   return _stripe;
 }
 
-// Export stripe instance as proxy for backwards compatibility
+// Export stripe instance as proxy for backwards compatibility.
+// All method calls on Stripe resource objects are routed through the
+// circuit breaker so the platform fast-fails when Stripe is degraded.
 export const stripe = new Proxy({} as Stripe, {
   get(_, prop) {
-    return (getStripe() as any)[prop];
+    const resource = (getStripe() as any)[prop];
+    // Wrap resource objects (e.g. stripe.customers, stripe.paymentIntents)
+    // so that their async methods run inside the circuit breaker.
+    // Skip the webhooks namespace — constructEvent is synchronous.
+    if (resource && typeof resource === 'object' && prop !== 'webhooks') {
+      return new Proxy(resource, {
+        get(target: any, method: string | symbol) {
+          const value = target[method];
+          if (typeof value !== 'function') return value;
+          return (...args: unknown[]) =>
+            stripeBreaker.execute(() => value.apply(target, args));
+        },
+      });
+    }
+    return resource;
   },
 });
 

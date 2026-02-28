@@ -448,5 +448,223 @@ describe('wallet.routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
     });
+
+    it('returns 404 when provider profile not found', async () => {
+      mockSupabaseChain({ data: null, error: { code: 'PGRST116' } });
+
+      const res = await request(app)
+        .get('/wallet/transactions')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  // ────────────── GET /wallet/transactions/:id ──────────────
+
+  describe('GET /wallet/transactions/:id', () => {
+    it('returns a single transaction', async () => {
+      mockSupabaseChain({ data: { id: 'prov_1' }, error: null });
+      mockGetTransaction.mockResolvedValue({
+        id: 'tx1',
+        provider_id: 'prov_1',
+        transaction_type: 'payout',
+        amount: '100',
+        currency: 'USDC',
+        status: 'confirmed',
+      });
+
+      const res = await request(app)
+        .get('/wallet/transactions/tx1')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.id).toBe('tx1');
+    });
+
+    it('returns 404 when transaction not found', async () => {
+      mockSupabaseChain({ data: { id: 'prov_1' }, error: null });
+      mockGetTransaction.mockResolvedValue(null);
+
+      const res = await request(app)
+        .get('/wallet/transactions/tx-unknown')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 when transaction belongs to another provider', async () => {
+      mockSupabaseChain({ data: { id: 'prov_1' }, error: null });
+      mockGetTransaction.mockResolvedValue({
+        id: 'tx1',
+        provider_id: 'other-provider',
+        status: 'confirmed',
+      });
+
+      const res = await request(app)
+        .get('/wallet/transactions/tx1')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 when provider profile not found', async () => {
+      mockSupabaseChain({ data: null, error: { code: 'PGRST116' } });
+
+      const res = await request(app)
+        .get('/wallet/transactions/tx1')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  // ────────────── PATCH /wallet/:id ──────────────
+
+  describe('PATCH /wallet/:id', () => {
+    it('updates wallet label', async () => {
+      mockUpdate.mockResolvedValue({
+        id: 'w1',
+        wallet_address: '0xabc',
+        blockchain_network: 'ethereum',
+        wallet_label: 'New Label',
+        payout_enabled: true,
+        min_payout_amount: 10,
+        payout_currency: 'USDC',
+        updated_at: '2025-01-15',
+      });
+
+      const res = await request(app)
+        .patch('/wallet/w1')
+        .set('Authorization', 'Bearer token')
+        .send({ label: 'New Label' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.label).toBe('New Label');
+    });
+
+    it('updates payout settings', async () => {
+      mockUpdate.mockResolvedValue({
+        id: 'w1',
+        wallet_address: '0xabc',
+        blockchain_network: 'ethereum',
+        wallet_label: 'W',
+        payout_enabled: true,
+        min_payout_amount: 50,
+        payout_currency: 'USDT',
+        updated_at: '2025-01-15',
+      });
+
+      const res = await request(app)
+        .patch('/wallet/w1')
+        .set('Authorization', 'Bearer token')
+        .send({ payoutEnabled: true, minPayoutAmount: 50, payoutCurrency: 'USDT' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.minPayoutAmount).toBe(50);
+      expect(res.body.data.payoutCurrency).toBe('USDT');
+    });
+
+    it('returns 400 when minPayoutAmount is below 10', async () => {
+      const res = await request(app)
+        .patch('/wallet/w1')
+        .set('Authorization', 'Bearer token')
+        .send({ minPayoutAmount: 5 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('at least 10');
+    });
+
+    it('returns 400 for invalid currency', async () => {
+      const res = await request(app)
+        .patch('/wallet/w1')
+        .set('Authorization', 'Bearer token')
+        .send({ payoutCurrency: 'DOGE' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Invalid currency');
+    });
+
+    it('returns 400 when no valid updates provided', async () => {
+      const res = await request(app)
+        .patch('/wallet/w1')
+        .set('Authorization', 'Bearer token')
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('No valid updates');
+    });
+  });
+
+  // ────────────── POST /wallet/:id/primary ──────────────
+
+  describe('POST /wallet/:id/primary', () => {
+    it('sets wallet as primary payout', async () => {
+      mockSetPrimary.mockResolvedValue({
+        id: 'w1',
+        wallet_address: '0xabc',
+        is_primary_payout: true,
+        payout_enabled: true,
+        provider_id: 'prov_1',
+      });
+
+      const res = await request(app)
+        .post('/wallet/w1/primary')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.isPrimaryPayout).toBe(true);
+      expect(mockAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'set_primary_payout' })
+      );
+    });
+
+    it('returns 500 when service throws', async () => {
+      mockSetPrimary.mockRejectedValue(new Error('Wallet not found'));
+
+      const res = await request(app)
+        .post('/wallet/w1/primary')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  // ────────────── POST /wallet/:id/revoke ──────────────
+
+  describe('POST /wallet/:id/revoke', () => {
+    it('revokes a wallet as admin', async () => {
+      mockRevoke.mockResolvedValue({
+        id: 'w1',
+        verification_status: 'revoked',
+        payout_enabled: false,
+      });
+
+      const res = await request(app)
+        .post('/wallet/w1/revoke')
+        .set('Authorization', 'Bearer token')
+        .send({ reason: 'Suspicious activity' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.verificationStatus).toBe('revoked');
+      expect(mockAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'wallet_revoked_admin' })
+      );
+    });
+
+    it('returns 500 when revoke fails', async () => {
+      mockRevoke.mockRejectedValue(new Error('DB error'));
+
+      const res = await request(app)
+        .post('/wallet/w1/revoke')
+        .set('Authorization', 'Bearer token')
+        .send({ reason: 'test' });
+
+      expect(res.status).toBe(500);
+    });
   });
 });

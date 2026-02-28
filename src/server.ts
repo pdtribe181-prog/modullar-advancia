@@ -18,9 +18,17 @@ import walletRoutes from './routes/wallet.routes.js';
 import invoicesRoutes from './routes/invoices.routes.js';
 import databaseWebhookRoutes from './routes/database-webhook.routes.js';
 import medBedRoutes from './routes/medbed.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
+import gdprRoutes from './routes/gdpr.routes.js';
+import retentionRoutes from './routes/retention.routes.js';
+import metricsRoutes from './routes/metrics.routes.js';
+import { auditLog } from './middleware/audit.middleware.js';
+import { metricsMiddleware } from './middleware/metrics.middleware.js';
+import { apiVersioning } from './middleware/api-versioning.middleware.js';
 import { apiLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
 import { getRedisKind, redisHelpers } from './lib/redis.js';
+import { getAllCircuitBreakerStats } from './utils/circuit-breaker.js';
 import { csrfProtection } from './middleware/csrf.middleware.js';
 import { sanitizeBody } from './middleware/sanitize.middleware.js';
 import { z } from 'zod';
@@ -101,6 +109,9 @@ try {
 // Request ID tracking (must be first)
 app.use(requestId);
 
+// Metrics collection (early — before auth so it sees all requests)
+app.use(metricsMiddleware);
+
 // Request logging
 app.use(requestLogger);
 
@@ -109,6 +120,9 @@ configureSecurityHeaders(app);
 
 // CORS configuration
 app.use(cors(getCorsConfig()));
+
+// API versioning (resolves version from URL / Accept header / X-API-Version)
+app.use('/api', apiVersioning);
 
 // Apply rate limiting to all API routes
 app.use('/api/v1', apiLimiter);
@@ -125,6 +139,17 @@ app.use((req, res, next) => {
 // CSRF protection for state-changing requests (POST/PUT/PATCH/DELETE)
 // Webhooks are excluded — they use their own signature verification
 app.use('/api/v1', csrfProtection);
+
+// Global audit logging for all mutating API requests
+// Writes to access_audit_logs after the response is sent (non-blocking)
+app.use('/api/v1', (req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    const segment = req.path.replace(/^\//, '').split('/')[0] || 'unknown';
+    const action = `${segment}.${req.method.toLowerCase()}`;
+    return auditLog(action)(req, res, next);
+  }
+  next();
+});
 
 // Auth middleware — fetches user + profile for role-based checks
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -167,9 +192,15 @@ apiRouter.use('/provider', providerRoutes);
 apiRouter.use('/wallet', walletRoutes);
 apiRouter.use('/invoices', invoicesRoutes);
 apiRouter.use('/medbeds', medBedRoutes);
+apiRouter.use('/upload', uploadRoutes);
+apiRouter.use('/gdpr', gdprRoutes);
+apiRouter.use('/retention', retentionRoutes);
 apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 
 app.use('/api/v1', apiRouter);
+
+// Metrics routes (outside /api/v1 — Prometheus scraper + admin dashboard)
+app.use('/metrics', metricsRoutes);
 
 // Profile routes (authenticated)
 // Expose under /api/v1 so frontend can call '/profile' when VITE_API_URL includes '/api/v1'.
@@ -473,6 +504,7 @@ app.get('/health', async (_req, res) => {
     timestamp: new Date().toISOString(),
     database: dbStatus,
     redis: { status: redisHealthy ? 'connected' : 'disconnected', kind: redisKind },
+    circuitBreakers: getAllCircuitBreakerStats(),
     monitoring: monitoring.enabled ? 'enabled' : 'disabled',
     version: process.env.npm_package_version || '1.0.0',
   });

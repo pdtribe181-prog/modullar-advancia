@@ -242,6 +242,36 @@ paths:
         '200':
           description: Signed out
 
+  /auth/forgot-password:
+    post:
+      summary: Request password reset email
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid email or rate limit exceeded
+
   /profile:
     get:
       summary: Get current user profile
@@ -273,6 +303,68 @@ paths:
       responses:
         '200':
           description: Profile updated
+
+  /provider:
+    get:
+      summary: List providers
+      description: |
+        Returns a paginated list of providers. Admins see all providers;
+        patients see only active providers. Supports search and specialty filter.
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: specialty
+          in: query
+          schema:
+            type: string
+          description: Filter by specialty (case-insensitive partial match)
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by business name or specialty
+      responses:
+        '200':
+          description: Paginated provider list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      providers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Provider'
+                      pagination:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                          limit:
+                            type: integer
+                          total:
+                            type: integer
+                          totalPages:
+                            type: integer
 
   /providers:
     get:
@@ -997,6 +1089,72 @@ paths:
           description: Refund created
 
   # Stripe Connect Routes
+  /connect/account:
+    post:
+      summary: Create Stripe Connect account for provider
+      description: Creates a new Stripe Express account or returns existing account info
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: New Connect account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accountId:
+                        type: string
+                      detailsSubmitted:
+                        type: boolean
+                      chargesEnabled:
+                        type: boolean
+                      payoutsEnabled:
+                        type: boolean
+                      alreadyExists:
+                        type: boolean
+        '200':
+          description: Existing Connect account returned
+        '404':
+          description: Provider profile not found
+
+  /connect/account-link:
+    post:
+      summary: Generate Stripe onboarding link
+      description: Creates a Stripe account link for provider onboarding flow
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Onboarding link generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accountId:
+                        type: string
+                      url:
+                        type: string
+                        format: uri
+                      expiresAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: No Stripe account found
+
   /connect/onboard:
     post:
       summary: Start provider onboarding
@@ -1249,6 +1407,256 @@ paths:
         '200':
           description: System health status
 
+  # ── GDPR Endpoints ────────────────────────────────────────
+  /gdpr/export:
+    get:
+      summary: Export user data (GDPR)
+      description: Generates a JSON package with all personal data from 50+ tables
+      tags: [GDPR]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: GDPR data export package
+        '401':
+          description: Unauthorized
+
+  /gdpr/erasure:
+    post:
+      summary: Erase user data (GDPR right to be forgotten)
+      description: Hard-deletes ephemeral data, anonymises financial/audit records, removes storage files and auth account
+      tags: [GDPR]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+              required: [userId]
+      responses:
+        '200':
+          description: Erasure completed
+        '401':
+          description: Unauthorized
+
+  /gdpr/consents:
+    get:
+      summary: Get user consent preferences
+      tags: [GDPR]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Consent records
+    put:
+      summary: Update consent preferences
+      tags: [GDPR]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Consents updated
+
+  # ── Data Retention Endpoints ──────────────────────────────
+  /retention/policies:
+    get:
+      summary: List data retention policies
+      tags: [Data Retention]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of all retention policies with schedules
+
+  /retention/enforce:
+    post:
+      summary: Manually enforce retention policies (admin only)
+      tags: [Data Retention]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Enforcement results
+        '403':
+          description: Forbidden — admin only
+
+  /retention/history:
+    get:
+      summary: Get retention enforcement history
+      tags: [Data Retention]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Past enforcement runs from compliance_logs
+
+  # ── File Upload Endpoints ─────────────────────────────────
+  /upload/avatar:
+    post:
+      summary: Upload profile avatar
+      tags: [File Upload]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload successful with public URL
+
+  /upload/medical-document:
+    post:
+      summary: Upload medical document
+      tags: [File Upload]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload successful
+
+  /upload/insurance:
+    post:
+      summary: Upload insurance document
+      tags: [File Upload]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload successful
+
+  /upload/invoice-attachment:
+    post:
+      summary: Upload invoice attachment
+      tags: [File Upload]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload successful
+
+  /upload/dispute-evidence:
+    post:
+      summary: Upload dispute evidence
+      tags: [File Upload]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload successful
+
+  /upload/kyc:
+    post:
+      summary: Upload KYC verification document
+      tags: [File Upload]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload successful
+
+  # ── Metrics Endpoints (outside /api/v1) ───────────────────
+  /metrics:
+    get:
+      summary: Prometheus-compatible metrics
+      description: Text/plain Prometheus gauge output for scrapers (no auth required — use IP allowlist)
+      tags: [Metrics]
+      responses:
+        '200':
+          description: Prometheus-format metrics text
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /metrics/json:
+    get:
+      summary: JSON metrics snapshot (admin only)
+      tags: [Metrics]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Full metrics snapshot with endpoints, latency histograms, transaction stats, active users
+
+  /metrics/persist:
+    post:
+      summary: Persist metrics snapshot to database (admin only)
+      tags: [Metrics]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Snapshot persisted
+
 tags:
   - name: System
     description: System health and status
@@ -1288,3 +1696,11 @@ tags:
     description: Account recovery options
   - name: Security Settings
     description: Security notification settings
+  - name: GDPR
+    description: GDPR compliance endpoints (data export, erasure, consent management)
+  - name: Data Retention
+    description: HIPAA/PCI-DSS/GDPR data retention policy management
+  - name: File Upload
+    description: Secure file upload to Supabase Storage (avatars, medical docs, insurance, invoices, disputes, KYC)
+  - name: Metrics
+    description: Application metrics and observability (Prometheus + JSON)

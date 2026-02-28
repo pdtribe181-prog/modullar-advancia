@@ -188,6 +188,32 @@ describe('Rate Limit Middleware', () => {
       const config = mockRateLimit.mock.calls[0][0] as any;
       expect(config.message).toEqual({ error: 'Too many payment requests, please slow down' });
     });
+
+    it('keyGenerator should use userId when available', async () => {
+      jest.resetModules();
+      mockRateLimit.mockReturnValue(mockHandler);
+
+      const { paymentLimiter } = await import('../middleware/rateLimit.middleware');
+      paymentLimiter(mockReq as Request, mockRes as Response, mockNext);
+
+      const config = mockRateLimit.mock.calls[0][0] as any;
+      expect(config.keyGenerator).toBeDefined();
+      const key = config.keyGenerator({ user: { id: 'user-pay-1' }, ip: '10.0.0.1' });
+      expect(key).toBe('user-pay-1');
+    });
+
+    it('keyGenerator should fall back to IP key when no user', async () => {
+      jest.resetModules();
+      mockRateLimit.mockReturnValue(mockHandler);
+
+      const { paymentLimiter } = await import('../middleware/rateLimit.middleware');
+      paymentLimiter(mockReq as Request, mockRes as Response, mockNext);
+
+      const config = mockRateLimit.mock.calls[0][0] as any;
+      const key = config.keyGenerator({ ip: '10.0.0.1' });
+      expect(key).toBeDefined();
+      expect(key).not.toBe('');
+    });
   });
 
   describe('sensitiveLimiter', () => {
@@ -205,6 +231,32 @@ describe('Rate Limit Middleware', () => {
           max: 5,
         })
       );
+    });
+
+    it('keyGenerator should use userId when available', async () => {
+      jest.resetModules();
+      mockRateLimit.mockReturnValue(mockHandler);
+
+      const { sensitiveLimiter } = await import('../middleware/rateLimit.middleware');
+      sensitiveLimiter(mockReq as Request, mockRes as Response, mockNext);
+
+      const config = mockRateLimit.mock.calls[0][0] as any;
+      expect(config.keyGenerator).toBeDefined();
+      const key = config.keyGenerator({ user: { id: 'user-sens-1' }, ip: '10.0.0.2' });
+      expect(key).toBe('user-sens-1');
+    });
+
+    it('keyGenerator should fall back to IP key when no user', async () => {
+      jest.resetModules();
+      mockRateLimit.mockReturnValue(mockHandler);
+
+      const { sensitiveLimiter } = await import('../middleware/rateLimit.middleware');
+      sensitiveLimiter(mockReq as Request, mockRes as Response, mockNext);
+
+      const config = mockRateLimit.mock.calls[0][0] as any;
+      const key = config.keyGenerator({ ip: '10.0.0.2' });
+      expect(key).toBeDefined();
+      expect(key).not.toBe('');
     });
   });
 

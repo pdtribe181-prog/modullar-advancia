@@ -6,6 +6,7 @@
 import { Resend } from 'resend';
 import { getEnv, isEmailConfigured } from '../config/env.js';
 import { logger } from '../middleware/logging.middleware.js';
+import { resendBreaker, CircuitBreakerError } from '../utils/circuit-breaker.js';
 
 // Lazy initialization for Resend client
 let _resend: Resend | null = null;
@@ -644,23 +645,33 @@ export async function sendEmail({ to, template, data }: SendEmailParams): Promis
     const email = templateFn(data);
     const resend = getResendClient();
 
-    // If Resend is configured, send the email
+    // If Resend is configured, send the email (via circuit breaker)
     if (resend) {
-      const { data: result, error } = await resend.emails.send({
-        from: getFromEmail(),
-        to: [to],
-        subject: email.subject,
-        html: email.html,
-        text: email.text,
-      });
+      try {
+        const { data: result, error } = await resendBreaker.execute(() =>
+          resend.emails.send({
+            from: getFromEmail(),
+            to: [to],
+            subject: email.subject,
+            html: email.html,
+            text: email.text,
+          })
+        );
 
-      if (error) {
-        logger.error('Resend email error', error as Error, { template, to });
-        return false;
+        if (error) {
+          logger.error('Resend email error', error as Error, { template, to });
+          return false;
+        }
+
+        logger.info('Email sent via Resend', { template, to, id: result?.id });
+        return true;
+      } catch (cbError) {
+        if (cbError instanceof CircuitBreakerError) {
+          logger.warn('Email circuit breaker OPEN — skipping send', { template, to });
+          return false;
+        }
+        throw cbError;
       }
-
-      logger.info('Email sent via Resend', { template, to, id: result?.id });
-      return true;
     }
 
     // Fallback: just log the email if Resend is not configured

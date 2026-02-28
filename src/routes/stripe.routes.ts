@@ -21,6 +21,7 @@ import {
 } from '../middleware/validation.middleware.js';
 import { asyncHandler, AppError, getErrorMessage } from '../utils/errors.js';
 import { logger } from '../middleware/logging.middleware.js';
+import { isWebhookProcessed, markWebhookProcessed } from '../utils/webhook-idempotency.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -58,7 +59,16 @@ router.post(
     }
 
     const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+
+    // Idempotency: skip already-processed events (Stripe retries)
+    if (await isWebhookProcessed(event.id)) {
+      logger.info('Duplicate webhook event skipped', { eventId: event.id, type: event.type });
+      res.json({ success: true, received: true, duplicate: true });
+      return;
+    }
+
     await processWebhook(event);
+    await markWebhookProcessed(event.id);
     res.json({ success: true, received: true });
   })
 );

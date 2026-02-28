@@ -5,6 +5,7 @@ import {
   isSupabaseError,
   isStripeError,
   tryCatch,
+  sendErrorResponse,
 } from '../utils/errors.js';
 
 describe('AppError', () => {
@@ -232,5 +233,53 @@ describe('tryCatch', () => {
     const result = await tryCatch(asyncOp);
     expect(result.data).toEqual({ id: 1, name: 'Test' });
     expect(result.error).toBeNull();
+  });
+});
+
+describe('sendErrorResponse', () => {
+  const originalEnv = process.env.NODE_ENV;
+  afterEach(() => {
+    process.env.NODE_ENV = originalEnv;
+  });
+
+  function mockRes(): any {
+    const res: any = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    return res;
+  }
+
+  it('hides 5xx error details in production', () => {
+    process.env.NODE_ENV = 'production';
+    const res = mockRes();
+    sendErrorResponse(res, new Error('Internal DB crash'));
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'An unexpected error occurred' })
+    );
+  });
+
+  it('includes requestId when provided', () => {
+    const res = mockRes();
+    sendErrorResponse(res, new AppError('Not found', 404, 'NOT_FOUND'), 'req-abc-123');
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ requestId: 'req-abc-123' }));
+  });
+
+  it('exposes AppError code and details for 4xx errors', () => {
+    const res = mockRes();
+    sendErrorResponse(res, new AppError('Bad input', 400, 'VALIDATION', { name: ['required'] }));
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'VALIDATION', details: { name: ['required'] } })
+    );
+  });
+
+  it('shows full error in development mode for 5xx', () => {
+    process.env.NODE_ENV = 'development';
+    const res = mockRes();
+    sendErrorResponse(res, new Error('DB connection failed'));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'DB connection failed' })
+    );
   });
 });

@@ -118,7 +118,8 @@ export function validateQuery<T extends z.ZodSchema>(schema: T) {
       return res.status(400).json({ error: 'Invalid query parameters', details: errors });
     }
 
-    (req as any).query = result.data;
+    // Express 5 makes req.query a getter-only property, so use defineProperty
+    Object.defineProperty(req, 'query', { value: result.data, writable: true, configurable: true });
     next();
   };
 }
@@ -138,7 +139,8 @@ export function validateParams<T extends z.ZodSchema>(schema: T) {
       return res.status(400).json({ error: 'Invalid URL parameters', details: errors });
     }
 
-    (req as any).params = result.data;
+    // Express 5 makes req.params a getter-only property, so use defineProperty
+    Object.defineProperty(req, 'params', { value: result.data, writable: true, configurable: true });
     next();
   };
 }

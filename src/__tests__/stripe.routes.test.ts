@@ -20,6 +20,8 @@ const mockRefundsCreatePartial = jest.fn<any>();
 const mockRefundsGet = jest.fn<any>();
 const mockProductsList = jest.fn<any>();
 const mockConstructEvent = jest.fn<any>();
+const mockPaymentIntentsList = jest.fn<any>();
+const mockPaymentIntentsRetrieve = jest.fn<any>();
 
 jest.unstable_mockModule('../services/stripe.service.js', () => ({
   stripeServices: {
@@ -82,6 +84,7 @@ jest.unstable_mockModule('../services/stripe.service.js', () => ({
   },
   stripe: {
     webhooks: { constructEvent: mockConstructEvent },
+    paymentIntents: { list: mockPaymentIntentsList, retrieve: mockPaymentIntentsRetrieve },
   },
 }));
 
@@ -113,6 +116,9 @@ jest.unstable_mockModule('../middleware/auth.middleware.js', () => ({
   authenticateWithProfile: (req: any, _res: Response, next: NextFunction) => {
     req.user = { id: 'user-123', email: 'test@example.com' };
     req.profile = { id: 'user-123', role: 'patient', stripe_customer_id: 'cus_test' };
+    if (mockHasStripeCustomer) {
+      req.userProfile = { id: 'user-123', role: 'patient', stripe_customer_id: 'cus_test' };
+    }
     next();
   },
   requireRole:
@@ -125,6 +131,17 @@ jest.unstable_mockModule('../middleware/auth.middleware.js', () => ({
 jest.unstable_mockModule('../lib/supabase.js', () => ({
   supabase: { from: jest.fn<any>() },
 }));
+
+const mockIsWebhookProcessed = jest.fn<any>();
+const mockMarkWebhookProcessed = jest.fn<any>();
+
+jest.unstable_mockModule('../utils/webhook-idempotency.js', () => ({
+  isWebhookProcessed: mockIsWebhookProcessed,
+  markWebhookProcessed: mockMarkWebhookProcessed,
+}));
+
+// Mutable flag to conditionally set req.userProfile for payment-history tests
+let mockHasStripeCustomer = false;
 
 // ── Dynamic imports ──
 
@@ -156,6 +173,7 @@ describe('stripe.routes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHasStripeCustomer = false;
   });
 
   // ────────────── Customer routes ──────────────
@@ -415,6 +433,96 @@ describe('stripe.routes', () => {
         .send(Buffer.from('{}'));
 
       expect(res.status).toBe(500);
+    });
+
+    it('processes webhook event successfully when secret is configured', async () => {
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+
+      const fakeEvent = { id: 'evt_123', type: 'payment_intent.succeeded', data: {} };
+      mockConstructEvent.mockReturnValue(fakeEvent);
+
+      const res = await request(app)
+        .post('/stripe/webhook')
+        .set('stripe-signature', 'sig_test')
+        .send(Buffer.from('{}'));
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.received).toBe(true);
+
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    });
+
+    it('skips duplicate webhook events', async () => {
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+
+      const fakeEvent = { id: 'evt_dup', type: 'payment_intent.succeeded', data: {} };
+      mockConstructEvent.mockReturnValue(fakeEvent);
+      mockIsWebhookProcessed.mockResolvedValue(true);
+
+      const res = await request(app)
+        .post('/stripe/webhook')
+        .set('stripe-signature', 'sig_test')
+        .send(Buffer.from('{}'));
+
+      expect(res.status).toBe(200);
+      expect(res.body.duplicate).toBe(true);
+      expect(mockMarkWebhookProcessed).not.toHaveBeenCalled();
+
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    });
+  });
+
+  // ────────────── Payment History ──────────────
+
+  describe('GET /stripe/payment-history', () => {
+    it('returns empty payments when no customer ID', async () => {
+      const res = await request(app)
+        .get('/stripe/payment-history')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.payments).toEqual([]);
+      expect(res.body.data.has_more).toBe(false);
+    });
+
+    it('returns payments filtered by status', async () => {
+      mockHasStripeCustomer = true;
+      mockPaymentIntentsList.mockResolvedValue({
+        data: [
+          {
+            id: 'pi_1',
+            amount: 5000,
+            currency: 'usd',
+            status: 'succeeded',
+            description: 'Consultation',
+            created: 1700000000,
+            latest_charge: null,
+            metadata: {},
+          },
+          {
+            id: 'pi_2',
+            amount: 3000,
+            currency: 'usd',
+            status: 'requires_payment_method',
+            description: 'Pending',
+            created: 1700000100,
+            latest_charge: null,
+            metadata: {},
+          },
+        ],
+        has_more: false,
+      });
+
+      const res = await request(app)
+        .get('/stripe/payment-history?status=succeeded')
+        .set('Authorization', 'Bearer token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.payments).toHaveLength(1);
+      expect(res.body.data.payments[0].id).toBe('pi_1');
+      expect(res.body.data.payments[0].status).toBe('succeeded');
+      expect(res.body.data.payments[0].amount).toBe(50); // 5000/100
     });
   });
 });

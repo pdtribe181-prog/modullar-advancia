@@ -5,6 +5,7 @@
 
 import twilio from 'twilio';
 import { logger } from '../middleware/logging.middleware.js';
+import { twilioBreaker, CircuitBreakerError } from '../utils/circuit-breaker.js';
 
 // Lazy initialization for Twilio client
 let _twilioClient: twilio.Twilio | null = null;
@@ -112,20 +113,30 @@ export async function sendSMS({ to, template, data = {} }: SendSMSParams): Promi
     const config = getTwilioConfig();
 
     if (client && config) {
-      const result = await client.messages.create({
-        body: message,
-        to: normalizePhoneNumber(to),
-        from: config.fromNumber,
-      });
+      try {
+        const result = await twilioBreaker.execute(() =>
+          client.messages.create({
+            body: message,
+            to: normalizePhoneNumber(to),
+            from: config.fromNumber,
+          })
+        );
 
-      logger.info('SMS sent via Twilio', {
-        template,
-        to: maskPhoneNumber(to),
-        sid: result.sid,
-        status: result.status,
-      });
+        logger.info('SMS sent via Twilio', {
+          template,
+          to: maskPhoneNumber(to),
+          sid: result.sid,
+          status: result.status,
+        });
 
-      return { success: true, messageId: result.sid };
+        return { success: true, messageId: result.sid };
+      } catch (cbError) {
+        if (cbError instanceof CircuitBreakerError) {
+          logger.warn('SMS circuit breaker OPEN — skipping send', { template, to: maskPhoneNumber(to) });
+          return { success: false, error: 'Service temporarily unavailable' };
+        }
+        throw cbError;
+      }
     }
 
     // Fallback: log SMS for development
@@ -152,14 +163,24 @@ export async function sendRawSMS(to: string, message: string): Promise<SendSMSRe
     const config = getTwilioConfig();
 
     if (client && config) {
-      const result = await client.messages.create({
-        body: message,
-        to: normalizePhoneNumber(to),
-        from: config.fromNumber,
-      });
+      try {
+        const result = await twilioBreaker.execute(() =>
+          client.messages.create({
+            body: message,
+            to: normalizePhoneNumber(to),
+            from: config.fromNumber,
+          })
+        );
 
-      logger.info('Raw SMS sent', { to: maskPhoneNumber(to), sid: result.sid });
-      return { success: true, messageId: result.sid };
+        logger.info('Raw SMS sent', { to: maskPhoneNumber(to), sid: result.sid });
+        return { success: true, messageId: result.sid };
+      } catch (cbError) {
+        if (cbError instanceof CircuitBreakerError) {
+          logger.warn('Raw SMS circuit breaker OPEN — skipping send', { to: maskPhoneNumber(to) });
+          return { success: false, error: 'Service temporarily unavailable' };
+        }
+        throw cbError;
+      }
     }
 
     logger.debug('Raw SMS queued (Twilio not configured)', {

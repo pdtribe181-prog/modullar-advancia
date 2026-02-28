@@ -30,6 +30,24 @@ jest.unstable_mockModule('../middleware/logging.middleware.js', () => ({
   },
 }));
 
+// Custom CircuitBreakerError class for the mock
+class MockCircuitBreakerError extends Error {
+  constructor(service: string) {
+    super(`Circuit breaker OPEN for service "${service}" — request blocked`);
+    this.name = 'CircuitBreakerError';
+  }
+}
+
+const mockExecute = jest.fn<any>().mockImplementation((fn: any) => fn());
+
+jest.unstable_mockModule('../utils/circuit-breaker.js', () => ({
+  twilioBreaker: { execute: mockExecute },
+  CircuitBreakerError: MockCircuitBreakerError,
+  stripeBreaker: { execute: (fn: any) => fn() },
+  resendBreaker: { execute: (fn: any) => fn() },
+  getAllCircuitBreakerStats: () => ({}),
+}));
+
 // ── import after mocks ──
 
 const {
@@ -257,6 +275,54 @@ describe('sms.service', () => {
     });
   });
 
+  // ────────────────────── normalizePhoneNumber (internal) ──────────────────────
+
+  describe('normalizePhoneNumber – branches via sendSMS', () => {
+    it('prepends +1 for a bare 10-digit US number', async () => {
+      setTwilioEnv();
+      mockCreate.mockResolvedValue({ sid: 'SM_10d', status: 'queued' });
+
+      await sendSMS({ to: '5551234567', template: 'welcome', data: { name: 'T' } });
+
+      expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ to: '+15551234567' }));
+    });
+
+    it('returns short +prefixed phone as-is when < 10 digits', async () => {
+      setTwilioEnv();
+      mockCreate.mockResolvedValue({ sid: 'SM_sp', status: 'queued' });
+
+      await sendSMS({ to: '+12345', template: 'welcome', data: { name: 'T' } });
+
+      expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ to: '+12345' }));
+    });
+
+    it('prepends + for short digits without + prefix', async () => {
+      setTwilioEnv();
+      mockCreate.mockResolvedValue({ sid: 'SM_sd', status: 'queued' });
+
+      await sendSMS({ to: '12345', template: 'welcome', data: { name: 'T' } });
+
+      expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ to: '+12345' }));
+    });
+  });
+
+  // ────────────────────── maskPhoneNumber (internal) ──────────────────────
+
+  describe('maskPhoneNumber – short-number branch', () => {
+    it('handles phone with fewer than 4 digits gracefully', async () => {
+      clearTwilioEnv();
+      const result = await sendSMS({ to: '12', template: 'welcome', data: { name: 'T' } });
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe('dev-mode');
+    });
+
+    it('masks very short phone via sendRawSMS', async () => {
+      clearTwilioEnv();
+      const result = await sendRawSMS('5', 'Hello');
+      expect(result.success).toBe(true);
+    });
+  });
+
   // ────────────────────── isValidPhoneNumber ──────────────────────
 
   describe('isValidPhoneNumber', () => {
@@ -303,6 +369,56 @@ describe('sms.service', () => {
       const result = await getSMSStatus('SM_test_sid');
       expect(result.status).toBe('error');
       expect(result.error).toBe('not found');
+    });
+  });
+
+  // ────────────────────── Circuit Breaker ──────────────────────
+
+  describe('sendSMS – circuit breaker', () => {
+    it('returns service unavailable when circuit breaker is open', async () => {
+      setTwilioEnv();
+      mockExecute.mockRejectedValueOnce(new MockCircuitBreakerError('twilio'));
+
+      const result = await sendSMS({
+        to: '+15559999999',
+        template: 'welcome',
+        data: { name: 'CBtest' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Service temporarily unavailable');
+    });
+  });
+
+  describe('sendRawSMS – circuit breaker', () => {
+    it('returns service unavailable when circuit breaker is open', async () => {
+      setTwilioEnv();
+      mockExecute.mockRejectedValueOnce(new MockCircuitBreakerError('twilio'));
+
+      const result = await sendRawSMS('+15559999999', 'Test message');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Service temporarily unavailable');
+    });
+  });
+
+  // ────────────────────── isValidPhoneNumber edge cases ──────────────────────
+
+  describe('isValidPhoneNumber – additional edge cases', () => {
+    it('returns true for number with country code prefix', () => {
+      expect(isValidPhoneNumber('+12125551234')).toBe(true);
+    });
+
+    it('returns false for empty string', () => {
+      expect(isValidPhoneNumber('')).toBe(false);
+    });
+
+    it('returns false for non-numeric string', () => {
+      expect(isValidPhoneNumber('not-a-number')).toBe(false);
+    });
+
+    it('returns true for 11-digit number', () => {
+      expect(isValidPhoneNumber('15551234567')).toBe(true);
     });
   });
 });

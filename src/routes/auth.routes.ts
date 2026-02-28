@@ -845,28 +845,31 @@ router.put(
 /**
  * Request password reset
  */
-router.post(
-  '/password/reset',
-  authLimiter,
-  validateBody(emailSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body;
+const handleForgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
 
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password`,
-    });
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password`,
+  });
 
-    if (error) {
-      throw AppError.badRequest(error.message);
-    }
+  if (error) {
+    throw AppError.badRequest(error.message);
+  }
 
-    res.json({
-      success: true,
-      message: 'Password reset email sent',
-      data,
-    });
-  })
-);
+  res.json({
+    success: true,
+    message: 'Password reset email sent',
+    data,
+  });
+});
+
+router.post('/password/reset', authLimiter, validateBody(emailSchema), handleForgotPassword);
+
+/**
+ * Forgot password (alias for /password/reset)
+ * Provides the standard forgot-password endpoint expected by clients
+ */
+router.post('/forgot-password', authLimiter, validateBody(emailSchema), handleForgotPassword);
 
 const updatePasswordSchema = z.object({
   password: z.string().min(8),

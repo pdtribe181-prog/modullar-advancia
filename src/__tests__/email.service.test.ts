@@ -63,6 +63,8 @@ const {
   sendSecurityNotification,
 } = await import('../services/email.service.js');
 
+const { resendBreaker } = await import('../utils/circuit-breaker.js');
+
 // ── tests ──
 
 describe('email.service', () => {
@@ -193,6 +195,22 @@ describe('email.service', () => {
       expect(mockResendSend).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: expect.stringContaining('Invoice'),
+        })
+      );
+    });
+
+    it('includes hostedInvoiceUrl link when provided', async () => {
+      const result = await sendInvoiceEmail('user@test.com', {
+        amount: 200,
+        currency: 'USD',
+        invoiceNumber: 'INV-002',
+        dueDate: '2025-02-01',
+        hostedInvoiceUrl: 'https://pay.stripe.com/inv_abc',
+      });
+      expect(result).toBe(true);
+      expect(mockResendSend).toHaveBeenCalledWith(
+        expect.objectContaining({
+          html: expect.stringContaining('https://pay.stripe.com/inv_abc'),
         })
       );
     });
@@ -341,6 +359,44 @@ describe('email.service', () => {
 
       expect(result.email).toBe(true);
       expect(result.sms).toBe(false);
+    });
+  });
+
+  // ────────────── Circuit breaker integration ──────────────
+
+  describe('circuit breaker integration', () => {
+    afterAll(() => {
+      resendBreaker.reset();
+    });
+
+    it('returns false when circuit breaker is open (CircuitBreakerError)', async () => {
+      resendBreaker.reset();
+      mockResendSend.mockRejectedValue(new Error('service down'));
+
+      // Trip the breaker (failureThreshold = 3)
+      await sendEmail({
+        to: 'x@test.com',
+        template: 'payment_succeeded',
+        data: { amount: 1, currency: 'USD', transactionId: 'tx_1', date: '2025-01-01' },
+      });
+      await sendEmail({
+        to: 'x@test.com',
+        template: 'payment_succeeded',
+        data: { amount: 1, currency: 'USD', transactionId: 'tx_1', date: '2025-01-01' },
+      });
+      await sendEmail({
+        to: 'x@test.com',
+        template: 'payment_succeeded',
+        data: { amount: 1, currency: 'USD', transactionId: 'tx_1', date: '2025-01-01' },
+      });
+
+      // 4th call: breaker is OPEN → CircuitBreakerError caught → returns false
+      const result = await sendEmail({
+        to: 'x@test.com',
+        template: 'payment_succeeded',
+        data: { amount: 1, currency: 'USD', transactionId: 'tx_1', date: '2025-01-01' },
+      });
+      expect(result).toBe(false);
     });
   });
 });

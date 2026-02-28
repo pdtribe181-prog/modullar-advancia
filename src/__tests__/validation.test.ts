@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import {
   emailSchema,
   passwordSchema,
@@ -9,6 +10,7 @@ import {
   createPaymentIntentSchema,
   refundSchema,
   paginationSchema,
+  validateQuery,
 } from '../middleware/validation.middleware.js';
 
 describe('Validation Schemas', () => {
@@ -321,6 +323,40 @@ describe('Validation Schemas', () => {
         limit: 200,
       });
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('validateQuery middleware', () => {
+    it('returns 400 when query validation fails', () => {
+      const middleware = validateQuery(paginationSchema);
+
+      const req = { query: { page: '0', limit: '200' } } as any;
+      const jsonMock = jest.fn<any>();
+      const statusMock = jest.fn<any>().mockReturnValue({ json: jsonMock });
+      const res = { status: statusMock } as any;
+      const next = jest.fn<any>();
+
+      middleware(req, res, next);
+
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Invalid query parameters' })
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('passes validated query to next when valid', () => {
+      const middleware = validateQuery(paginationSchema);
+
+      const req = { query: { page: '2', limit: '10' } } as any;
+      const res = {} as any;
+      const next = jest.fn<any>();
+
+      middleware(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(req.query.page).toBe(2);
+      expect(req.query.limit).toBe(10);
     });
   });
 });

@@ -24,6 +24,123 @@ const router = Router();
  * 6. GET /connect/payouts - Get provider payout history
  */
 
+// ============================================================
+// STANDALONE CONNECT ACCOUNT ENDPOINTS
+// ============================================================
+
+/**
+ * Create a Stripe Connect Express account for a provider
+ * POST /connect/account
+ */
+router.post(
+  '/account',
+  onboardingLimiter,
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user!.id;
+    const userProfile = req.userProfile!;
+
+    // Get provider record
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('id, stripe_account_id, business_name')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider) {
+      throw AppError.notFound('Provider profile not found');
+    }
+
+    // Check if already has a Stripe account
+    if (provider.stripe_account_id) {
+      // Return existing account info
+      const account = await stripeServices.connect.getAccount(provider.stripe_account_id);
+      res.json({
+        success: true,
+        data: {
+          accountId: provider.stripe_account_id,
+          detailsSubmitted: account.details_submitted,
+          chargesEnabled: account.charges_enabled,
+          payoutsEnabled: account.payouts_enabled,
+          alreadyExists: true,
+        },
+      });
+      return;
+    }
+
+    // Create new Stripe Express account
+    const account = await stripeServices.connect.createExpressAccount({
+      email: req.user!.email || '',
+      providerId: provider.id,
+      businessName: provider.business_name || userProfile.full_name || 'Healthcare Provider',
+      country: 'US',
+    });
+
+    // Store Stripe account ID in provider record
+    await supabase
+      .from('providers')
+      .update({ stripe_account_id: account.id })
+      .eq('id', provider.id);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        accountId: account.id,
+        detailsSubmitted: account.details_submitted,
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled,
+        alreadyExists: false,
+      },
+    });
+  })
+);
+
+/**
+ * Generate an account link for Stripe Connect onboarding
+ * POST /connect/account-link
+ */
+router.post(
+  '/account-link',
+  onboardingLimiter,
+  authenticateWithProfile,
+  requireRole('provider', 'admin'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user!.id;
+
+    const { data: provider } = await supabase
+      .from('providers')
+      .select('stripe_account_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!provider?.stripe_account_id) {
+      throw AppError.badRequest(
+        'No Stripe account found. Create one first via POST /connect/account.'
+      );
+    }
+
+    const accountLink = await stripeServices.connect.createAccountLink(
+      provider.stripe_account_id,
+      `${process.env.FRONTEND_URL}/provider/onboarding/refresh`,
+      `${process.env.FRONTEND_URL}/provider/onboarding/complete`
+    );
+
+    res.json({
+      success: true,
+      data: {
+        accountId: provider.stripe_account_id,
+        url: accountLink.url,
+        expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
+      },
+    });
+  })
+);
+
+// ============================================================
+// COMBINED ONBOARDING FLOW
+// ============================================================
+
 // Start provider onboarding
 router.post(
   '/onboard',

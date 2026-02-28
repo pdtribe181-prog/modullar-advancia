@@ -10,6 +10,7 @@ import {
 } from '../middleware/validation.middleware.js';
 import { asyncHandler, AppError } from '../utils/errors.js';
 import { logger } from '../middleware/logging.middleware.js';
+import { cacheResponse, invalidateResource } from '../middleware/cache.middleware.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -69,6 +70,79 @@ const cancelAppointmentSchema = z.object({
 const completeAppointmentSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
+
+// ============================================================
+// PROVIDER LIST (Admin / Public)
+// ============================================================
+
+/**
+ * List providers
+ * GET /provider
+ * Admins see all providers; authenticated patients see active providers only.
+ */
+router.get(
+  '/',
+  authenticate,
+  cacheResponse(30), // 30-second TTL — provider list is read-heavy
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    // Determine caller's role
+    const { data: callerProfile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    const isAdmin = callerProfile?.role === 'admin';
+
+    // Parse query params
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+    const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || '20'), 10)));
+    const offset = (page - 1) * limit;
+    const specialty = req.query.specialty as string | undefined;
+    const search = req.query.search as string | undefined;
+
+    let query = supabase
+      .from('providers')
+      .select(
+        'id, user_id, business_name, specialty, phone, email, consultation_fee, bio, status, stripe_onboarding_complete, created_at',
+        { count: 'exact' }
+      );
+
+    // Non-admins only see active/verified providers
+    if (!isAdmin) {
+      query = query.eq('status', 'active');
+    }
+
+    if (specialty) {
+      query = query.ilike('specialty', `%${specialty}%`);
+    }
+
+    if (search) {
+      query = query.or(`business_name.ilike.%${search}%,specialty.ilike.%${search}%`);
+    }
+
+    query = query.order('business_name', { ascending: true }).range(offset, offset + limit - 1);
+
+    const { data: providers, error, count } = await query;
+
+    if (error) throw AppError.internal();
+
+    res.json({
+      success: true,
+      data: {
+        providers: providers || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
+      },
+    });
+  })
+);
 
 // ============================================================
 // PROVIDER DASHBOARD ROUTES

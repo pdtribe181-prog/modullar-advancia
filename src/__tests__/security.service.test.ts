@@ -416,5 +416,355 @@ describe('security.service', () => {
       // Both false => shouldNotify = false
       expect(mockSendSecurityNotification).not.toHaveBeenCalled();
     });
+
+    it('sends notification for email_changed event', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_4' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'email_changed',
+          ipAddress: '1.2.3.4',
+        },
+        {
+          email: 'user@test.com',
+          name: 'Alice',
+          preferences: { notifyOnEmailChange: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'user@test.com' }),
+        'email_changed',
+        expect.any(Object)
+      );
+    });
+
+    it('always sends notification for mfa_enabled event', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_5' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'mfa_enabled',
+        },
+        {
+          email: 'user@test.com',
+          preferences: {},
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'user@test.com' }),
+        'mfa_enabled',
+        expect.any(Object)
+      );
+    });
+
+    it('always sends notification for mfa_disabled event', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_6' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'mfa_disabled',
+        },
+        {
+          email: 'user@test.com',
+          preferences: {},
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'user@test.com' }),
+        'mfa_disabled',
+        expect.any(Object)
+      );
+    });
+
+    it('parses iPhone user agent in notification data', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_7' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'login',
+          userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) Mobile/15E148',
+          ipAddress: '5.5.5.5',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnLogin: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new_login',
+        expect.objectContaining({ device: 'iPhone' })
+      );
+    });
+
+    it('parses Android user agent in notification data', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_8' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'login',
+          userAgent: 'Mozilla/5.0 (Linux; Android 12; Pixel 6) Mobile Safari/537.36',
+          ipAddress: '5.5.5.5',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnLogin: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new_login',
+        expect.objectContaining({ device: 'Android Device' })
+      );
+    });
+
+    it('parses Windows user agent in notification data', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_9' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'password_changed',
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnPasswordChange: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'password_changed',
+        expect.objectContaining({ device: 'Windows PC' })
+      );
+    });
+
+    it('parses Mac user agent in notification data', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_10' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'password_changed',
+          userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnPasswordChange: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'password_changed',
+        expect.objectContaining({ device: 'Mac' })
+      );
+    });
+
+    it('parses Linux user agent in notification data', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_11' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'password_changed',
+          userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnPasswordChange: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'password_changed',
+        expect.objectContaining({ device: 'Linux PC' })
+      );
+    });
+
+    it('formats location data in notification', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_12' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'login',
+          ipAddress: '1.2.3.4',
+          location: { city: 'New York', region: 'NY', country: 'US' },
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnLogin: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new_login',
+        expect.objectContaining({ location: 'New York, NY, US' })
+      );
+    });
+
+    it('formats location with partial data', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_13' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'login',
+          ipAddress: '1.2.3.4',
+          location: { country: 'US' },
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnLogin: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new_login',
+        expect.objectContaining({ location: 'US' })
+      );
+    });
+
+    it('returns Unknown Location when location is empty', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_14' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'login',
+          ipAddress: '1.2.3.4',
+          location: {},
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnLogin: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new_login',
+        expect.objectContaining({ location: 'Unknown Location' })
+      );
+    });
+
+    it('parses generic Mobile user agent', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_15' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'login',
+          userAgent: 'Mozilla/5.0 Mobile Safari/604.1',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnLogin: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new_login',
+        expect.objectContaining({ device: 'Mobile Device' })
+      );
+    });
+
+    it('falls back to Unknown Device for unrecognized user agent', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_16' }, error: null });
+      mockSendSecurityNotification.mockResolvedValue({ email: true, sms: false });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'login',
+          userAgent: 'SomeRandomBot/1.0',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { notifyOnLogin: true },
+        }
+      );
+
+      expect(mockSendSecurityNotification).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new_login',
+        expect.objectContaining({ device: 'Unknown Device' })
+      );
+    });
+
+    it('uses default notification rule for unmapped event types with emailNotifications', async () => {
+      const chain = createChain();
+      mockFrom.mockReturnValue(chain);
+      mockSingle.mockResolvedValue({ data: { id: 'evt_17' }, error: null });
+
+      await logAndNotify(
+        {
+          userId: 'user-abc',
+          eventType: 'failed_login',
+        },
+        {
+          email: 'user@test.com',
+          preferences: { emailNotifications: true },
+        }
+      );
+
+      // failed_login is not in the notificationMap, so sendSecurityNotification should NOT be called
+      // (even though shouldSendNotification returns true, findNotificationType is null)
+      expect(mockSendSecurityNotification).not.toHaveBeenCalled();
+    });
   });
 });

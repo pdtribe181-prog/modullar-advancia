@@ -11,11 +11,7 @@ export default {
       'ts-jest',
       {
         useESM: true,
-        tsconfig: {
-          target: 'ES2022',
-          module: 'ESNext',
-          moduleResolution: 'bundler',
-        },
+        tsconfig: 'tsconfig.test.json',
         diagnostics: {
           ignoreDiagnostics: [1378],
         },
@@ -33,9 +29,10 @@ export default {
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testTimeout: 30000,
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/types/**'],
+  coverageProvider: 'v8',
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/types/**', '!src/__tests__/**'],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
   coverageThreshold: {
     global: {
       statements: 12,

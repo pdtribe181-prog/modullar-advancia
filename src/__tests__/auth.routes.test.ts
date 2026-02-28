@@ -14,6 +14,19 @@ const mockSignUp = jest.fn<any>();
 const mockSignOut = jest.fn<any>();
 const mockSetSession = jest.fn<any>();
 const mockRefreshSession = jest.fn<any>();
+const mockResetPasswordForEmail = jest.fn<any>();
+const mockSignInWithOtp = jest.fn<any>();
+const mockVerifyOtp = jest.fn<any>();
+const mockResend = jest.fn<any>();
+const mockUpdateUser = jest.fn<any>();
+const mockLinkIdentity = jest.fn<any>();
+const mockUnlinkIdentity = jest.fn<any>();
+const mockMfaEnroll = jest.fn<any>();
+const mockMfaVerify = jest.fn<any>();
+const mockMfaChallenge = jest.fn<any>();
+const mockMfaListFactors = jest.fn<any>();
+const mockMfaUnenroll = jest.fn<any>();
+const mockMfaGetAssurance = jest.fn<any>();
 const mockFrom = jest.fn<any>();
 
 jest.unstable_mockModule('../lib/supabase.js', () => ({
@@ -29,6 +42,21 @@ jest.unstable_mockModule('../lib/supabase.js', () => ({
       signOut: mockSignOut,
       setSession: mockSetSession,
       refreshSession: mockRefreshSession,
+      resetPasswordForEmail: mockResetPasswordForEmail,
+      signInWithOtp: mockSignInWithOtp,
+      verifyOtp: mockVerifyOtp,
+      resend: mockResend,
+      updateUser: mockUpdateUser,
+      linkIdentity: mockLinkIdentity,
+      unlinkIdentity: mockUnlinkIdentity,
+      mfa: {
+        enroll: mockMfaEnroll,
+        verify: mockMfaVerify,
+        challenge: mockMfaChallenge,
+        listFactors: mockMfaListFactors,
+        unenroll: mockMfaUnenroll,
+        getAuthenticatorAssuranceLevel: mockMfaGetAssurance,
+      },
     },
     from: mockFrom,
   }),
@@ -57,6 +85,12 @@ jest.unstable_mockModule('../services/security.service.js', () => ({
   logSecurityEvent: mockLogSecurityEvent,
   logAndNotify: mockLogAndNotify,
   extractIPAddress: mockExtractIPAddress,
+}));
+
+const mockGenerateCsrfToken = jest.fn<any>();
+jest.unstable_mockModule('../middleware/csrf.middleware.js', () => ({
+  generateCsrfToken: mockGenerateCsrfToken,
+  csrfProtection: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 
 // Auth middleware - let through with mocked user
@@ -174,6 +208,23 @@ describe('auth.routes', () => {
       expect(res.body.success).toBe(true);
     });
 
+    it('returns 500 when auto-created profile insertion fails', async () => {
+      const chain: any = {};
+      chain.select = jest.fn<any>().mockReturnValue(chain);
+      chain.insert = jest.fn<any>().mockReturnValue(chain);
+      chain.eq = jest.fn<any>().mockReturnValue(chain);
+      chain.single = jest
+        .fn<any>()
+        .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116', message: 'not found' } })
+        .mockResolvedValueOnce({ data: null, error: { message: 'insert failed' } });
+      mockFrom.mockReturnValue(chain);
+
+      const res = await request(app).get('/auth/profile').set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
+
     it('returns 500 on non-PGRST116 error', async () => {
       mockSupabaseChain({ data: null, error: { code: 'OTHER', message: 'DB error' } });
 
@@ -212,6 +263,18 @@ describe('auth.routes', () => {
         .send({ phone: 'not-a-phone' });
 
       expect(res.status).toBe(400);
+    });
+
+    it('returns 500 when profile update fails', async () => {
+      mockSupabaseChain({ data: null, error: { message: 'update failed' } });
+
+      const res = await request(app)
+        .put('/auth/profile')
+        .set('Authorization', 'Bearer test-token')
+        .send({ full_name: 'New Name' });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -279,6 +342,44 @@ describe('auth.routes', () => {
           eventType: 'failed_login',
         })
       );
+    });
+
+    it('returns 403 for pending email account', async () => {
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: mockUser.id, email: 'test@example.com', user_metadata: {} },
+          session: { access_token: 'tok', refresh_token: 'ref' },
+        },
+        error: null,
+      });
+      mockSupabaseChain({ data: { status: 'pending', role: 'patient' }, error: null });
+      mockSignOut.mockResolvedValue({ error: null });
+
+      const res = await request(app)
+        .post('/auth/login')
+        .send({ email: 'test@example.com', password: 'ValidPass1!' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('pending approval');
+    });
+
+    it('returns 403 for suspended email account', async () => {
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: mockUser.id, email: 'test@example.com', user_metadata: {} },
+          session: { access_token: 'tok', refresh_token: 'ref' },
+        },
+        error: null,
+      });
+      mockSupabaseChain({ data: { status: 'suspended', role: 'patient' }, error: null });
+      mockSignOut.mockResolvedValue({ error: null });
+
+      const res = await request(app)
+        .post('/auth/login')
+        .send({ email: 'test@example.com', password: 'ValidPass1!' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('suspended');
     });
   });
 
@@ -348,6 +449,15 @@ describe('auth.routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
     });
+
+    it('returns 500 when signOut fails', async () => {
+      mockSignOut.mockResolvedValue({ error: { message: 'session error' } });
+
+      const res = await request(app).post('/auth/logout').set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
   });
 
   // ────────────── POST /auth/refresh ──────────────
@@ -398,6 +508,969 @@ describe('auth.routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+    });
+  });
+
+  // ────────────── POST /auth/forgot-password ──────────────
+
+  describe('POST /auth/forgot-password', () => {
+    it('sends password reset email', async () => {
+      mockResetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app)
+        .post('/auth/forgot-password')
+        .send({ email: 'test@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('Password reset email sent');
+    });
+
+    it('returns 400 for invalid email', async () => {
+      const res = await request(app).post('/auth/forgot-password').send({ email: 'not-an-email' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when Supabase returns error', async () => {
+      mockResetPasswordForEmail.mockResolvedValue({
+        data: null,
+        error: { message: 'Rate limit exceeded' },
+      });
+
+      const res = await request(app)
+        .post('/auth/forgot-password')
+        .send({ email: 'test@example.com' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  // ────────────── POST /auth/password/reset ──────────────
+
+  describe('POST /auth/password/reset', () => {
+    it('sends password reset email (same handler as forgot-password)', async () => {
+      mockResetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app)
+        .post('/auth/password/reset')
+        .send({ email: 'test@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+  });
+
+  // ────────────── GET /auth/csrf-token ──────────────
+
+  describe('GET /auth/csrf-token', () => {
+    it('returns a CSRF token', async () => {
+      mockGenerateCsrfToken.mockResolvedValue('test-csrf-token-hex');
+
+      const res = await request(app)
+        .get('/auth/csrf-token')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.csrfToken).toBe('test-csrf-token-hex');
+    });
+  });
+
+  // ────────────── PHONE AUTH ROUTES ──────────────
+
+  describe('POST /auth/phone/signup', () => {
+    it('sends OTP for phone signup', async () => {
+      mockSignInWithOtp.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app).post('/auth/phone/signup').send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('OTP sent');
+    });
+
+    it('returns 400 on Supabase error', async () => {
+      mockSignInWithOtp.mockResolvedValue({ data: null, error: { message: 'Rate limit' } });
+
+      const res = await request(app).post('/auth/phone/signup').send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for invalid phone format', async () => {
+      const res = await request(app).post('/auth/phone/signup').send({ phone: 'invalid' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('POST /auth/phone/signin', () => {
+    it('sends OTP for phone signin', async () => {
+      mockSignInWithOtp.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app).post('/auth/phone/signin').send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on error', async () => {
+      mockSignInWithOtp.mockResolvedValue({ data: null, error: { message: 'Error' } });
+
+      const res = await request(app).post('/auth/phone/signin').send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('POST /auth/phone/verify', () => {
+    it('verifies OTP and returns session for active user', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: {
+          user: { id: mockUser.id, phone: '+12025551234', user_metadata: { full_name: 'Test' } },
+          session: { access_token: 'token-123' },
+        },
+        error: null,
+      });
+
+      // Profile exists and active
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: { status: 'active', role: 'patient' },
+              error: null,
+            }),
+          }),
+        }),
+        update: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockResolvedValue({ error: null }),
+        }),
+      });
+
+      const res = await request(app)
+        .post('/auth/phone/verify')
+        .send({ phone: '+12025551234', token: '123456' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 403 for pending user', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { user: { id: mockUser.id }, session: {} },
+        error: null,
+      });
+      mockSignOut.mockResolvedValue({ error: null });
+
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: { status: 'pending', role: 'patient' },
+              error: null,
+            }),
+          }),
+        }),
+      });
+
+      const res = await request(app)
+        .post('/auth/phone/verify')
+        .send({ phone: '+12025551234', token: '123456' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 403 for suspended user', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { user: { id: mockUser.id }, session: {} },
+        error: null,
+      });
+      mockSignOut.mockResolvedValue({ error: null });
+
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: { status: 'suspended', role: 'patient' },
+              error: null,
+            }),
+          }),
+        }),
+      });
+
+      const res = await request(app)
+        .post('/auth/phone/verify')
+        .send({ phone: '+12025551234', token: '123456' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('creates profile for new phone user and returns pending', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: {
+          user: {
+            id: mockUser.id,
+            phone: '+12025551234',
+            user_metadata: { full_name: 'Test', role: 'patient' },
+          },
+          session: {},
+        },
+        error: null,
+      });
+      mockSignOut.mockResolvedValue({ error: null });
+
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: null,
+              error: null,
+            }),
+          }),
+        }),
+        insert: jest.fn<any>().mockResolvedValue({ error: null }),
+      });
+
+      const res = await request(app)
+        .post('/auth/phone/verify')
+        .send({ phone: '+12025551234', token: '123456' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 401 on invalid OTP', async () => {
+      mockVerifyOtp.mockResolvedValue({ data: {}, error: { message: 'Invalid OTP' } });
+
+      const res = await request(app)
+        .post('/auth/phone/verify')
+        .send({ phone: '+12025551234', token: '000000' });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('POST /auth/phone/resend', () => {
+    it('resends OTP', async () => {
+      mockResend.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app).post('/auth/phone/resend').send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on error', async () => {
+      mockResend.mockResolvedValue({ data: null, error: { message: 'Too fast' } });
+
+      const res = await request(app).post('/auth/phone/resend').send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('PUT /auth/phone', () => {
+    it('updates phone number', async () => {
+      mockUpdateUser.mockResolvedValue({
+        data: { user: { ...mockUser, phone: '+19998887777' } },
+        error: null,
+      });
+
+      const res = await request(app)
+        .put('/auth/phone')
+        .set('Authorization', 'Bearer test-token')
+        .send({ phone: '+19998887777' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on error', async () => {
+      mockUpdateUser.mockResolvedValue({ data: null, error: { message: 'Phone taken' } });
+
+      const res = await request(app)
+        .put('/auth/phone')
+        .set('Authorization', 'Bearer test-token')
+        .send({ phone: '+19998887777' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  // ────────────── MFA ROUTES ──────────────
+
+  describe('POST /auth/mfa/enroll', () => {
+    it('enrolls TOTP factor', async () => {
+      mockMfaEnroll.mockResolvedValue({
+        data: { id: 'factor-1', type: 'totp', totp: { qr_code: 'data:image/png', secret: 's' } },
+        error: null,
+      });
+
+      const res = await request(app)
+        .post('/auth/mfa/enroll')
+        .set('Authorization', 'Bearer test-token')
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.id).toBe('factor-1');
+    });
+
+    it('returns 500 on error', async () => {
+      mockMfaEnroll.mockResolvedValue({ data: null, error: { message: 'fail' } });
+
+      const res = await request(app)
+        .post('/auth/mfa/enroll')
+        .set('Authorization', 'Bearer test-token')
+        .send({});
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('POST /auth/mfa/verify', () => {
+    it('verifies and activates MFA factor', async () => {
+      mockMfaChallenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
+      mockMfaVerify.mockResolvedValue({ data: { id: 'factor-1' }, error: null });
+      mockGetUser.mockResolvedValue({
+        data: { user: { email: 'test@example.com', phone: null, user_metadata: {} } },
+        error: null,
+      });
+      mockLogAndNotify.mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .post('/auth/mfa/verify')
+        .set('Authorization', 'Bearer test-token')
+        .send({ factorId: '550e8400-e29b-41d4-a716-446655440000', code: '123456' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on challenge error', async () => {
+      mockMfaChallenge.mockResolvedValue({ data: null, error: { message: 'factor not found' } });
+
+      const res = await request(app)
+        .post('/auth/mfa/verify')
+        .set('Authorization', 'Bearer test-token')
+        .send({ factorId: '550e8400-e29b-41d4-a716-446655440000', code: '123456' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 401 on verify error', async () => {
+      mockMfaChallenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
+      mockMfaVerify.mockResolvedValue({ data: null, error: { message: 'invalid code' } });
+
+      const res = await request(app)
+        .post('/auth/mfa/verify')
+        .set('Authorization', 'Bearer test-token')
+        .send({ factorId: '550e8400-e29b-41d4-a716-446655440000', code: '000000' });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('POST /auth/mfa/challenge', () => {
+    it('challenges and verifies MFA during login', async () => {
+      mockMfaChallenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
+      mockMfaVerify.mockResolvedValue({ data: { session: {} }, error: null });
+
+      const res = await request(app)
+        .post('/auth/mfa/challenge')
+        .send({ factorId: '550e8400-e29b-41d4-a716-446655440000', code: '123456' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on challenge error', async () => {
+      mockMfaChallenge.mockResolvedValue({ data: null, error: { message: 'not found' } });
+
+      const res = await request(app)
+        .post('/auth/mfa/challenge')
+        .send({ factorId: '550e8400-e29b-41d4-a716-446655440000', code: '123456' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 401 on verify error', async () => {
+      mockMfaChallenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
+      mockMfaVerify.mockResolvedValue({ data: null, error: { message: 'wrong code' } });
+
+      const res = await request(app)
+        .post('/auth/mfa/challenge')
+        .send({ factorId: '550e8400-e29b-41d4-a716-446655440000', code: '000000' });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('GET /auth/mfa/factors', () => {
+    it('lists enrolled MFA factors', async () => {
+      mockMfaListFactors.mockResolvedValue({
+        data: {
+          totp: [{ id: 'f1', friendly_name: 'App', factor_type: 'totp', status: 'verified' }],
+          phone: [],
+        },
+        error: null,
+      });
+
+      const res = await request(app)
+        .get('/auth/mfa/factors')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 500 on error', async () => {
+      mockMfaListFactors.mockResolvedValue({ data: null, error: { message: 'fail' } });
+
+      const res = await request(app)
+        .get('/auth/mfa/factors')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('DELETE /auth/mfa/factors/:factorId', () => {
+    it('unenrolls MFA factor', async () => {
+      mockMfaUnenroll.mockResolvedValue({ data: {}, error: null });
+      mockLogAndNotify.mockResolvedValue(undefined);
+      mockGetUser.mockResolvedValue({
+        data: { user: { email: 'test@example.com', phone: null, user_metadata: {} } },
+        error: null,
+      });
+
+      const res = await request(app)
+        .delete('/auth/mfa/factors/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 500 on unenroll error', async () => {
+      mockMfaUnenroll.mockResolvedValue({ data: null, error: { message: 'fail' } });
+
+      const res = await request(app)
+        .delete('/auth/mfa/factors/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('GET /auth/mfa/assurance', () => {
+    it('returns assurance level on success', async () => {
+      mockMfaGetAssurance.mockResolvedValue({
+        data: {
+          currentLevel: 'aal1',
+          nextLevel: 'aal2',
+          currentAuthenticationMethods: [{ method: 'password', timestamp: 0 }],
+        },
+        error: null,
+      });
+
+      const res = await request(app)
+        .get('/auth/mfa/assurance')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.currentLevel).toBe('aal1');
+    });
+
+    it('returns 500 on assurance level error', async () => {
+      mockMfaGetAssurance.mockResolvedValue({ data: null, error: { message: 'fail' } });
+
+      const res = await request(app)
+        .get('/auth/mfa/assurance')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
+  });
+
+  // ────────────── EMAIL ROUTES ──────────────
+
+  describe('POST /auth/email/resend-confirmation', () => {
+    it('resends confirmation email', async () => {
+      mockResend.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app)
+        .post('/auth/email/resend-confirmation')
+        .send({ email: 'test@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on error', async () => {
+      mockResend.mockResolvedValue({ data: null, error: { message: 'rate limited' } });
+
+      const res = await request(app)
+        .post('/auth/email/resend-confirmation')
+        .send({ email: 'test@example.com' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('PUT /auth/email', () => {
+    it('updates email address', async () => {
+      mockUpdateUser.mockResolvedValue({
+        data: { user: { ...mockUser, email: 'new@example.com' } },
+        error: null,
+      });
+
+      const res = await request(app)
+        .put('/auth/email')
+        .set('Authorization', 'Bearer test-token')
+        .send({ email: 'new@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on error', async () => {
+      mockUpdateUser.mockResolvedValue({ data: null, error: { message: 'Email taken' } });
+
+      const res = await request(app)
+        .put('/auth/email')
+        .set('Authorization', 'Bearer test-token')
+        .send({ email: 'taken@example.com' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  // ────────────── PASSWORD UPDATE ──────────────
+
+  describe('PUT /auth/password', () => {
+    it('updates password', async () => {
+      mockUpdateUser.mockResolvedValue({
+        data: {
+          user: { ...mockUser, email: 'test@example.com', user_metadata: { full_name: 'Test' } },
+        },
+        error: null,
+      });
+      mockLogAndNotify.mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .put('/auth/password')
+        .set('Authorization', 'Bearer test-token')
+        .send({ password: 'NewStr0ngPass!' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on error', async () => {
+      mockUpdateUser.mockResolvedValue({ data: null, error: { message: 'Password too weak' } });
+
+      const res = await request(app)
+        .put('/auth/password')
+        .set('Authorization', 'Bearer test-token')
+        .send({ password: 'NewStr0ngPass!' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  // ────────────── IDENTITY ROUTES ──────────────
+
+  describe('GET /auth/identities', () => {
+    it('returns linked identities', async () => {
+      mockGetUser.mockResolvedValue({
+        data: {
+          user: {
+            identities: [
+              {
+                id: 'id-1',
+                provider: 'google',
+                created_at: '2025-01-01',
+                last_sign_in_at: '2025-06-01',
+                identity_data: { email: 'test@gmail.com', full_name: 'Test', avatar_url: null },
+              },
+            ],
+          },
+        },
+        error: null,
+      });
+
+      const res = await request(app)
+        .get('/auth/identities')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.identities).toHaveLength(1);
+      expect(res.body.data.identities[0].provider).toBe('google');
+    });
+
+    it('returns 500 on getUser error', async () => {
+      mockGetUser.mockResolvedValue({ data: null, error: { message: 'fail' } });
+
+      const res = await request(app)
+        .get('/auth/identities')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('POST /auth/identities/link', () => {
+    it('returns OAuth URL for linking', async () => {
+      mockLinkIdentity.mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/auth?...' },
+        error: null,
+      });
+
+      const res = await request(app)
+        .post('/auth/identities/link')
+        .set('Authorization', 'Bearer test-token')
+        .send({ provider: 'google' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.url).toContain('google');
+    });
+
+    it('returns 400 on error', async () => {
+      mockLinkIdentity.mockResolvedValue({ data: null, error: { message: 'already linked' } });
+
+      const res = await request(app)
+        .post('/auth/identities/link')
+        .set('Authorization', 'Bearer test-token')
+        .send({ provider: 'github' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('DELETE /auth/identities/:identityId', () => {
+    it('unlinks an identity', async () => {
+      mockGetUser.mockResolvedValue({
+        data: {
+          user: {
+            identities: [
+              { id: '550e8400-e29b-41d4-a716-446655440000', provider: 'google', identity_data: {} },
+              { id: '660e8400-e29b-41d4-a716-446655440001', provider: 'github', identity_data: {} },
+            ],
+          },
+        },
+        error: null,
+      });
+      mockUnlinkIdentity.mockResolvedValue({ error: null });
+
+      const res = await request(app)
+        .delete('/auth/identities/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 when trying to unlink last identity', async () => {
+      mockGetUser.mockResolvedValue({
+        data: {
+          user: {
+            identities: [
+              { id: '550e8400-e29b-41d4-a716-446655440000', provider: 'google', identity_data: {} },
+            ],
+          },
+        },
+        error: null,
+      });
+
+      const res = await request(app)
+        .delete('/auth/identities/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 404 when identity not found', async () => {
+      mockGetUser.mockResolvedValue({
+        data: {
+          user: {
+            identities: [
+              { id: '660e8400-e29b-41d4-a716-446655440001', provider: 'google', identity_data: {} },
+              { id: '770e8400-e29b-41d4-a716-446655440002', provider: 'github', identity_data: {} },
+            ],
+          },
+        },
+        error: null,
+      });
+
+      const res = await request(app)
+        .delete('/auth/identities/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 500 when getUser fails for unlink', async () => {
+      mockGetUser.mockResolvedValue({ data: null, error: { message: 'auth error' } });
+
+      const res = await request(app)
+        .delete('/auth/identities/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+    });
+
+    it('returns 500 when unlinkIdentity fails', async () => {
+      mockGetUser.mockResolvedValue({
+        data: {
+          user: {
+            identities: [
+              { id: '550e8400-e29b-41d4-a716-446655440000', provider: 'google', identity_data: {} },
+              { id: '660e8400-e29b-41d4-a716-446655440001', provider: 'github', identity_data: {} },
+            ],
+          },
+        },
+        error: null,
+      });
+      mockUnlinkIdentity.mockResolvedValue({ error: { message: 'unlink failed' } });
+
+      const res = await request(app)
+        .delete('/auth/identities/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  // ────────────── RECOVERY ROUTES ──────────────
+
+  describe('POST /auth/recovery/phone', () => {
+    it('sets recovery phone', async () => {
+      mockUpdateUser.mockResolvedValue({
+        data: { user: mockUser },
+        error: null,
+      });
+      mockSignInWithOtp.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app)
+        .post('/auth/recovery/phone')
+        .set('Authorization', 'Bearer test-token')
+        .send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 400 on error', async () => {
+      mockUpdateUser.mockResolvedValue({ data: null, error: { message: 'fail' } });
+
+      const res = await request(app)
+        .post('/auth/recovery/phone')
+        .set('Authorization', 'Bearer test-token')
+        .send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('POST /auth/recovery/phone/verify', () => {
+    it('verifies recovery phone', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { session: { access_token: 'tok' } },
+        error: null,
+      });
+      mockUpdateUser.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app)
+        .post('/auth/recovery/phone/verify')
+        .set('Authorization', 'Bearer test-token')
+        .send({ phone: '+12025551234', token: '123456' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 401 on invalid OTP', async () => {
+      mockVerifyOtp.mockResolvedValue({ data: null, error: { message: 'expired' } });
+
+      const res = await request(app)
+        .post('/auth/recovery/phone/verify')
+        .set('Authorization', 'Bearer test-token')
+        .send({ phone: '+12025551234', token: '000000' });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('POST /auth/recovery/initiate', () => {
+    it('sends recovery OTP when phone found', async () => {
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: { id: mockUser.id, phone: '+12025551234', email: 'test@example.com' },
+              error: null,
+            }),
+          }),
+        }),
+      });
+      mockSignInWithOtp.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app)
+        .post('/auth/recovery/initiate')
+        .send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns success even when phone not found (avoid enumeration)', async () => {
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: null,
+              error: { message: 'not found' },
+            }),
+          }),
+        }),
+      });
+
+      const res = await request(app)
+        .post('/auth/recovery/initiate')
+        .send({ phone: '+19999999999' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 500 when OTP send fails', async () => {
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: { id: mockUser.id, phone: '+12025551234', email: 'test@example.com' },
+              error: null,
+            }),
+          }),
+        }),
+      });
+      mockSignInWithOtp.mockResolvedValue({ data: null, error: { message: 'sms failed' } });
+
+      const res = await request(app)
+        .post('/auth/recovery/initiate')
+        .send({ phone: '+12025551234' });
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('POST /auth/recovery/complete', () => {
+    it('completes recovery with valid OTP', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { user: mockUser, session: { access_token: 'tok' } },
+        error: null,
+      });
+
+      const res = await request(app)
+        .post('/auth/recovery/complete')
+        .send({ phone: '+12025551234', token: '123456' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 401 on invalid OTP', async () => {
+      mockVerifyOtp.mockResolvedValue({ data: null, error: { message: 'Invalid OTP' } });
+
+      const res = await request(app)
+        .post('/auth/recovery/complete')
+        .send({ phone: '+12025551234', token: '000000' });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ────────────── SECURITY PREFERENCES ──────────────
+
+  describe('GET /auth/security/preferences', () => {
+    it('returns security preferences with defaults', async () => {
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: { security_preferences: { notifyOnLogin: true } },
+              error: null,
+            }),
+          }),
+        }),
+      });
+
+      const res = await request(app)
+        .get('/auth/security/preferences')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.preferences.emailNotifications).toBe(true);
+      expect(res.body.data.preferences.notifyOnLogin).toBe(true);
+    });
+
+    it('returns 500 on DB error', async () => {
+      mockFrom.mockReturnValue({
+        select: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockReturnValue({
+            single: jest.fn<any>().mockResolvedValue({
+              data: null,
+              error: { message: 'db error' },
+            }),
+          }),
+        }),
+      });
+
+      const res = await request(app)
+        .get('/auth/security/preferences')
+        .set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('PUT /auth/security/preferences', () => {
+    it('updates security preferences', async () => {
+      mockFrom.mockReturnValue({
+        update: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockResolvedValue({ error: null }),
+        }),
+      });
+
+      const res = await request(app)
+        .put('/auth/security/preferences')
+        .set('Authorization', 'Bearer test-token')
+        .send({ emailNotifications: false, smsNotifications: true });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('returns 500 on DB error', async () => {
+      mockFrom.mockReturnValue({
+        update: jest.fn<any>().mockReturnValue({
+          eq: jest.fn<any>().mockResolvedValue({ error: { message: 'fail' } }),
+        }),
+      });
+
+      const res = await request(app)
+        .put('/auth/security/preferences')
+        .set('Authorization', 'Bearer test-token')
+        .send({ notifyOnLogin: false });
+
+      expect(res.status).toBe(500);
     });
   });
 });

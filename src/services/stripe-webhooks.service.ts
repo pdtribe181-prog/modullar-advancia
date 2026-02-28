@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { createServiceClient } from '../lib/supabase.js';
 import { sendPaymentSuccessEmail, sendPaymentFailedEmail } from './email.service.js';
 import { logger } from '../middleware/logging.middleware.js';
+import { recordTransaction } from './metrics.service.js';
 
 // Use service role client for webhook operations (bypasses RLS)
 const supabase = createServiceClient();
@@ -129,6 +130,9 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event): Promise<void> 
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
   const { patient_id, provider_id, appointment_id } = paymentIntent.metadata;
 
+  // Track payment success metric
+  recordTransaction(true);
+
   // Update transaction status
   const { error } = await supabase
     .from('transactions')
@@ -187,6 +191,9 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event): Promise<void> 
 async function handlePaymentIntentFailed(event: Stripe.Event): Promise<void> {
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
   const { patient_id } = paymentIntent.metadata;
+
+  // Track payment failure metric
+  recordTransaction(false);
 
   await supabase
     .from('transactions')
