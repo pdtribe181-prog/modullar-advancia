@@ -385,7 +385,20 @@ router.post(
 );
 
 // ============================================================
-// PRODUCT/PRICE ROUTES (Admin only for create, public for list)
+// PRODUCT/PRICE ROUTES - DEPRECATED
+// ============================================================
+// ⚠️ DEPRECATED: These routes query external Stripe Product Catalog.
+//
+// The platform now uses the local 'services' table as the single source of truth.
+// All medical services/products are defined in the database, eliminating:
+//   - External API dependencies
+//   - Synchronization issues between Stripe and local data
+//   - Unnecessary API calls and latency
+//   - Additional costs
+//
+// USE INSTEAD: GET /api/v1/services
+//
+// These routes remain for backward compatibility only and may be removed in future versions.
 // ============================================================
 
 router.post(
@@ -393,16 +406,26 @@ router.post(
   authenticate,
   requireRole('admin'),
   asyncHandler(async (req: Request, res: Response) => {
-    const product = await stripeServices.products.create(req.body);
-    res.json({ success: true, data: product });
+    // DEPRECATED: Use POST /api/v1/services instead
+    res.status(410).json({
+      success: false,
+      error: 'This endpoint is deprecated',
+      message: 'Use POST /api/v1/services to create medical services in the local catalog',
+      migrationGuide: 'https://docs.advanciapayledger.com/migration/services',
+    });
   })
 );
 
 router.get(
   '/products',
   asyncHandler(async (req: Request, res: Response) => {
-    const products = await stripeServices.products.list(true);
-    res.json({ success: true, data: products });
+    // DEPRECATED: Use GET /api/v1/services instead
+    res.status(410).json({
+      success: false,
+      error: 'This endpoint is deprecated',
+      message: 'Use GET /api/v1/services to list medical services from the local catalog',
+      migrationGuide: 'https://docs.advanciapayledger.com/migration/services',
+    });
   })
 );
 
@@ -411,21 +434,13 @@ router.post(
   authenticate,
   requireRole('admin'),
   asyncHandler(async (req: Request, res: Response) => {
-    const { productId, unitAmount, currency, interval } = req.body;
-    // unitAmount is already in cents — do NOT multiply by 100
-    const price = await stripeServices.products.createPrice(
-      productId,
-      Math.round(unitAmount),
-      currency || 'usd',
-      interval ? { interval } : undefined
-    );
-    res.json({
-      success: true,
-      data: {
-        id: price.id,
-        unitAmount: price.unit_amount ? price.unit_amount / 100 : null,
-        currency: price.currency,
-      },
+    // DEPRECATED: Prices are now part of the service definition
+    res.status(410).json({
+      success: false,
+      error: 'This endpoint is deprecated',
+      message:
+        'Service pricing is managed in the services table. Use PUT /api/v1/services/:id to update default_price',
+      migrationGuide: 'https://docs.advanciapayledger.com/migration/services',
     });
   })
 );

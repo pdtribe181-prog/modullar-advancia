@@ -25,21 +25,25 @@ export const PaymentOrchestrationRequest = z.object({
   paymentMethodId: z.string(),
   providerId: z.string().uuid().optional(),
   metadata: z.record(z.string(), z.string()).optional(),
-  retryConfig: z.object({
-    maxAttempts: z.number().max(5),
-    backoffMultiplier: z.number(),
-    initialDelayMs: z.number(),
-  }).optional(),
+  retryConfig: z
+    .object({
+      maxAttempts: z.number().max(5),
+      backoffMultiplier: z.number(),
+      initialDelayMs: z.number(),
+    })
+    .optional(),
 });
 
 export const SmartRoutingConfig = z.object({
   primaryProvider: z.enum(['stripe', 'square', 'authorize_net']),
   fallbackProviders: z.array(z.enum(['stripe', 'square', 'authorize_net'])),
-  routingRules: z.object({
-    highValue: z.number().optional(), // Amount threshold for high-value routing
-    riskScore: z.number().min(0).max(100).optional(), // Risk-based routing
-    preferredProvider: z.string().optional(),
-  }).optional(),
+  routingRules: z
+    .object({
+      highValue: z.number().optional(), // Amount threshold for high-value routing
+      riskScore: z.number().min(0).max(100).optional(), // Risk-based routing
+      preferredProvider: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type PaymentOrchestrationRequestType = z.infer<typeof PaymentOrchestrationRequest>;
@@ -113,7 +117,6 @@ export class PaymentOrchestrationService {
       await this.recordPaymentMetrics(paymentId, result, Date.now() - startTime);
 
       return result;
-
     } catch (error) {
       logger.error('Payment orchestration failed', undefined, {
         paymentId,
@@ -138,8 +141,11 @@ export class PaymentOrchestrationService {
     paymentState: PaymentState,
     routingConfig: SmartRoutingConfigType
   ): Promise<PaymentResult> {
-    const { maxAttempts = 3, backoffMultiplier = 2, initialDelayMs = 1000 } =
-      paymentState.originalRequest.retryConfig || {};
+    const {
+      maxAttempts = 3,
+      backoffMultiplier = 2,
+      initialDelayMs = 1000,
+    } = paymentState.originalRequest.retryConfig || {};
 
     let lastError = '';
 
@@ -204,7 +210,6 @@ export class PaymentOrchestrationService {
           const delayMs = initialDelayMs * Math.pow(backoffMultiplier, attempt - 1);
           await this.delay(delayMs);
         }
-
       } catch (error) {
         lastError = error instanceof Error ? error.message : 'Unknown error during payment attempt';
         logger.error('Payment attempt error', undefined, {
@@ -272,7 +277,6 @@ export class PaymentOrchestrationService {
         default:
           throw new Error(`Unsupported provider: ${provider}`);
       }
-
     } catch (error) {
       return {
         success: false,
@@ -287,7 +291,9 @@ export class PaymentOrchestrationService {
   /**
    * Process with Stripe (main implementation)
    */
-  private async processWithStripe(request: PaymentOrchestrationRequestType): Promise<PaymentResult> {
+  private async processWithStripe(
+    request: PaymentOrchestrationRequestType
+  ): Promise<PaymentResult> {
     const startTime = Date.now();
 
     // This would integrate with actual Stripe service
@@ -318,7 +324,9 @@ export class PaymentOrchestrationService {
   /**
    * Process with Square (fallback implementation)
    */
-  private async processWithSquare(request: PaymentOrchestrationRequestType): Promise<PaymentResult> {
+  private async processWithSquare(
+    request: PaymentOrchestrationRequestType
+  ): Promise<PaymentResult> {
     const startTime = Date.now();
 
     // Simulate Square processing
@@ -347,7 +355,9 @@ export class PaymentOrchestrationService {
   /**
    * Process with Authorize.Net (fallback implementation)
    */
-  private async processWithAuthorizeNet(request: PaymentOrchestrationRequestType): Promise<PaymentResult> {
+  private async processWithAuthorizeNet(
+    request: PaymentOrchestrationRequestType
+  ): Promise<PaymentResult> {
     const startTime = Date.now();
 
     // Simulate Authorize.Net processing
@@ -398,7 +408,6 @@ export class PaymentOrchestrationService {
           riskScore: 50,
         },
       };
-
     } catch (error) {
       logger.warn('Failed to get routing config, using defaults', {
         customerId,
@@ -437,20 +446,14 @@ export class PaymentOrchestrationService {
   private async updatePaymentState(paymentId: string, state: PaymentState): Promise<void> {
     try {
       // Store in Redis for fast access
-      await redisHelpers.setCache(
-        `${this.cacheKeyPrefix}${paymentId}`,
-        state,
-        this.stateExpiry
-      );
+      await redisHelpers.setCache(`${this.cacheKeyPrefix}${paymentId}`, state, this.stateExpiry);
 
       // Store in database for persistence
-      const { error } = await supabase
-        .from('payment_orchestration_state')
-        .upsert({
-          id: paymentId,
-          state: state,
-          updated_at: new Date().toISOString(),
-        });
+      const { error } = await supabase.from('payment_orchestration_state').upsert({
+        id: paymentId,
+        state: state,
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) {
         logger.warn('Failed to persist payment state to database', {
@@ -458,7 +461,6 @@ export class PaymentOrchestrationService {
           error: error.message,
         });
       }
-
     } catch (error) {
       logger.error('Failed to update payment state', undefined, {
         paymentId,
@@ -487,9 +489,7 @@ export class PaymentOrchestrationService {
         recorded_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('payment_orchestration_metrics')
-        .insert(metrics);
+      const { error } = await supabase.from('payment_orchestration_metrics').insert(metrics);
 
       if (error) {
         logger.warn('Failed to record payment metrics', {
@@ -497,7 +497,6 @@ export class PaymentOrchestrationService {
           error: error.message,
         });
       }
-
     } catch (error) {
       logger.error('Error recording payment metrics', undefined, {
         paymentId,
@@ -524,8 +523,7 @@ export class PaymentOrchestrationService {
         .eq('id', paymentId)
         .single();
 
-      return data?.state as PaymentState || null;
-
+      return (data?.state as PaymentState) || null;
     } catch (error) {
       logger.error('Failed to get payment state', undefined, {
         paymentId,
@@ -550,7 +548,6 @@ export class PaymentOrchestrationService {
 
       await this.updatePaymentState(paymentId, state);
       return true;
-
     } catch (error) {
       logger.error('Failed to cancel payment', undefined, {
         paymentId,
@@ -579,7 +576,33 @@ export class PaymentOrchestrationService {
   }
 
   private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Get metrics for a specific payment
+   */
+  async getPaymentMetrics(paymentId: string): Promise<Record<string, unknown>> {
+    try {
+      const serviceClient = createServiceClient();
+      const { data, error } = await serviceClient
+        .from('payment_orchestration_metrics')
+        .select('*')
+        .eq('payment_id', paymentId);
+
+      if (error) {
+        logger.warn('Failed to fetch payment metrics', { paymentId, error: error.message });
+        return { paymentId, metrics: [] };
+      }
+
+      return { paymentId, metrics: data || [] };
+    } catch (error) {
+      logger.error('Error fetching payment metrics', undefined, {
+        paymentId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      return { paymentId, metrics: [] };
+    }
   }
 }
 

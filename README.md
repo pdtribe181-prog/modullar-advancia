@@ -140,6 +140,18 @@ modullar-advancia/
 - `GET /health` - Health check with DB status
 - `GET /docs` - Swagger API documentation
 
+### Medical Services Catalog
+
+- `GET /services` - List all available services/procedures
+- `GET /services/categories` - Get service categories
+- `GET /services/:id` - Get specific service details
+- `POST /services` - Create service (admin only)
+- `PUT /services/:id` - Update service (admin only)
+- `DELETE /services/:id` - Deactivate service (admin only)
+
+> **Note**: Services are stored locally in the database, not in Stripe Product Catalog.
+> This eliminates external API dependencies and ensures consistency.
+
 ### Authentication
 
 - `POST /auth/register` - Register new user

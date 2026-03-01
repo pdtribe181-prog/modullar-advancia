@@ -407,17 +407,12 @@ describe('stripe.routes', () => {
   // ────────────── Product routes ──────────────
 
   describe('GET /stripe/products', () => {
-    it('lists products (public endpoint)', async () => {
-      mockProductsList.mockResolvedValue([
-        { id: 'prod_1', name: 'Basic Plan' },
-        { id: 'prod_2', name: 'Pro Plan' },
-      ]);
-
+    it('lists products (public endpoint - DEPRECATED)', async () => {
       const res = await request(app).get('/stripe/products');
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveLength(2);
+      expect(res.status).toBe(410);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toContain('deprecated');
     });
   });
 

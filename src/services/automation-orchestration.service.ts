@@ -770,6 +770,52 @@ export class AutomationOrchestrationService {
   private generateExecutionId(): string {
     return `automation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
+
+  /**
+   * Get all registered workflows (builtin + custom)
+   */
+  getRegisteredWorkflows(): Array<{ id: string; name: string; enabled: boolean; type: string }> {
+    const workflows: Array<{ id: string; name: string; enabled: boolean; type: string }> = [];
+
+    // Add builtin workflows
+    for (const [id, workflow] of Object.entries(this.builtinWorkflows)) {
+      workflows.push({
+        id,
+        name: workflow.name,
+        enabled: workflow.enabled ?? true,
+        type: 'builtin',
+      });
+    }
+
+    return workflows;
+  }
+
+  /**
+   * Get execution history for a workflow
+   */
+  async getExecutionHistory(workflowId: string): Promise<Array<Record<string, unknown>>> {
+    try {
+      const serviceClient = createServiceClient();
+      const { data, error } = await serviceClient
+        .from('automation_execution_log')
+        .select('*')
+        .eq('workflow_id', workflowId)
+        .order('started_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        logger.warn('Failed to fetch execution history', {
+          workflowId,
+          error: error.message,
+        });
+        return [];
+      }
+
+      return (data || []) as Array<Record<string, unknown>>;
+    } catch {
+      return [];
+    }
+  }
 }
 
 // Export singleton instance

@@ -22,6 +22,8 @@ import uploadRoutes from './routes/upload.routes.js';
 import gdprRoutes from './routes/gdpr.routes.js';
 import retentionRoutes from './routes/retention.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
+import orchestrationRoutes from './routes/orchestration.routes.js';
+import servicesRoutes from './routes/services.routes.js';
 import { auditLog } from './middleware/audit.middleware.js';
 import { metricsMiddleware } from './middleware/metrics.middleware.js';
 import { apiVersioning } from './middleware/api-versioning.middleware.js';
@@ -62,6 +64,10 @@ import {
   flushEvents,
   captureError,
 } from './services/monitoring.service.js';
+import {
+  initializeServiceCatalog,
+  shutdownServiceCatalog,
+} from './services/service-catalog.service.js';
 
 // Validate environment variables at startup (fail fast)
 try {
@@ -203,6 +209,8 @@ apiRouter.use('/upload', uploadRoutes);
 apiRouter.use('/gdpr', gdprRoutes);
 apiRouter.use('/retention', retentionRoutes);
 apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
+apiRouter.use('/orchestration', orchestrationRoutes);
+apiRouter.use('/services', servicesRoutes); // Medical services catalog (local DB)
 
 app.use('/api/v1', apiRouter);
 
@@ -532,17 +540,29 @@ app.use(sentryErrorHandler);
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   logger.info(`Healthcare API started`, {
     port: PORT,
     env: env.NODE_ENV,
     docsUrl: `http://localhost:${PORT}/docs`,
   });
+
+  // Initialize in-memory service catalog
+  try {
+    await initializeServiceCatalog();
+    logger.info('✨ Service catalog loaded into memory - zero external lookups during requests');
+  } catch (error) {
+    logger.error('Failed to initialize service catalog', error as Error);
+    // Continue running - services routes will fail but other endpoints work
+  }
 });
 
 // Graceful shutdown handling
 const shutdown = async (signal: string) => {
   logger.info(`${signal} received, shutting down gracefully...`);
+
+  // Stop service catalog auto-sync
+  shutdownServiceCatalog();
 
   // Flush Sentry events before shutdown
   await flushEvents(2000);

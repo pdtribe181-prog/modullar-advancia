@@ -633,35 +633,26 @@ describe('Payment Flows', () => {
   // ────────────── Products & Prices ──────────────
 
   describe('Products & Prices', () => {
-    it('POST /stripe/products creates product', async () => {
-      mockProductsCreate.mockResolvedValue({
-        id: 'prod_123',
-        name: 'Annual Checkup',
-      });
-
+    it('POST /stripe/products creates product (DEPRECATED)', async () => {
       const res = await request(app)
         .post('/stripe/products')
         .set('Authorization', 'Bearer token')
         .send({ name: 'Annual Checkup', description: 'Full health checkup' });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.id).toBe('prod_123');
+      expect(res.status).toBe(410);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toContain('deprecated');
     });
 
-    it('POST /stripe/prices creates price', async () => {
-      mockProductsCreatePrice.mockResolvedValue({
-        id: 'price_123',
-        unit_amount: 15000,
-        currency: 'usd',
-      });
-
+    it('POST /stripe/prices creates price (DEPRECATED)', async () => {
       const res = await request(app)
         .post('/stripe/prices')
         .set('Authorization', 'Bearer token')
         .send({ productId: 'prod_123', unitAmount: 15000, currency: 'usd' });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.unitAmount).toBe(150); // 15000 cents → $150
+      expect(res.status).toBe(410);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toContain('deprecated');
     });
   });
 

@@ -35,26 +35,52 @@ export const NotificationRequest = z.object({
 });
 
 export const UserPreferences = z.object({
-  email: z.object({
-    enabled: z.boolean().default(true),
-    quietHoursStart: z.string().regex(/^\d{2}:\d{2}$/).optional(), // HH:MM format
-    quietHoursEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-    frequency: z.enum(['immediate', 'hourly', 'daily', 'weekly']).default('immediate'),
-  }).optional(),
-  sms: z.object({
-    enabled: z.boolean().default(true),
-    quietHoursStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-    quietHoursEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-    urgentOnly: z.boolean().default(false),
-  }).optional(),
-  push: z.object({
-    enabled: z.boolean().default(true),
-    quietHoursStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-    quietHoursEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  }).optional(),
-  in_app: z.object({
-    enabled: z.boolean().default(true),
-  }).optional(),
+  email: z
+    .object({
+      enabled: z.boolean().default(true),
+      quietHoursStart: z
+        .string()
+        .regex(/^\d{2}:\d{2}$/)
+        .optional(), // HH:MM format
+      quietHoursEnd: z
+        .string()
+        .regex(/^\d{2}:\d{2}$/)
+        .optional(),
+      frequency: z.enum(['immediate', 'hourly', 'daily', 'weekly']).default('immediate'),
+    })
+    .optional(),
+  sms: z
+    .object({
+      enabled: z.boolean().default(true),
+      quietHoursStart: z
+        .string()
+        .regex(/^\d{2}:\d{2}$/)
+        .optional(),
+      quietHoursEnd: z
+        .string()
+        .regex(/^\d{2}:\d{2}$/)
+        .optional(),
+      urgentOnly: z.boolean().default(false),
+    })
+    .optional(),
+  push: z
+    .object({
+      enabled: z.boolean().default(true),
+      quietHoursStart: z
+        .string()
+        .regex(/^\d{2}:\d{2}$/)
+        .optional(),
+      quietHoursEnd: z
+        .string()
+        .regex(/^\d{2}:\d{2}$/)
+        .optional(),
+    })
+    .optional(),
+  in_app: z
+    .object({
+      enabled: z.boolean().default(true),
+    })
+    .optional(),
   timezone: z.string().default('UTC'),
 });
 
@@ -137,7 +163,10 @@ export class NotificationOrchestrationService {
       const deliveryPlan = await this.createDeliveryPlan(validatedRequest, userPrefs);
 
       // Initialize notification state
-      const notificationState = await this.initializeNotificationState(notificationId, validatedRequest);
+      const notificationState = await this.initializeNotificationState(
+        notificationId,
+        validatedRequest
+      );
 
       // Execute delivery plan
       const result = await this.executeDeliveryPlan(notificationState, deliveryPlan, userPrefs);
@@ -154,7 +183,6 @@ export class NotificationOrchestrationService {
       await this.recordNotificationAnalytics(notificationId, result, validatedRequest);
 
       return result;
-
     } catch (error) {
       logger.error('Notification orchestration failed', undefined, {
         notificationId,
@@ -239,8 +267,8 @@ export class NotificationOrchestrationService {
     const availableChannels = this.getAvailableChannels(userPrefs);
 
     // Sort channels by engagement rate
-    const sortedChannels = availableChannels.sort((a, b) =>
-      (channelEngagement[b] || 0) - (channelEngagement[a] || 0)
+    const sortedChannels = availableChannels.sort(
+      (a, b) => (channelEngagement[b] || 0) - (channelEngagement[a] || 0)
     );
 
     return sortedChannels[0] || 'email'; // Default to email
@@ -259,7 +287,8 @@ export class NotificationOrchestrationService {
     // Wait for optimal timing if needed
     if (shouldDelay && !this.isUrgent(notificationState.originalRequest.priority)) {
       const delayMs = optimalTiming.getTime() - Date.now();
-      if (delayMs > 0 && delayMs < 24 * 60 * 60 * 1000) { // Max 24 hour delay
+      if (delayMs > 0 && delayMs < 24 * 60 * 60 * 1000) {
+        // Max 24 hour delay
         await this.scheduleDelayedDelivery(notificationState.id, delayMs);
         return {
           success: true,
@@ -350,12 +379,18 @@ export class NotificationOrchestrationService {
       }
 
       // Check quiet hours
-      if (!this.isWithinActiveHours(channel, userPrefs) && !this.isUrgent(notificationState.originalRequest.priority)) {
+      if (
+        !this.isWithinActiveHours(channel, userPrefs) &&
+        !this.isUrgent(notificationState.originalRequest.priority)
+      ) {
         const nextActiveTime = this.getNextActiveTime(channel, userPrefs);
 
         // Schedule for next active time if within reasonable bounds
-        if (nextActiveTime && (nextActiveTime.getTime() - Date.now()) < 12 * 60 * 60 * 1000) {
-          await this.scheduleDelayedDelivery(notificationState.id, nextActiveTime.getTime() - Date.now());
+        if (nextActiveTime && nextActiveTime.getTime() - Date.now() < 12 * 60 * 60 * 1000) {
+          await this.scheduleDelayedDelivery(
+            notificationState.id,
+            nextActiveTime.getTime() - Date.now()
+          );
 
           return {
             success: true,
@@ -364,7 +399,7 @@ export class NotificationOrchestrationService {
             metadata: {
               scheduled: true,
               reason: 'quiet_hours',
-              deliverAt: nextActiveTime.toISOString()
+              deliverAt: nextActiveTime.toISOString(),
             },
           };
         }
@@ -427,7 +462,6 @@ export class NotificationOrchestrationService {
         channel,
         error: deliveryResult.error || 'Delivery failed',
       };
-
     } catch (error) {
       attempt.completedAt = new Date();
       attempt.status = 'failed';
@@ -448,7 +482,10 @@ export class NotificationOrchestrationService {
   /**
    * Deliver notification via email
    */
-  private async deliverEmail(userId: string, content: any): Promise<{ success: boolean; error?: string; messageId?: string }> {
+  private async deliverEmail(
+    userId: string,
+    content: any
+  ): Promise<{ success: boolean; error?: string; messageId?: string }> {
     try {
       // Get user email
       const { data: user } = await supabase
@@ -472,7 +509,6 @@ export class NotificationOrchestrationService {
         success,
         messageId: success ? `email_${Date.now()}` : undefined,
       };
-
     } catch (error) {
       return {
         success: false,
@@ -484,7 +520,10 @@ export class NotificationOrchestrationService {
   /**
    * Deliver notification via SMS
    */
-  private async deliverSMS(userId: string, content: any): Promise<{ success: boolean; error?: string; messageId?: string }> {
+  private async deliverSMS(
+    userId: string,
+    content: any
+  ): Promise<{ success: boolean; error?: string; messageId?: string }> {
     try {
       // Get user phone
       const { data: user } = await supabase
@@ -498,16 +537,12 @@ export class NotificationOrchestrationService {
       }
 
       // Send via SMS service
-      const result = await sendRawSMS(
-        user.phone,
-        content.message
-      );
+      const result = await sendRawSMS(user.phone, content.message);
 
       return {
         success: result.success,
         messageId: result.messageId,
       };
-
     } catch (error) {
       return {
         success: false,
@@ -519,7 +554,10 @@ export class NotificationOrchestrationService {
   /**
    * Deliver push notification
    */
-  private async deliverPush(userId: string, content: any): Promise<{ success: boolean; error?: string; messageId?: string }> {
+  private async deliverPush(
+    userId: string,
+    content: any
+  ): Promise<{ success: boolean; error?: string; messageId?: string }> {
     try {
       // Get user push tokens
       const { data: devices } = await supabase
@@ -534,11 +572,11 @@ export class NotificationOrchestrationService {
 
       // Send to all devices (implement actual push service integration)
       const pushResults = await Promise.allSettled(
-        devices.map(device => this.sendPushToDevice(device.push_token, content))
+        devices.map((device) => this.sendPushToDevice(device.push_token, content))
       );
 
-      const successCount = pushResults.filter(result =>
-        result.status === 'fulfilled' && result.value.success
+      const successCount = pushResults.filter(
+        (result) => result.status === 'fulfilled' && result.value.success
       ).length;
 
       if (successCount > 0) {
@@ -549,7 +587,6 @@ export class NotificationOrchestrationService {
       }
 
       return { success: false, error: 'All push deliveries failed' };
-
     } catch (error) {
       return {
         success: false,
@@ -561,19 +598,20 @@ export class NotificationOrchestrationService {
   /**
    * Deliver in-app notification
    */
-  private async deliverInApp(userId: string, content: any): Promise<{ success: boolean; error?: string; messageId?: string }> {
+  private async deliverInApp(
+    userId: string,
+    content: any
+  ): Promise<{ success: boolean; error?: string; messageId?: string }> {
     try {
       // Store in-app notification
-      const { error } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: userId,
-          title: content.title,
-          message: content.message,
-          type: 'in_app',
-          data: content.data || {},
-          created_at: new Date().toISOString(),
-        });
+      const { error } = await supabase.from('notifications').insert({
+        user_id: userId,
+        title: content.title,
+        message: content.message,
+        type: 'in_app',
+        data: content.data || {},
+        created_at: new Date().toISOString(),
+      });
 
       if (error) {
         return { success: false, error: error.message };
@@ -583,7 +621,6 @@ export class NotificationOrchestrationService {
         success: true,
         messageId: `inapp_${this.generateId()}`,
       };
-
     } catch (error) {
       return {
         success: false,
@@ -618,7 +655,6 @@ export class NotificationOrchestrationService {
       await redisHelpers.setCache(`${this.userPrefixPrefix}${userId}`, preferences, 3600);
 
       return preferences;
-
     } catch (error) {
       logger.warn('Failed to get user preferences, using defaults', {
         userId,
@@ -672,10 +708,17 @@ export class NotificationOrchestrationService {
     return state;
   }
 
-  private async updateNotificationState(notificationId: string, state: NotificationState): Promise<void> {
+  private async updateNotificationState(
+    notificationId: string,
+    state: NotificationState
+  ): Promise<void> {
     // Similar implementation to payment orchestration state management
     try {
-      await redisHelpers.setCache(`${this.cacheKeyPrefix}${notificationId}`, state, this.stateExpiry);
+      await redisHelpers.setCache(
+        `${this.cacheKeyPrefix}${notificationId}`,
+        state,
+        this.stateExpiry
+      );
     } catch (error) {
       logger.error('Failed to update notification state', undefined, {
         notificationId,
@@ -704,24 +747,38 @@ export class NotificationOrchestrationService {
 
   private isChannelEnabled(channel: string, userPrefs: UserPreferencesType): boolean {
     switch (channel) {
-      case 'email': return userPrefs.email?.enabled ?? true;
-      case 'sms': return userPrefs.sms?.enabled ?? true;
-      case 'push': return userPrefs.push?.enabled ?? true;
-      case 'in_app': return userPrefs.in_app?.enabled ?? true;
-      default: return false;
+      case 'email':
+        return userPrefs.email?.enabled ?? true;
+      case 'sms':
+        return userPrefs.sms?.enabled ?? true;
+      case 'push':
+        return userPrefs.push?.enabled ?? true;
+      case 'in_app':
+        return userPrefs.in_app?.enabled ?? true;
+      default:
+        return false;
     }
   }
 
-  private async selectFallbackChannel(originalChannel: string, userPrefs: UserPreferencesType): Promise<string> {
+  private async selectFallbackChannel(
+    originalChannel: string,
+    userPrefs: UserPreferencesType
+  ): Promise<string> {
     const available = this.getAvailableChannels(userPrefs);
-    return available.find(c => c !== originalChannel) || 'email';
+    return available.find((c) => c !== originalChannel) || 'email';
   }
 
-  private async getFallbackChannels(primaryChannel: string, userPrefs: UserPreferencesType): Promise<string[]> {
-    return this.getAvailableChannels(userPrefs).filter(c => c !== primaryChannel);
+  private async getFallbackChannels(
+    primaryChannel: string,
+    userPrefs: UserPreferencesType
+  ): Promise<string[]> {
+    return this.getAvailableChannels(userPrefs).filter((c) => c !== primaryChannel);
   }
 
-  private async calculateOptimalTiming(request: NotificationRequestType, userPrefs: UserPreferencesType): Promise<Date> {
+  private async calculateOptimalTiming(
+    request: NotificationRequestType,
+    userPrefs: UserPreferencesType
+  ): Promise<Date> {
     return request.scheduledFor || new Date(); // Implement optimal timing logic
   }
 
@@ -741,8 +798,13 @@ export class NotificationOrchestrationService {
     return null; // Implement next active time calculation
   }
 
-  private async getNotificationContent(templateId: string, channel: string, data: any): Promise<any> {
-    return { // Implement template rendering
+  private async getNotificationContent(
+    templateId: string,
+    channel: string,
+    data: any
+  ): Promise<any> {
+    return {
+      // Implement template rendering
       subject: 'Notification',
       body: 'Message body',
       message: 'SMS message',
@@ -754,12 +816,81 @@ export class NotificationOrchestrationService {
     return { success: true }; // Implement actual push service
   }
 
-  private async recordDelivery(notificationId: string, channel: string, messageId?: string): Promise<void> {
+  private async recordDelivery(
+    notificationId: string,
+    channel: string,
+    messageId?: string
+  ): Promise<void> {
     // Implement delivery recording
   }
 
-  private async recordNotificationAnalytics(notificationId: string, result: NotificationResult, request: NotificationRequestType): Promise<void> {
+  private async recordNotificationAnalytics(
+    notificationId: string,
+    result: NotificationResult,
+    request: NotificationRequestType
+  ): Promise<void> {
     // Implement analytics recording
+  }
+
+  /**
+   * Get delivery status for a specific notification
+   */
+  async getNotificationStatus(notificationId: string): Promise<NotificationState | null> {
+    try {
+      const cached = await redisHelpers.getCache<NotificationState>(
+        `notification_state:${notificationId}`
+      );
+      if (cached) return cached;
+
+      const serviceClient = createServiceClient();
+      const { data, error } = await serviceClient
+        .from('notification_delivery_log')
+        .select('*')
+        .eq('notification_id', notificationId)
+        .single();
+
+      if (error || !data) return null;
+      return data as unknown as NotificationState;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get aggregated delivery analytics
+   */
+  async getDeliveryAnalytics(): Promise<Record<string, unknown>> {
+    try {
+      const serviceClient = createServiceClient();
+      const { data, error } = await serviceClient
+        .from('notification_delivery_log')
+        .select('channel, status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+      if (error) {
+        logger.warn('Failed to fetch delivery analytics', { error: error.message });
+        return { totalSent: 0, byChannel: {}, byStatus: {} };
+      }
+
+      const byChannel: Record<string, number> = {};
+      const byStatus: Record<string, number> = {};
+
+      for (const row of data || []) {
+        const ch = (row as Record<string, string>).channel || 'unknown';
+        const st = (row as Record<string, string>).status || 'unknown';
+        byChannel[ch] = (byChannel[ch] || 0) + 1;
+        byStatus[st] = (byStatus[st] || 0) + 1;
+      }
+
+      return {
+        totalSent: (data || []).length,
+        byChannel,
+        byStatus,
+      };
+    } catch {
+      return { totalSent: 0, byChannel: {}, byStatus: {} };
+    }
   }
 }
 
