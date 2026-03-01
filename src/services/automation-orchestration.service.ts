@@ -465,7 +465,7 @@ export class AutomationOrchestrationService {
     };
 
     const maxRetries = action.retryConfig?.maxRetries || 0;
-    let lastError = '';
+    let lastError: string;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
