@@ -151,7 +151,9 @@ function printScores(label: string, scores: LighthouseScores) {
     if (!pass) allPass = false;
     const icon = pass ? '✅' : score >= threshold - 10 ? '⚠️' : '❌';
     const bar = '█'.repeat(Math.floor(score / 5)) + '░'.repeat(20 - Math.floor(score / 5));
-    console.log(`  ${icon}  ${name.padEnd(16)} ${String(score).padStart(3)}/100  ${bar}  (target: ${threshold})`);
+    console.log(
+      `  ${icon}  ${name.padEnd(16)} ${String(score).padStart(3)}/100  ${bar}  (target: ${threshold})`
+    );
   }
 
   return allPass;

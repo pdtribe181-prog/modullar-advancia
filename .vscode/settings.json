@@ -82,6 +82,9 @@
   "npm.enableRunFromFolder": true,
   "npm.packageManager": "npm",
 
+  // Jest Extension — must use --experimental-vm-modules for ESM top-level await
+  "jest.jestCommandLine": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+
   // Existing SQL/DB settings
   "mssql.intelliSense.enableIntelliSense": false,
   "mssql.intelliSense.lowerCaseSuggestions": false,

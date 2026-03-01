@@ -49,6 +49,11 @@ test-results/
 
 # Generated test artifacts
 temp_email_previews/
+test-output.txt
+temp_supabase/
+
+# One-time migration guide (already applied)
+COPY_PASTE_INSTRUCTIONS.txt
 
 # Hostinger deployment build output (generated, do not commit)
 hostingerdeployments/

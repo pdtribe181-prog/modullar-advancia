@@ -111,17 +111,16 @@ function printResult(r: CheckResult) {
       ? ` | Redis: ${(r.details.redis as any)?.status || 'N/A'}`
       : '';
 
-  console.log(`  ${icon} ${r.url} — ${code} (${time})${db}${redis}${r.error ? ` | ${r.error}` : ''}`);
+  console.log(
+    `  ${icon} ${r.url} — ${code} (${time})${db}${redis}${r.error ? ` | ${r.error}` : ''}`
+  );
 }
 
 async function runChecks(): Promise<CheckResult[]> {
   const timestamp = new Date().toISOString();
   console.log(`\n[${timestamp}] Running uptime checks...`);
 
-  const results = await Promise.all([
-    checkEndpoint(API_URL),
-    checkEndpoint(FRONTEND_URL),
-  ]);
+  const results = await Promise.all([checkEndpoint(API_URL), checkEndpoint(FRONTEND_URL)]);
 
   for (const r of results) printResult(r);
 
@@ -143,7 +142,9 @@ async function main() {
     console.log(`Uptime monitor started (polling every ${intervalSec}s)`);
     console.log(`  API:      ${API_URL}`);
     console.log(`  Frontend: ${FRONTEND_URL}`);
-    console.log(`  Alerts:   ${RESEND_KEY ? `enabled → ${ALERT_EMAIL}` : 'disabled (no RESEND_API_KEY)'}`);
+    console.log(
+      `  Alerts:   ${RESEND_KEY ? `enabled → ${ALERT_EMAIL}` : 'disabled (no RESEND_API_KEY)'}`
+    );
 
     // Initial check
     await runChecks();

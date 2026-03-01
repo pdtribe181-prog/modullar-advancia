@@ -70,7 +70,9 @@ async function validateConnectivity(config: Partial<StagingConfig>): Promise<boo
     console.log(`  ❌ Staging Supabase returned HTTP ${res.status}`);
     return false;
   } catch (err) {
-    console.log(`  ❌ Cannot reach staging Supabase: ${err instanceof Error ? err.message : String(err)}`);
+    console.log(
+      `  ❌ Cannot reach staging Supabase: ${err instanceof Error ? err.message : String(err)}`
+    );
     return false;
   }
 }
@@ -159,9 +161,15 @@ function main() {
   console.log(`  Current Status:`);
   console.log(`  ─────────────────────────────────────────────────`);
   console.log(`  ${hasEnv ? '✅' : '❌'}  .env.staging file ${hasEnv ? 'exists' : 'missing'}`);
-  console.log(`  ${config.supabaseUrl ? '✅' : '❌'}  SUPABASE_URL: ${config.supabaseUrl || 'not set'}`);
-  console.log(`  ${config.supabaseAnonKey ? '✅' : '❌'}  SUPABASE_ANON_KEY: ${config.supabaseAnonKey ? 'set' : 'not set'}`);
-  console.log(`  ${config.supabaseServiceRoleKey ? '✅' : '❌'}  SUPABASE_SERVICE_ROLE_KEY: ${config.supabaseServiceRoleKey ? 'set' : 'not set'}`);
+  console.log(
+    `  ${config.supabaseUrl ? '✅' : '❌'}  SUPABASE_URL: ${config.supabaseUrl || 'not set'}`
+  );
+  console.log(
+    `  ${config.supabaseAnonKey ? '✅' : '❌'}  SUPABASE_ANON_KEY: ${config.supabaseAnonKey ? 'set' : 'not set'}`
+  );
+  console.log(
+    `  ${config.supabaseServiceRoleKey ? '✅' : '❌'}  SUPABASE_SERVICE_ROLE_KEY: ${config.supabaseServiceRoleKey ? 'set' : 'not set'}`
+  );
 
   if (!hasEnv) {
     generateStagingEnv();

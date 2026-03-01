@@ -29,7 +29,7 @@ function hasPm2(): boolean {
 
 function getPm2LogPaths(): { out: string; err: string } | null {
   try {
-    const desc = execSync('pm2 jlist 2>nul || echo "[]"', { encoding: 'utf-8', shell: true });
+    const desc = execSync('pm2 jlist 2>nul || echo "[]"', { encoding: 'utf-8' });
     const apps = JSON.parse(desc);
     const app = apps.find((a: { name: string }) => a.name === 'advancia-api');
     if (app) {
@@ -91,7 +91,7 @@ function installPm2LogRotate(): void {
 
   try {
     console.log('  Installing pm2-logrotate module...');
-    execSync('pm2 install pm2-logrotate', { encoding: 'utf-8', shell: true, timeout: 30000 });
+    execSync('pm2 install pm2-logrotate', { encoding: 'utf-8', timeout: 30000 });
     console.log('  ✅ pm2-logrotate installed');
 
     // Configure rotation
@@ -107,7 +107,6 @@ function installPm2LogRotate(): void {
     for (const [key, value] of configs) {
       execSync(`pm2 set pm2-logrotate:${key} ${value}`, {
         encoding: 'utf-8',
-        shell: true,
         timeout: 5000,
       });
       console.log(`  ✅ pm2-logrotate:${key} = ${value}`);
