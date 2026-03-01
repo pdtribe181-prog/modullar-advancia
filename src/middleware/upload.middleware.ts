@@ -180,7 +180,7 @@ export function createUpload(bucket: string) {
  * Use AFTER multer has parsed the file into `req.file` / `req.files`.
  */
 export function validateFileContent(bucket: string) {
-  return (req: Request, _res: unknown, next: Function) => {
+  return (req: Request, _res: unknown, next: (err?: unknown) => void) => {
     const files: Express.Multer.File[] = [];
 
     if ((req as any).file) files.push((req as any).file);
@@ -209,7 +209,12 @@ export function validateFileContent(bucket: string) {
  * Error-handling wrapper that converts multer-specific errors
  * (e.g. LIMIT_FILE_SIZE) into AppErrors with user-friendly messages.
  */
-export function handleMulterError(err: any, _req: Request, _res: unknown, next: Function) {
+export function handleMulterError(
+  err: any,
+  _req: Request,
+  _res: unknown,
+  next: (err?: unknown) => void
+) {
   if (err instanceof multer.MulterError) {
     switch (err.code) {
       case 'LIMIT_FILE_SIZE': {

@@ -23,6 +23,20 @@ export default defineConfig({
   ],
   build: {
     sourcemap: true, // Required for Sentry source maps
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime — cached across all pages
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Charting library (large, only used on dashboards)
+          'vendor-charts': ['recharts'],
+          // Stripe SDKs (only used on payment pages)
+          'vendor-stripe': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
+          // Sentry (monitoring, loaded on all pages but rarely changes)
+          'vendor-sentry': ['@sentry/react'],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

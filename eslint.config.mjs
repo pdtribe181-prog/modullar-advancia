@@ -45,6 +45,9 @@ export default tseslint.config(
       'scripts/',
       'e2e/',
       'playwright.config.ts',
+      'src/**/*.test.ts',
+      'src/**/__tests__/**/*',
+      '**/*.spec.ts',
     ],
   }
 );

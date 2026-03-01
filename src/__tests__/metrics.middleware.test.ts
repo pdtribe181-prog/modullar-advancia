@@ -17,7 +17,7 @@ describe('Metrics Middleware', () => {
   let req: Request;
   let res: Response;
   let next: NextFunction;
-  let finishListeners: Function[];
+  let finishListeners: ((...args: unknown[]) => void)[];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -31,7 +31,7 @@ describe('Metrics Middleware', () => {
 
     res = {
       statusCode: 200,
-      on: jest.fn<any>().mockImplementation((event: string, cb: Function) => {
+      on: jest.fn<any>().mockImplementation((event: string, cb: (...args: unknown[]) => void) => {
         if (event === 'finish') finishListeners.push(cb);
         return res;
       }),

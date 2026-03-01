@@ -44,10 +44,10 @@ function createMockReq(overrides: Partial<Request> = {}): any {
 }
 
 function createMockRes(): any {
-  const listeners: Record<string, Function[]> = {};
+  const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
   return {
     statusCode: 200,
-    on: jest.fn<any>((event: string, cb: Function) => {
+    on: jest.fn<any>((event: string, cb: (...args: unknown[]) => void) => {
       listeners[event] = listeners[event] || [];
       listeners[event].push(cb);
     }),

@@ -16,5 +16,5 @@
     "noUnusedLocals": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "migrations"]
+  "exclude": ["node_modules", "dist", "migrations", "src/**/*.test.ts", "src/**/__tests__/**/*", "**/*.spec.ts"]
 }

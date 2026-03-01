@@ -21,13 +21,13 @@ function createMocks(overrides?: { req?: Partial<Request>; res?: Partial<Respons
     ...overrides?.req,
   } as unknown as Request;
 
-  const listeners: Record<string, Function[]> = {};
+  const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
   const res = {
     statusCode: 200,
     setHeader: jest.fn<any>(),
     status: jest.fn<any>().mockReturnThis(),
     json: jest.fn<any>().mockReturnThis(),
-    on: jest.fn<any>().mockImplementation((event: string, cb: Function) => {
+    on: jest.fn<any>().mockImplementation((event: string, cb: (...args: unknown[]) => void) => {
       if (!listeners[event]) listeners[event] = [];
       listeners[event].push(cb);
       return res;

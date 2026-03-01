@@ -8,6 +8,10 @@ import { jest } from '@jest/globals';
 
 // Close any open handles after all tests
 afterAll(async () => {
-  // Give time for any open handles to close
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  // Give time for any open handles to close, using .unref() to prevent the
+  // timer itself from keeping the worker alive (avoids "failed to exit gracefully")
+  await new Promise<void>((resolve) => {
+    const timer = setTimeout(() => resolve(), 500);
+    timer.unref();
+  });
 });

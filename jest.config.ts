@@ -29,16 +29,18 @@ export default {
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testTimeout: 30000,
+  // Recycle workers after 512 MB to prevent stale handles from blocking exit
+  workerIdleMemoryLimit: '512MB',
   coverageProvider: 'v8',
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/types/**', '!src/__tests__/**'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      statements: 12,
-      branches: 15,
-      functions: 15,
-      lines: 12,
+      statements: 90,
+      branches: 80,
+      functions: 90,
+      lines: 90,
     },
   },
 };
