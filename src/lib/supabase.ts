@@ -13,6 +13,7 @@ let _serviceClient: SupabaseClient | null = null;
  *   1. DB schema targeting (`db.schema`)
  *   2. HTTP keep-alive via the global fetch agent (Node 18+)
  *   3. Reasonable statement timeout (realtime + REST)
+ *   4. Optimized fetch configuration for production workloads
  *
  * True PostgreSQL connection pooling is handled server-side by PgBouncer
  * in the Supabase dashboard (Settings → Database → Connection Pooling):
@@ -28,7 +29,16 @@ const SHARED_DB_OPTIONS = {
   global: {
     headers: {
       'x-connection-pool': 'transaction', // hint for edge/proxy routing
+      'x-client-info': 'modullar-advancia/1.0.0',
+      'cache-control': 'no-cache', // prevent stale cached responses
     },
+  },
+  realtime: {
+    timeout: 30000, // 30s timeout for real-time connections
+  },
+  auth: {
+    flowType: 'pkce',
+    debug: false,
   },
 };
 

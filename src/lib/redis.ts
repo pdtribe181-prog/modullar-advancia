@@ -49,7 +49,16 @@ export function getUpstashRedis(): UpstashRedis {
       );
     }
 
-    _upstash = new UpstashRedis({ url, token });
+    _upstash = new UpstashRedis({
+      url,
+      token,
+      retry: {
+        retries: 3,
+        backoff: (retryCount) => Math.exp(retryCount) * 50, // exponential backoff
+      },
+      responseEncoding: 'utf8',
+      cache: 'force-cache', // Enable HTTP caching for GET requests
+    });
   }
   return _upstash;
 }
