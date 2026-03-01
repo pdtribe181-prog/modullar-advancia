@@ -103,7 +103,7 @@ function triggerEvent(eventType: string): { success: boolean; output: string } {
   try {
     const output = execSync(
       `stripe trigger ${eventType} --override event:created=${Math.floor(Date.now() / 1000)}`,
-      { encoding: 'utf-8', shell: true, timeout: 30000 }
+      { encoding: 'utf-8', timeout: 30000 }
     );
     return { success: true, output: output.trim() };
   } catch (err: unknown) {

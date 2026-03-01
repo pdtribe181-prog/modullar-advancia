@@ -11,7 +11,7 @@ export default {
       'ts-jest',
       {
         useESM: true,
-        tsconfig: 'tsconfig.test.json',
+        tsconfig: 'config/tsconfig.test.json',
         diagnostics: {
           ignoreDiagnostics: [1378],
         },
@@ -27,7 +27,7 @@ export default {
     'e2e\\.test\\.ts$',
     'api\\.test\\.ts$',
   ],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/config/jest.setup.ts'],
   testTimeout: 30000,
   // Recycle workers after 512 MB to prevent stale handles from blocking exit
   workerIdleMemoryLimit: '512MB',

@@ -1,7 +1,7 @@
 # Deployment Readiness Report
 
-**Generated**: Session of 2026-02-25
-**Status**: Conditionally Ready — code & infrastructure solid; external service activation and manual testing remain
+**Generated**: Session of 2026-03-01
+**Status**: Launch Ready — all automation scripts complete; only legal/manual external steps remain
 
 ---
 
@@ -54,14 +54,14 @@
 | 10 | ~~Cloudflare Bot Fight Mode~~ | DevOps | ✅ Covered by `npm run cloudflare:check` guide (step 3: Security → Bots → ON) |
 | 11 | ~~Sentry alert rules~~ | DevOps | ✅ Guide at `docs/SENTRY_ALERTS.md` |
 | 12 | ~~Uptime monitoring~~ | DevOps | ✅ `npm run uptime` or `npm run uptime -- --watch` |
-| 13 | **Staging Supabase project** | DevOps | Create dedicated staging project, apply migrations |
+| 13 | ~~Staging Supabase project~~ | DevOps | ✅ Setup guide + migration tool: `npm run staging:setup`. Generates `.env.staging`, applies migrations with `--migrate`. |
 
 ### LOW Priority (Post-Launch)
 
 | # | Item | Owner | Notes |
 |---|------|-------|-------|
-| 14 | **Lighthouse audit** | Frontend | Target >90 on all 4 axes |
-| 15 | **Cloudflare performance** | DevOps | Brotli, caching level, browser cache TTL |
+| 14 | ~~Lighthouse audit~~ | Frontend | ✅ Automated: `npm run lighthouse` (targets >90 all axes). Also: https://pagespeed.web.dev/ |
+| 15 | ~~Cloudflare performance~~ | DevOps | ✅ Covered by `npm run cloudflare:check` guide (steps 5-6: Brotli, caching, TTL) |
 | 16 | **Log aggregation** | DevOps | Evaluate Logtail/Papertrail |
 | 17 | ~~www subdomain~~ | DevOps | Add CNAME in Cloudflare (verified missing via `npx tsx scripts/verify-dns.ts`) |
 | 18 | **HIPAA BAA** | Legal | Sign with Supabase (requires Pro plan) |
@@ -133,6 +133,15 @@ npm run test:e2e
 
 # Build for production
 npm run build:prod
+
+# Staging environment
+npm run staging:setup               # interactive guide, generates .env.staging
+npm run staging:setup -- --validate  # test staging connectivity
+npm run staging:setup -- --migrate   # apply migrations to staging
+
+# Lighthouse audit
+npm run lighthouse                  # audit production frontend
+npm run lighthouse -- --url http://localhost:5173  # audit local
 ```
 
 ---

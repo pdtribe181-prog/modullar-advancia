@@ -41,7 +41,9 @@
     "secrets:rotate": "tsx scripts/rotate-secrets.ts",
     "deploy:vps": "tsx scripts/vps-deploy.ts",
     "verify:dns": "tsx scripts/verify-dns.ts",
-    "cloudflare:check": "tsx scripts/cloudflare-setup.ts"
+    "cloudflare:check": "tsx scripts/cloudflare-setup.ts",
+    "staging:setup": "tsx scripts/staging-setup.ts",
+    "lighthouse": "tsx scripts/lighthouse-audit.ts"
   },
   "keywords": [
     "healthcare",
