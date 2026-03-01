@@ -60,9 +60,9 @@
 
 | # | Item | Owner | Notes |
 |---|------|-------|-------|
-| 14 | ~~Lighthouse audit~~ | Frontend | ✅ Automated: `npm run lighthouse` (targets >90 all axes). Also: https://pagespeed.web.dev/ |
+| 14 | ~~Lighthouse audit~~ | Frontend | ✅ Automated: `npm run lighthouse` (targets >90 all axes). Also: <https://pagespeed.web.dev/> |
 | 15 | ~~Cloudflare performance~~ | DevOps | ✅ Covered by `npm run cloudflare:check` guide (steps 5-6: Brotli, caching, TTL) |
-| 16 | **Log aggregation** | DevOps | Evaluate Logtail/Papertrail |
+| 16 | ~~Log aggregation~~ | DevOps | ✅ Setup guide + PM2 rotation: `npm run logs:setup`. Supports Logtail, Papertrail, Datadog. |
 | 17 | ~~www subdomain~~ | DevOps | Add CNAME in Cloudflare (verified missing via `npx tsx scripts/verify-dns.ts`) |
 | 18 | **HIPAA BAA** | Legal | Sign with Supabase (requires Pro plan) |
 | 19 | **ToS / Privacy Policy** | Legal | Legal counsel review |
@@ -142,6 +142,11 @@ npm run staging:setup -- --migrate   # apply migrations to staging
 # Lighthouse audit
 npm run lighthouse                  # audit production frontend
 npm run lighthouse -- --url http://localhost:5173  # audit local
+
+# Log aggregation
+npm run logs:setup                  # guide + current status
+npm run logs:setup -- --pm2-rotate  # install PM2 log rotation on VPS
+npm run logs:setup -- --test        # verify structured log format
 ```
 
 ---

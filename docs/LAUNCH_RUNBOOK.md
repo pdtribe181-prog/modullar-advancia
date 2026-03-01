@@ -9,6 +9,7 @@
 ## Pre-Launch (T-2 hours)
 
 ### 1. Final Code Verification
+
 ```bash
 # Ensure main branch is clean and tests pass
 git checkout main && git pull
@@ -18,16 +19,20 @@ cd .. && npm run test:e2e             # 29 E2E tests (requires dev server)
 ```
 
 ### 2. Production Pre-flight
+
 ```bash
 npm run preflight
 ```
+
 All checks must show ✅. Fix any ❌ before proceeding.
 
 ### 3. Stripe Go-Live Validation
+
 ```bash
 npm run stripe:go-live
 npm run stripe:go-live -- --remote    # Requires live keys in .env
 ```
+
 Confirm:
 - [ ] `sk_live_` and `pk_live_` keys are set
 - [ ] `STRIPE_WEBHOOK_SECRET` matches production endpoint
@@ -35,10 +40,12 @@ Confirm:
 - [ ] At least 1 webhook endpoint configured
 
 ### 4. DNS & Cloudflare
+
 ```bash
 npm run verify:dns
 npm run cloudflare:check -- --verify
 ```
+
 Confirm:
 - [ ] SSL mode is Full (Strict)
 - [ ] Bot Fight Mode enabled
@@ -46,9 +53,11 @@ Confirm:
 - [ ] HTTP → HTTPS redirect working
 
 ### 5. Secrets Audit
+
 ```bash
 npm run secrets:rotate
 ```
+
 Confirm:
 - [ ] All external secrets configured (Stripe, Supabase, Resend, Twilio, Upstash, Sentry)
 - [ ] No test/development-era keys in production
@@ -58,6 +67,7 @@ Confirm:
 ## Deploy (T-0)
 
 ### 6. Deploy to VPS
+
 ```bash
 # Dry run first
 npm run deploy:vps
@@ -65,19 +75,24 @@ npm run deploy:vps
 # Execute
 npm run deploy:vps -- --apply
 ```
+
 Deploy steps: git pull → npm ci → build → PM2 reload → health check
 
 ### 7. Verify Production Health
+
 ```bash
 curl -s https://api.advanciapayledger.com/health | jq .
 curl -s https://api.advanciapayledger.com/health?verbose=true | jq .
 ```
+
 Expected: `{"status":"healthy","database":"connected","monitoring":"enabled"}`
 
 ### 8. Webhook Delivery Test
+
 ```bash
 npm run stripe:webhooks -- --trigger --url https://api.advanciapayledger.com/api/v1/stripe/webhook
 ```
+
 Or manually in Stripe Dashboard → Webhooks → Send test webhook.
 
 ### 9. Smoke Test Critical Flows
@@ -92,6 +107,7 @@ Or manually in Stripe Dashboard → Webhooks → Send test webhook.
 ## Post-Launch (T+1 hour)
 
 ### 10. Start Monitoring
+
 ```bash
 # Uptime monitor (continuous)
 npm run uptime -- --watch
@@ -101,16 +117,20 @@ npm run uptime -- --watch
 ```
 
 ### 11. Lighthouse Audit
+
 ```bash
 npm run lighthouse
 # Or use: https://pagespeed.web.dev/
 ```
+
 Target: >90 on all 4 axes (Performance, Accessibility, Best Practices, SEO)
 
 ### 12. GitHub Actions Secrets
+
 ```bash
 npm run secrets:setup -- --apply --env production
 ```
+
 Confirm CI pipeline runs green with production secrets.
 
 ---
@@ -143,9 +163,9 @@ See [docs/ROLLBACK_PROCEDURE.md](docs/ROLLBACK_PROCEDURE.md) for detailed rollba
 | DevOps Lead | ___________ |
 | Backend Dev | ___________ |
 | Stripe Account | ___________ |
-| Supabase Support | support@supabase.io |
+| Supabase Support | <support@supabase.io> |
 | Cloudflare Support | ___________ |
-| Sentry Dashboard | https://sentry.io |
+| Sentry Dashboard | <https://sentry.io> |
 
 ---
 

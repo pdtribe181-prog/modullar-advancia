@@ -43,7 +43,8 @@
     "verify:dns": "tsx scripts/verify-dns.ts",
     "cloudflare:check": "tsx scripts/cloudflare-setup.ts",
     "staging:setup": "tsx scripts/staging-setup.ts",
-    "lighthouse": "tsx scripts/lighthouse-audit.ts"
+    "lighthouse": "tsx scripts/lighthouse-audit.ts",
+    "logs:setup": "tsx scripts/log-aggregation.ts"
   },
   "keywords": [
     "healthcare",
