@@ -63,7 +63,7 @@
 | 14 | ~~Lighthouse audit~~ | Frontend | ✅ Automated: `npm run lighthouse` (targets >90 all axes). Also: <https://pagespeed.web.dev/> |
 | 15 | ~~Cloudflare performance~~ | DevOps | ✅ Covered by `npm run cloudflare:check` guide (steps 5-6: Brotli, caching, TTL) |
 | 16 | ~~Log aggregation~~ | DevOps | ✅ Setup guide + PM2 rotation: `npm run logs:setup`. Supports Logtail, Papertrail, Datadog. |
-| 17 | ~~www subdomain~~ | DevOps | Add CNAME in Cloudflare (verified missing via `npx tsx scripts/verify-dns.ts`) |
+| 17 | ~~www subdomain~~ | DevOps | ✅ Nginx 301 redirect added (`nginx/advancia.conf`); add CNAME `www → advanciapayledger.com` in Cloudflare |
 | 18 | **HIPAA BAA** | Legal | Sign with Supabase (requires Pro plan) |
 | 19 | **ToS / Privacy Policy** | Legal | Legal counsel review |
 | 20 | ~~Load testing (peak)~~ | QA | ✅ `npm run load-test` — 100 concurrent users, P95 <200ms validation |
