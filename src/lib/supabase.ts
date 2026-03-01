@@ -35,11 +35,7 @@ const SHARED_DB_OPTIONS = {
   realtime: {
     timeout: 15000, // Balanced 15s timeout
   },
-  auth: {
-    flowType: 'pkce',
-    debug: false,
-  },
-};
+} as const;
 
 /**
  * Get the Supabase anon client (for user-authenticated operations)
@@ -48,12 +44,13 @@ export function getSupabaseClient(): SupabaseClient {
   if (!_supabase) {
     const env = getEnv();
     _supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      ...SHARED_DB_OPTIONS,
       auth: {
+        flowType: 'pkce' as const,
         autoRefreshToken: false,
         persistSession: false,
         detectSessionInUrl: false,
       },
-      ...SHARED_DB_OPTIONS,
     });
   }
   return _supabase;
@@ -67,11 +64,12 @@ export const createServiceClient = (): SupabaseClient => {
   if (!_serviceClient) {
     const env = getEnv();
     _serviceClient = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      ...SHARED_DB_OPTIONS,
       auth: {
+        flowType: 'pkce' as const,
         autoRefreshToken: false,
         persistSession: false,
       },
-      ...SHARED_DB_OPTIONS,
     });
   }
   return _serviceClient;

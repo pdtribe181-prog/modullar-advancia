@@ -56,7 +56,7 @@ export function getUpstashRedis(): UpstashRedis {
         retries: 2, // Reasonable retry count for balanced reliability
         backoff: (retryCount) => retryCount * 100, // Simple linear backoff
       },
-      responseEncoding: 'utf8',
+      responseEncoding: false, // Disable base64 encoding for better performance with valid UTF-8 data
       automaticDeserialization: true, // Balanced feature set
     });
   }

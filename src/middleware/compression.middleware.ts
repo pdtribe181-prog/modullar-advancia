@@ -183,7 +183,7 @@ export function createCompressionMiddleware(opts: Partial<CompressionOptions> = 
         compressor.on('data', (data: Buffer) => compressed.push(data));
         compressor.on('end', () => {
           const result = Buffer.concat(compressed);
-          originalEnd.call(res, result, undefined, callback);
+          originalEnd.call(res, result, 'utf8' as BufferEncoding, callback);
         });
         compressor.on('error', (error) => {
           console.error('[Compression] Error:', error);
