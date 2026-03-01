@@ -36,10 +36,12 @@
     "load-test": "tsx scripts/load-test.ts",
     "uptime": "tsx scripts/uptime-monitor.ts",
     "stripe:go-live": "tsx scripts/stripe-go-live.ts",
+    "stripe:webhooks": "tsx scripts/test-stripe-webhooks.ts",
     "secrets:setup": "tsx scripts/setup-gh-secrets.ts",
     "secrets:rotate": "tsx scripts/rotate-secrets.ts",
     "deploy:vps": "tsx scripts/vps-deploy.ts",
-    "verify:dns": "tsx scripts/verify-dns.ts"
+    "verify:dns": "tsx scripts/verify-dns.ts",
+    "cloudflare:check": "tsx scripts/cloudflare-setup.ts"
   },
   "keywords": [
     "healthcare",

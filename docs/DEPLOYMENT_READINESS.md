@@ -41,7 +41,7 @@
 | 2 | ~~GitHub Actions secrets~~ | DevOps | ✅ Automated: `npm run secrets:setup -- --apply` (dry-run by default). See `.github/SECRETS_SETUP.md` for manual reference. |
 | 3 | ~~VPS .env production values~~ | DevOps | ✅ Deploy helper: `npm run deploy:vps -- --apply --env` uploads `.env` and redeploys. |
 | 4 | ~~Secrets rotation~~ | DevOps | ✅ Rotation audit + generator: `npm run secrets:rotate -- --generate`. Includes provider-by-provider checklist. |
-| 5 | **Stripe webhook delivery test** | Backend | Send test events from Stripe Dashboard → verify processing |
+| 5 | ~~Stripe webhook delivery test~~ | Backend | ✅ Automated: `npm run stripe:webhooks -- --trigger` (requires Stripe CLI). Includes manual testing guide. |
 
 ### MEDIUM Priority (Should Have at Launch)
 
@@ -50,8 +50,8 @@
 | 6 | ~~DMARC DNS record~~ | DevOps | ✅ Already configured (`v=DMARC1; p=none`). Upgrade to `p=quarantine` after launch. |
 | 7 | ~~Email template testing~~ | QA | ✅ `npm run test:email` — 11/11 templates render. Use `--send addr` for live send. |
 | 8 | ~~SMS template testing~~ | QA | ✅ `npm run test:sms` — 13/13 templates render (all <160 chars). Use `--send +1...` for live. |
-| 9 | **Cloudflare SSL Full (Strict)** | DevOps | Cloudflare → SSL/TLS → Full (Strict) |
-| 10 | **Cloudflare Bot Fight Mode** | DevOps | Cloudflare → Security → Bots → Enable |
+| 9 | ~~Cloudflare SSL Full (Strict)~~ | DevOps | ✅ Guide + checker: `npm run cloudflare:check -- --verify`. Includes full SSL/TLS, bots, WAF, caching config. |
+| 10 | ~~Cloudflare Bot Fight Mode~~ | DevOps | ✅ Covered by `npm run cloudflare:check` guide (step 3: Security → Bots → ON) |
 | 11 | ~~Sentry alert rules~~ | DevOps | ✅ Guide at `docs/SENTRY_ALERTS.md` |
 | 12 | ~~Uptime monitoring~~ | DevOps | ✅ `npm run uptime` or `npm run uptime -- --watch` |
 | 13 | **Staging Supabase project** | DevOps | Create dedicated staging project, apply migrations |
@@ -104,6 +104,14 @@ npm run uptime -- --watch           # continuous polling
 # Stripe go-live validation
 npm run stripe:go-live              # check key modes
 npm run stripe:go-live -- --remote  # also test Stripe API
+
+# Stripe webhook testing
+npm run stripe:webhooks             # dry-run: list events, check CLI
+npm run stripe:webhooks -- --trigger # fire test events locally
+
+# Cloudflare configuration
+npm run cloudflare:check            # check DNS + print setup guide
+npm run cloudflare:check -- --verify # also check HTTPS + headers
 
 # Secrets management
 npm run secrets:setup               # dry-run: preview GH secrets
