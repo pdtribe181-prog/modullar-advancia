@@ -2,6 +2,7 @@ import express, { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { stripeServices, stripe } from '../services/stripe.service.js';
 import processWebhook from '../services/stripe-webhooks.service.js';
+import { getEnv } from '../config/env.js';
 import {
   authenticate,
   authenticateWithProfile,
@@ -52,7 +53,8 @@ router.post(
   webhookLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const env = getEnv();
+    const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
       throw AppError.internal('Webhook secret not configured');
@@ -268,10 +270,11 @@ router.post(
   sensitiveLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { returnUrl, refreshUrl } = req.body;
+    const env = getEnv();
     const accountLink = await stripeServices.connect.createAccountLink(
       String(req.params.accountId),
-      refreshUrl || `${process.env.FRONTEND_URL}/provider/setup/refresh`,
-      returnUrl || `${process.env.FRONTEND_URL}/provider/setup/complete`
+      refreshUrl || `${env.FRONTEND_URL}/provider/setup/refresh`,
+      returnUrl || `${env.FRONTEND_URL}/provider/setup/complete`
     );
     res.json({
       success: true,

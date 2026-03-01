@@ -16,7 +16,7 @@ services:
       - key: PORT
         value: 3000
       - key: NODE_VERSION
-        value: 22
+        value: 20
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY

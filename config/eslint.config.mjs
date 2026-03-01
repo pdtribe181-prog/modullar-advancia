@@ -15,7 +15,8 @@ export default tseslint.config(
         ...globals.jest,
       },
       parserOptions: {
-        project: './tsconfig.json',
+        // Path is relative to this config file in config/, so go up one level
+        project: '../tsconfig.eslint.json',
       },
     },
     rules: {

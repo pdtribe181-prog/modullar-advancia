@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'  # Node 20 LTS
           cache: npm
 
       - name: Install dependencies
@@ -40,6 +40,15 @@ jobs:
       - name: Frontend audit (high severity)
         run: npm audit --audit-level=high
         working-directory: frontend
+
+      - name: Check outdated packages
+        run: |
+          echo "Backend outdated packages:"
+          npm outdated || true
+          echo ""
+          echo "Frontend outdated packages:"
+          cd frontend && npm outdated || true
+        continue-on-error: true
 
   # ─────────────────────────────────────────────────────────────────────────
   # JOB: Secret Detection
@@ -98,7 +107,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'  # Node 20 LTS
           cache: npm
 
       - name: Install dependencies

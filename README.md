@@ -37,8 +37,8 @@ cd modullar-advancia
 npm install
 
 # Configure environment
-cp .env.example .env
-# Edit .env with your credentials
+cp env/.env.example env/.env
+# Edit env/.env with your credentials
 
 # Start backend
 npm run dev           # API at http://127.0.0.1:3000
@@ -75,7 +75,7 @@ This project supports a staging API on Render and should use a dedicated Supabas
 - Render origin: `modullar-advancia.onrender.com`
 - Keep staging and production Supabase projects fully separate.
 
-Use [.env.staging.example](.env.staging.example) as the source of truth for staging variables.
+Use [env/.env.staging.example](env/.env.staging.example) as the source of truth for staging variables.
 
 Minimum required staging variables in Render:
 
@@ -106,29 +106,28 @@ Minimum required staging variables in Render:
 
 ```text
 modullar-advancia/
-├── src/
+├── env/                       # Environment variable files
+├── docs/                      # All documentation (manuals, guides, changelogs)
+├── scripts/                   # Utility and automation scripts
+├── config/                    # Configuration files (nginx, Docker, TypeScript, etc.)
+│   └── nginx/                 # Nginx configuration
+├── src/                       # Backend source code
 │   ├── server.ts              # Express entry point
-│   ├── config/                # Environment config
+│   ├── config/                # App-level config
 │   ├── lib/                   # Supabase client
 │   ├── middleware/            # Auth, rate limiting, security
 │   ├── routes/                # API endpoints
-│   │   ├── auth.routes.ts     # Login, register, MFA
-│   │   ├── stripe.routes.ts   # Payments, subscriptions
-│   │   ├── connect.routes.ts  # Provider onboarding
-│   │   ├── admin.routes.ts    # Admin dashboard
-│   │   ├── appointments.routes.ts
-│   │   ├── provider.routes.ts
-│   │   └── wallet.routes.ts   # Crypto wallet linking
 │   ├── services/              # Business logic
-│   └── __tests__/             # Jest unit tests
-├── frontend/
-│   ├── src/
-│   │   ├── pages/             # React pages
-│   │   ├── components/        # UI components
-│   │   └── providers/         # Auth, Stripe context
-│   └── package.json
-├── migrations/                # SQL migrations (001-019)
+│   └── types/                 # TypeScript types
+├── frontend/                  # Frontend app (Vite + React)
+│   ├── src/                   # Frontend source code
+│   └── public/                # Static assets
+├── migrations/                # SQL migrations
 ├── e2e/                       # Playwright E2E tests
+├── tests/                     # Unit and integration tests
+├── coverage/                  # Test coverage reports
+├── archive/                   # Archived/obsolete files and logs
+├── supabase/                  # Supabase CLI and config
 ├── render.yaml                # Render deployment config
 └── openapi.yaml               # API documentation
 ```
@@ -211,7 +210,7 @@ npm run test:e2e      # Playwright E2E tests
 
 ## Deployment
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full deployment guide.
 
 ### Quick Deploy
 

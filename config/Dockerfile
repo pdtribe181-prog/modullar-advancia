@@ -1,5 +1,5 @@
 # Production Dockerfile for Healthcare Payment API
-FROM node:22-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Production dependencies stage
-FROM node:22-alpine AS deps
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # Production stage
-FROM node:22-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
