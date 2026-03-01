@@ -10,18 +10,18 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": "../dist",
+    "rootDir": "../src",
     "types": ["node", "jest"],
     "noUnusedLocals": false
   },
-  "include": ["src/**/*", "src/config/production.config.ts", "src/routes/stripe.routes.ts"],
+  "include": ["../src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
     "migrations",
-    "src/**/*.test.ts",
-    "src/**/__tests__/**/*",
+    "../src/**/*.test.ts",
+    "../src/**/__tests__/**/*",
     "**/*.spec.ts"
   ]
 }

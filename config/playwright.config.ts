@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
 dotenv.config();
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: '../e2e',
   timeout: 60000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -44,20 +44,26 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
   ],
-  webServer: [
-    {
-      command: 'npm run dev',
-      url: 'http://127.0.0.1:3000/health',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120000,
-      cwd: '.',
-    },
-    {
-      command: 'npm run dev',
-      url: 'http://127.0.0.1:5173',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120000,
-      cwd: './frontend',
-    },
-  ],
+  // In CI, Playwright starts servers automatically.
+  // Locally, start servers yourself before running E2E: npm run dev & cd frontend && npm run dev
+  ...(process.env.CI
+    ? {
+        webServer: [
+          {
+            command: 'npm run dev',
+            url: 'http://127.0.0.1:3000/health',
+            reuseExistingServer: false,
+            timeout: 120000,
+            cwd: '.',
+          },
+          {
+            command: 'npm run dev',
+            url: 'http://127.0.0.1:5173',
+            reuseExistingServer: false,
+            timeout: 120000,
+            cwd: './frontend',
+          },
+        ],
+      }
+    : {}),
 });
