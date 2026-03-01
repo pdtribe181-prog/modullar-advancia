@@ -507,22 +507,46 @@ const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
 };
 
 // Health check
-app.get('/health', async (_req, res) => {
+app.get('/health', async (req, res) => {
   const dbStatus = await getDatabaseStatus();
   const monitoring = getMonitoringHealth();
   const redisHealthy = await redisHelpers.isHealthy();
   const redisKind = getRedisKind();
 
   const isHealthy = dbStatus === 'connected';
-  res.status(isHealthy ? 200 : 503).json({
+
+  // Server metrics — useful for monitoring dashboards and alerting
+  const mem = process.memoryUsage();
+  const serverMetrics = {
+    uptime: Math.round(process.uptime()),
+    memory: {
+      rss: Math.round(mem.rss / 1024 / 1024), // MB
+      heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+      heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
+      external: Math.round(mem.external / 1024 / 1024),
+    },
+    nodeVersion: process.version,
+    pid: process.pid,
+  };
+
+  // Minimal response for HEAD / shallow probes; full response for GET
+  const verbose = req.query.verbose === 'true';
+
+  const body: Record<string, unknown> = {
     status: isHealthy ? 'healthy' : 'unhealthy',
     timestamp: new Date().toISOString(),
     database: dbStatus,
     redis: { status: redisHealthy ? 'connected' : 'disconnected', kind: redisKind },
-    circuitBreakers: getAllCircuitBreakerStats(),
     monitoring: monitoring.enabled ? 'enabled' : 'disabled',
     version: process.env.npm_package_version || '1.0.0',
-  });
+  };
+
+  if (verbose) {
+    body.circuitBreakers = getAllCircuitBreakerStats();
+    body.server = serverMetrics;
+  }
+
+  res.status(isHealthy ? 200 : 503).json(body);
 });
 
 // API Documentation

@@ -29,7 +29,8 @@
     "clean": "rimraf dist",
     "build:prod": "npm run clean && npm run build",
     "docker:build": "docker build -t healthcare-payment-api .",
-    "docker:run": "docker run -p 3000:3000 --env-file .env healthcare-payment-api"
+    "docker:run": "docker run -p 3000:3000 --env-file .env healthcare-payment-api",
+    "preflight": "tsx scripts/preflight-check.ts"
   },
   "keywords": [
     "healthcare",

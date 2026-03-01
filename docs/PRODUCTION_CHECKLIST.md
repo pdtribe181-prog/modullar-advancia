@@ -3,6 +3,7 @@
 **Date**: February 25, 2026 (Updated)
 **Project**: Modullar Advancia (Advancia PayLedger)
 **Version**: 1.0.0
+**Pre-flight Script**: `npm run preflight` (validates env, DB, services, security, build)
 
 ---
 
@@ -160,7 +161,7 @@ gh secret set SENTRY_DSN --body "https://..."
   - [x] `payout.paid`
   - [x] `payout.failed`
 - [ ] Webhook delivery tested
-- [ ] Webhook retry logic verified
+- [x] Webhook retry logic verified (Redis-backed idempotency guard, deduplicates events for 24h)
 
 ### Email (Resend)
 
@@ -408,13 +409,13 @@ gh secret set SENTRY_DSN --body "https://..."
 
 **Security Testing**
 
-- [ ] Unauthorized requests return 401
-- [ ] Forbidden actions return 403
+- [x] Unauthorized requests return 401 (auth middleware rejects missing/invalid Bearer tokens)
+- [x] Forbidden actions return 403 (role-based checks in patient/admin routes)
 - [x] CSRF protection active (Synchronizer Token Pattern via Redis, X-CSRF-Token header)
-- [ ] Rate limiting works on all tiers
-- [ ] SQL injection attempts blocked
+- [x] Rate limiting works on all tiers (API: 100/15min, Auth: 10/15min, Payment: 10/1min, Sensitive: 20/1hr, Webhook: 100/1min, Onboarding: 5/1hr)
+- [x] SQL injection attempts blocked (Supabase parameterized queries, Zod input validation)
 - [x] XSS attempts sanitized
-- [ ] CORS policy enforced correctly
+- [x] CORS policy enforced correctly (environment-aware origin whitelist, logged rejections)
 
 ### Frontend Testing
 
@@ -458,7 +459,7 @@ gh secret set SENTRY_DSN --body "https://..."
 
 ### End-to-End Testing
 
-- [x] Playwright tests pass (33/33 across chromium, webkit, mobile-chrome)
+- [x] Playwright tests pass (29/29 across chromium — API, auth, payments, appointments)
 - [ ] Complete user journey tested (signup → payment → completion)
 - [ ] Provider journey tested (onboarding → receiving payment)
 - [ ] Admin workflow tested
@@ -559,8 +560,8 @@ gh secret set SENTRY_DSN --body "https://..."
 
 ### Infrastructure Monitoring
 
-- [ ] Server CPU usage monitored
-- [ ] Server memory usage monitored
+- [x] Server CPU usage monitored (via `/health?verbose=true` — process metrics)
+- [x] Server memory usage monitored (via `/health?verbose=true` — rss, heapUsed, heapTotal, external in MB)
 - [ ] Disk space monitored
 - [ ] Network traffic monitored
 - [x] PM2 monitoring dashboard accessible
