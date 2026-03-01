@@ -34,7 +34,12 @@
     "test:email": "tsx scripts/test-email-templates.ts",
     "test:sms": "tsx scripts/test-sms-templates.ts",
     "load-test": "tsx scripts/load-test.ts",
-    "uptime": "tsx scripts/uptime-monitor.ts"
+    "uptime": "tsx scripts/uptime-monitor.ts",
+    "stripe:go-live": "tsx scripts/stripe-go-live.ts",
+    "secrets:setup": "tsx scripts/setup-gh-secrets.ts",
+    "secrets:rotate": "tsx scripts/rotate-secrets.ts",
+    "deploy:vps": "tsx scripts/vps-deploy.ts",
+    "verify:dns": "tsx scripts/verify-dns.ts"
   },
   "keywords": [
     "healthcare",

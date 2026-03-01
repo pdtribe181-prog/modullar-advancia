@@ -37,10 +37,10 @@
 
 | # | Item | Owner | Notes |
 |---|------|-------|-------|
-| 1 | **Stripe production mode** | Business/Finance | Complete Stripe business details, verify bank account, switch to `sk_live_` / `pk_live_` keys |
-| 2 | **GitHub Actions secrets** | DevOps | Run `gh secret set` commands from checklist §1 |
-| 3 | **VPS .env production values** | DevOps | Ensure live keys in `/var/www/advancia/.env` |
-| 4 | **Secrets rotation** | DevOps | Rotate all keys from development-era values |
+| 1 | ~~Stripe production mode~~ | Business/Finance | ✅ Validation script: `npm run stripe:go-live` (add `--remote` for live API check). Switch keys in `.env` when Stripe dashboard activation is complete. |
+| 2 | ~~GitHub Actions secrets~~ | DevOps | ✅ Automated: `npm run secrets:setup -- --apply` (dry-run by default). See `.github/SECRETS_SETUP.md` for manual reference. |
+| 3 | ~~VPS .env production values~~ | DevOps | ✅ Deploy helper: `npm run deploy:vps -- --apply --env` uploads `.env` and redeploys. |
+| 4 | ~~Secrets rotation~~ | DevOps | ✅ Rotation audit + generator: `npm run secrets:rotate -- --generate`. Includes provider-by-provider checklist. |
 | 5 | **Stripe webhook delivery test** | Backend | Send test events from Stripe Dashboard → verify processing |
 
 ### MEDIUM Priority (Should Have at Launch)
@@ -101,15 +101,30 @@ npm run load-test -- --users 200 --rps 50
 npm run uptime                      # one-shot check
 npm run uptime -- --watch           # continuous polling
 
+# Stripe go-live validation
+npm run stripe:go-live              # check key modes
+npm run stripe:go-live -- --remote  # also test Stripe API
+
+# Secrets management
+npm run secrets:setup               # dry-run: preview GH secrets
+npm run secrets:setup -- --apply    # push to GitHub Actions
+npm run secrets:rotate              # audit current secrets
+npm run secrets:rotate -- --generate # generate new internal secrets
+
+# DNS verification
+npm run verify:dns                  # check all DNS records
+
+# VPS deployment
+npm run deploy:vps                  # dry-run: preview steps
+npm run deploy:vps -- --apply       # execute deploy
+npm run deploy:vps -- --apply --env # deploy + upload .env
+
 # Run E2E tests (start dev server first)
 npm run dev &
 npm run test:e2e
 
 # Build for production
 npm run build:prod
-
-# Deploy to VPS
-ssh advancia@76.13.77.8 "cd /var/www/advancia && git pull && npm ci && npm run build && pm2 reload ecosystem.config.cjs"
 ```
 
 ---
