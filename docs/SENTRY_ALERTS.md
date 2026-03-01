@@ -78,7 +78,7 @@ Go to **Settings → Notifications → Alerts** and configure:
 
 Ensure `SENTRY_ENVIRONMENT` is set correctly per deployment:
 
-```
+```bash
 # Production
 SENTRY_ENVIRONMENT=production
 

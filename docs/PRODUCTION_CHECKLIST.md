@@ -27,7 +27,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 
 **GitHub CLI helper (replace placeholders):**
 
-```
+```bash
 gh secret set STRIPE_SECRET_KEY --body "sk_live_..."
 gh secret set STRIPE_PUBLISHABLE_KEY --body "pk_live_..."
 gh secret set STRIPE_WEBHOOK_SECRET --body "whsec_..."
