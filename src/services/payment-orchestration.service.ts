@@ -14,7 +14,7 @@
 
 import { supabase, createServiceClient } from '../lib/supabase.js';
 import { redisHelpers } from '../lib/redis.js';
-import { logger } from '../config/logger.js';
+import { logger } from '../middleware/logging.middleware.js';
 import { z } from 'zod';
 
 // Payment orchestration schemas
@@ -24,11 +24,11 @@ export const PaymentOrchestrationRequest = z.object({
   customerId: z.string().uuid(),
   paymentMethodId: z.string(),
   providerId: z.string().uuid().optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
   retryConfig: z.object({
-    maxAttempts: z.number().max(5).default(3),
-    backoffMultiplier: z.number().default(2),
-    initialDelayMs: z.number().default(1000),
+    maxAttempts: z.number().max(5),
+    backoffMultiplier: z.number(),
+    initialDelayMs: z.number(),
   }).optional(),
 });
 
@@ -115,7 +115,7 @@ export class PaymentOrchestrationService {
       return result;
 
     } catch (error) {
-      logger.error('Payment orchestration failed', {
+      logger.error('Payment orchestration failed', undefined, {
         paymentId,
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
@@ -207,7 +207,7 @@ export class PaymentOrchestrationService {
 
       } catch (error) {
         lastError = error instanceof Error ? error.message : 'Unknown error during payment attempt';
-        logger.error('Payment attempt error', {
+        logger.error('Payment attempt error', undefined, {
           paymentId: paymentState.id,
           attempt,
           error: lastError,
@@ -437,7 +437,7 @@ export class PaymentOrchestrationService {
   private async updatePaymentState(paymentId: string, state: PaymentState): Promise<void> {
     try {
       // Store in Redis for fast access
-      await redisHelpers.setJson(
+      await redisHelpers.setCache(
         `${this.cacheKeyPrefix}${paymentId}`,
         state,
         this.stateExpiry
@@ -460,7 +460,7 @@ export class PaymentOrchestrationService {
       }
 
     } catch (error) {
-      logger.error('Failed to update payment state', {
+      logger.error('Failed to update payment state', undefined, {
         paymentId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -499,7 +499,7 @@ export class PaymentOrchestrationService {
       }
 
     } catch (error) {
-      logger.error('Error recording payment metrics', {
+      logger.error('Error recording payment metrics', undefined, {
         paymentId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -512,7 +512,7 @@ export class PaymentOrchestrationService {
   async getPaymentState(paymentId: string): Promise<PaymentState | null> {
     try {
       // Try Redis first
-      const cached = await redisHelpers.getJson(`${this.cacheKeyPrefix}${paymentId}`);
+      const cached = await redisHelpers.getCache(`${this.cacheKeyPrefix}${paymentId}`);
       if (cached) {
         return cached as PaymentState;
       }
@@ -527,7 +527,7 @@ export class PaymentOrchestrationService {
       return data?.state as PaymentState || null;
 
     } catch (error) {
-      logger.error('Failed to get payment state', {
+      logger.error('Failed to get payment state', undefined, {
         paymentId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -552,7 +552,7 @@ export class PaymentOrchestrationService {
       return true;
 
     } catch (error) {
-      logger.error('Failed to cancel payment', {
+      logger.error('Failed to cancel payment', undefined, {
         paymentId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });

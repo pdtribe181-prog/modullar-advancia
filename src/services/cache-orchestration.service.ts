@@ -15,9 +15,9 @@
 
 import { supabase, createServiceClient } from '../lib/supabase.js';
 import { redisHelpers } from '../lib/redis.js';
-import { logger } from '../config/logger.js';
+import { logger } from '../middleware/logging.middleware.js';
 import { z } from 'zod';
-import LRU from 'lru-cache';
+import { LRUCache as LRU } from 'lru-cache';
 
 // Caching orchestration schemas
 export const CacheRequest = z.object({
@@ -129,7 +129,7 @@ export class CacheOrchestrationService {
     this.memoryCache = new LRU<string, CacheEntry>({
       max: 1000, // Maximum items
       maxSize: 100 * 1024 * 1024, // 100MB max size
-      sizeCalculation: (entry) => entry.size,
+      sizeCalculation: (entry: CacheEntry) => entry.size,
       ttl: 5 * 60 * 1000, // 5 minutes default TTL
       allowStale: true, // Allow stale reads for performance
       updateAgeOnGet: true, // Update access time
@@ -193,7 +193,7 @@ export class CacheOrchestrationService {
       };
 
     } catch (error) {
-      logger.error('Cache get operation failed', {
+      logger.error('Cache get operation failed', undefined, {
         key,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -278,7 +278,7 @@ export class CacheOrchestrationService {
       };
 
     } catch (error) {
-      logger.error('Cache set operation failed', {
+      logger.error('Cache set operation failed', undefined, {
         key,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -347,7 +347,7 @@ export class CacheOrchestrationService {
       };
 
     } catch (error) {
-      logger.error('Cache invalidation failed', {
+      logger.error('Cache invalidation failed', undefined, {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
 
@@ -400,7 +400,7 @@ export class CacheOrchestrationService {
       };
 
     } catch (error) {
-      logger.error('Cache warming failed', {
+      logger.error('Cache warming failed', undefined, {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
 
@@ -439,7 +439,7 @@ export class CacheOrchestrationService {
       };
 
     } catch (error) {
-      logger.error('Failed to get cache stats', {
+      logger.error('Failed to get cache stats', undefined, {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
 
@@ -499,7 +499,7 @@ export class CacheOrchestrationService {
     const startTime = Date.now();
 
     try {
-      const value = await redisHelpers.getJson(key);
+      const value = await redisHelpers.getCache(key);
       const retrievalTime = Date.now() - startTime;
 
       if (value !== null) {
@@ -552,7 +552,7 @@ export class CacheOrchestrationService {
   }
 
   private async setToRedis(key: string, value: any, ttl: number): Promise<void> {
-    await redisHelpers.setJson(key, value, ttl);
+    await redisHelpers.setCache(key, value, ttl);
   }
 
   // Caching strategy implementations
@@ -657,7 +657,7 @@ export class CacheOrchestrationService {
   private async invalidateKey(key: string, strategy: string): Promise<void> {
     // Invalidate from all layers
     this.memoryCache.delete(key);
-    await redisHelpers.del(key);
+    await redisHelpers.deleteCache(key);
   }
 
   private async propagateInvalidation(keys: string[], strategy: string): Promise<void> {

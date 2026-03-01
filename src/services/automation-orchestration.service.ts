@@ -17,7 +17,7 @@
 
 import { supabase, createServiceClient } from '../lib/supabase.js';
 import { redisHelpers } from '../lib/redis.js';
-import { logger } from '../config/logger.js';
+import { logger } from '../middleware/logging.middleware.js';
 import { z } from 'zod';
 import { paymentOrchestrationService } from './payment-orchestration.service.js';
 import { notificationOrchestrationService } from './notification-orchestration.service.js';
@@ -27,11 +27,13 @@ export const WorkflowTrigger = z.object({
   type: z.enum(['schedule', 'event', 'condition', 'manual']),
   schedule: z.string().optional(), // Cron expression for scheduled triggers
   event: z.string().optional(), // Event name for event triggers
-  condition: z.object({
-    field: z.string(),
-    operator: z.enum(['equals', 'not_equals', 'greater_than', 'less_than', 'contains', 'exists']),
-    value: z.any(),
-  }).optional(),
+  condition: z
+    .object({
+      field: z.string(),
+      operator: z.enum(['equals', 'not_equals', 'greater_than', 'less_than', 'contains', 'exists']),
+      value: z.any(),
+    })
+    .optional(),
 });
 
 export const WorkflowAction = z.object({
@@ -44,38 +46,46 @@ export const WorkflowAction = z.object({
     'send_reminder',
     'escalate_issue',
     'sync_data',
-    'custom_function'
+    'custom_function',
   ]),
-  config: z.record(z.any()),
-  retryConfig: z.object({
-    maxRetries: z.number().default(3),
-    backoffStrategy: z.enum(['linear', 'exponential']).default('exponential'),
-    retryDelayMs: z.number().default(1000),
-  }).optional(),
+  config: z.record(z.string(), z.any()),
+  retryConfig: z
+    .object({
+      maxRetries: z.number(),
+      backoffStrategy: z.enum(['linear', 'exponential']),
+      retryDelayMs: z.number(),
+    })
+    .optional(),
 });
 
 export const WorkflowDefinition = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
-  enabled: z.boolean().default(true),
+  enabled: z.boolean().optional().default(true),
   trigger: WorkflowTrigger,
-  conditions: z.array(z.object({
-    field: z.string(),
-    operator: z.enum(['and', 'or', 'not']),
-    value: z.any(),
-  })).optional(),
+  conditions: z
+    .array(
+      z.object({
+        field: z.string(),
+        operator: z.enum(['and', 'or', 'not']),
+        value: z.any(),
+      })
+    )
+    .optional(),
   actions: z.array(WorkflowAction),
-  errorHandling: z.object({
-    strategy: z.enum(['fail_fast', 'continue', 'retry']).default('retry'),
-    onError: z.array(WorkflowAction).optional(),
-  }).optional(),
-  metadata: z.record(z.any()).optional(),
+  errorHandling: z
+    .object({
+      strategy: z.enum(['fail_fast', 'continue', 'retry']),
+      onError: z.array(WorkflowAction).optional(),
+    })
+    .optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const AutomationRequest = z.object({
   workflowId: z.string(),
-  context: z.record(z.any()).optional(),
+  context: z.record(z.string(), z.any()).optional(),
   priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
   scheduledFor: z.date().optional(),
   expiresAt: z.date().optional(),
@@ -127,75 +137,87 @@ export class AutomationOrchestrationService {
 
   // Built-in workflow templates
   private readonly builtinWorkflows: Record<string, WorkflowDefinitionType> = {
-    'appointment_reminder': {
+    appointment_reminder: {
       id: 'appointment_reminder',
       name: 'Appointment Reminder Automation',
       description: 'Automatically send appointment reminders to patients',
+      enabled: true,
       trigger: {
         type: 'schedule',
         schedule: '0 9 * * *', // Daily at 9 AM
       },
-      actions: [{
-        type: 'send_notification',
-        config: {
-          templateId: 'appointment_reminder',
-          channel: 'auto',
-          timeBeforeAppointment: '24h',
+      actions: [
+        {
+          type: 'send_notification',
+          config: {
+            templateId: 'appointment_reminder',
+            channel: 'auto',
+            timeBeforeAppointment: '24h',
+          },
         },
-      }],
+      ],
     },
-    'payment_reconciliation': {
+    payment_reconciliation: {
       id: 'payment_reconciliation',
       name: 'Payment Reconciliation Automation',
       description: 'Automatically reconcile daily payments',
+      enabled: true,
       trigger: {
         type: 'schedule',
         schedule: '0 23 * * *', // Daily at 11 PM
       },
-      actions: [{
-        type: 'generate_report',
-        config: {
-          reportType: 'payment_reconciliation',
-          period: 'daily',
-          autoSend: true,
+      actions: [
+        {
+          type: 'generate_report',
+          config: {
+            reportType: 'payment_reconciliation',
+            period: 'daily',
+            autoSend: true,
+          },
         },
-      }],
+      ],
     },
-    'failed_payment_recovery': {
+    failed_payment_recovery: {
       id: 'failed_payment_recovery',
       name: 'Failed Payment Recovery',
       description: 'Automatically retry failed payments with intelligent logic',
+      enabled: true,
       trigger: {
         type: 'event',
         event: 'payment_failed',
       },
-      actions: [{
-        type: 'process_payment',
-        config: {
-          retryStrategy: 'exponential_backoff',
-          maxAttempts: 3,
-          alternativePaymentMethods: true,
+      actions: [
+        {
+          type: 'process_payment',
+          config: {
+            retryStrategy: 'exponential_backoff',
+            maxAttempts: 3,
+            alternativePaymentMethods: true,
+          },
+          retryConfig: {
+            maxRetries: 2,
+            backoffStrategy: 'exponential',
+            retryDelayMs: 3600000, // 1 hour
+          },
         },
-        retryConfig: {
-          maxRetries: 2,
-          backoffStrategy: 'exponential',
-          retryDelayMs: 3600000, // 1 hour
-        },
-      }],
+      ],
     },
-    'insurance_claim_processing': {
+    insurance_claim_processing: {
       id: 'insurance_claim_processing',
       name: 'Insurance Claim Processing',
       description: 'Automatically process and submit insurance claims',
+      enabled: true,
       trigger: {
         type: 'event',
         event: 'appointment_completed',
       },
-      conditions: [{
-        field: 'hasInsurance',
-        operator: 'and',
-        value: true,
-      }],
+      conditions: [
+        {
+          field: 'hasInsurance',
+          operator: 'and',
+          value: true,
+        },
+      ],
       actions: [
         {
           type: 'generate_report',
@@ -216,10 +238,11 @@ export class AutomationOrchestrationService {
         },
       ],
     },
-    'compliance_monitoring': {
+    compliance_monitoring: {
       id: 'compliance_monitoring',
       name: 'Compliance Monitoring',
       description: 'Monitor and ensure HIPAA and healthcare compliance',
+      enabled: true,
       trigger: {
         type: 'schedule',
         schedule: '0 8 * * 1', // Weekly on Monday at 8 AM
@@ -297,7 +320,7 @@ export class AutomationOrchestrationService {
       await this.saveExecutionState(executionId, result);
 
       // Evaluate workflow conditions
-      if (workflow.conditions && !await this.evaluateConditions(workflow.conditions, context)) {
+      if (workflow.conditions && !(await this.evaluateConditions(workflow.conditions, context))) {
         result.status = 'completed';
         result.success = true;
         result.completedAt = new Date();
@@ -311,7 +334,7 @@ export class AutomationOrchestrationService {
       result.steps = actionResults;
 
       // Determine overall success
-      const hasFailedSteps = actionResults.some(step => step.status === 'failed');
+      const hasFailedSteps = actionResults.some((step) => step.status === 'failed');
       result.success = !hasFailedSteps;
       result.status = hasFailedSteps ? 'failed' : 'completed';
       result.completedAt = new Date();
@@ -332,14 +355,13 @@ export class AutomationOrchestrationService {
         workflowId: workflow.id,
         success: result.success,
         duration: Date.now() - startTime,
-        stepsCompleted: actionResults.filter(s => s.status === 'completed').length,
-        stepsFailed: actionResults.filter(s => s.status === 'failed').length,
+        stepsCompleted: actionResults.filter((s) => s.status === 'completed').length,
+        stepsFailed: actionResults.filter((s) => s.status === 'failed').length,
       });
 
       return result;
-
     } catch (error) {
-      logger.error('Workflow execution failed', {
+      logger.error('Workflow execution failed', undefined, {
         executionId,
         workflowId: request.workflowId,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -365,7 +387,9 @@ export class AutomationOrchestrationService {
   /**
    * Register custom workflow
    */
-  async registerWorkflow(workflow: WorkflowDefinitionType): Promise<{ success: boolean; error?: string }> {
+  async registerWorkflow(
+    workflow: WorkflowDefinitionType
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       // Validate workflow definition
       const validatedWorkflow = WorkflowDefinition.parse(workflow);
@@ -384,9 +408,8 @@ export class AutomationOrchestrationService {
       });
 
       return { success: true };
-
     } catch (error) {
-      logger.error('Failed to register workflow', {
+      logger.error('Failed to register workflow', undefined, {
         workflowId: workflow.id,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -463,7 +486,6 @@ export class AutomationOrchestrationService {
         });
 
         return stepResult;
-
       } catch (error) {
         lastError = error instanceof Error ? error.message : 'Unknown error';
 
@@ -501,7 +523,10 @@ export class AutomationOrchestrationService {
   /**
    * Execute specific action type
    */
-  private async executeActionType(action: WorkflowActionType, context: WorkflowContext): Promise<any> {
+  private async executeActionType(
+    action: WorkflowActionType,
+    context: WorkflowContext
+  ): Promise<any> {
     switch (action.type) {
       case 'send_notification':
         return await this.executeSendNotification(action.config, context);
@@ -548,6 +573,8 @@ export class AutomationOrchestrationService {
       channel: config.channel || 'auto',
       priority: config.priority || 'normal',
       data: { ...context.variables, ...config.data },
+      enableFallback: true,
+      enableTracking: true,
     };
 
     return await notificationOrchestrationService.sendNotification(notificationRequest);
@@ -558,18 +585,16 @@ export class AutomationOrchestrationService {
       throw new Error('Patient ID and Provider ID required for appointment creation');
     }
 
-    const { error } = await supabase
-      .from('appointments')
-      .insert({
-        patient_id: context.patientId,
-        provider_id: context.providerId,
-        appointment_date: config.appointmentDate,
-        duration: config.duration || 30,
-        type: config.type || 'consultation',
-        status: 'scheduled',
-        notes: config.notes,
-        created_at: new Date().toISOString(),
-      });
+    const { error } = await supabase.from('appointments').insert({
+      patient_id: context.patientId,
+      provider_id: context.providerId,
+      appointment_date: config.appointmentDate,
+      duration: config.duration || 30,
+      type: config.type || 'consultation',
+      status: 'scheduled',
+      notes: config.notes,
+      created_at: new Date().toISOString(),
+    });
 
     if (error) {
       throw new Error(`Failed to create appointment: ${error.message}`);
@@ -600,10 +625,7 @@ export class AutomationOrchestrationService {
     // Process variables in update object
     const processedUpdate = this.processVariables(update, context.variables);
 
-    const { error } = await supabase
-      .from(table)
-      .update(processedUpdate)
-      .match(where);
+    const { error } = await supabase.from(table).update(processedUpdate).match(where);
 
     if (error) {
       throw new Error(`Failed to update record: ${error.message}`);
@@ -624,9 +646,7 @@ export class AutomationOrchestrationService {
     };
 
     // Store report metadata
-    const { error } = await supabase
-      .from('generated_reports')
-      .insert(reportData);
+    const { error } = await supabase.from('generated_reports').insert(reportData);
 
     if (error) {
       throw new Error(`Failed to generate report: ${error.message}`);
@@ -661,7 +681,11 @@ export class AutomationOrchestrationService {
     return true; // Placeholder
   }
 
-  private async handleWorkflowErrors(errorHandling: any, context: WorkflowContext, results: AutomationStepResult[]): Promise<void> {
+  private async handleWorkflowErrors(
+    errorHandling: any,
+    context: WorkflowContext,
+    results: AutomationStepResult[]
+  ): Promise<void> {
     // Implement error handling logic
   }
 
@@ -689,7 +713,7 @@ export class AutomationOrchestrationService {
   }
 
   private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // Workflow management methods
@@ -702,10 +726,12 @@ export class AutomationOrchestrationService {
 
     // Check stored workflows
     try {
-      const workflow = await redisHelpers.getJson(`${this.workflowKeyPrefix}${workflowId}`);
-      return workflow as WorkflowDefinitionType || null;
+      const workflow = await redisHelpers.getCache<WorkflowDefinitionType>(
+        `${this.workflowKeyPrefix}${workflowId}`
+      );
+      return workflow || null;
     } catch (error) {
-      logger.error('Failed to get workflow', {
+      logger.error('Failed to get workflow', undefined, {
         workflowId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -714,18 +740,22 @@ export class AutomationOrchestrationService {
   }
 
   private async saveWorkflow(workflow: WorkflowDefinitionType): Promise<void> {
-    await redisHelpers.setJson(`${this.workflowKeyPrefix}${workflow.id}`, workflow, 0); // No expiry
+    await redisHelpers.setCache(`${this.workflowKeyPrefix}${workflow.id}`, workflow);
   }
 
   private async saveExecutionState(executionId: string, state: AutomationResult): Promise<void> {
-    await redisHelpers.setJson(`${this.executionKeyPrefix}${executionId}`, state, 24 * 60 * 60); // 24 hours
+    await redisHelpers.setCache(`${this.executionKeyPrefix}${executionId}`, state, 24 * 60 * 60); // 24 hours
   }
 
   private async scheduleWorkflow(workflow: WorkflowDefinitionType): Promise<void> {
     // Schedule workflow with cron scheduler
   }
 
-  private async recordExecutionMetrics(executionId: string, result: AutomationResult, duration: number): Promise<void> {
+  private async recordExecutionMetrics(
+    executionId: string,
+    result: AutomationResult,
+    duration: number
+  ): Promise<void> {
     // Record execution metrics for analytics
   }
 

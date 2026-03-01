@@ -15,10 +15,10 @@
 
 import { supabase, createServiceClient } from '../lib/supabase.js';
 import { redisHelpers } from '../lib/redis.js';
-import { logger } from '../config/logger.js';
+import { logger } from '../middleware/logging.middleware.js';
 import { z } from 'zod';
-import { EmailService } from './email.service.js';
-import { SMSService } from './sms.service.js';
+import { sendEmail } from './email.service.js';
+import { sendRawSMS } from './sms.service.js';
 
 // Notification orchestration schemas
 export const NotificationRequest = z.object({
@@ -26,12 +26,12 @@ export const NotificationRequest = z.object({
   templateId: z.string(),
   channel: z.enum(['email', 'sms', 'push', 'in_app', 'auto']).default('auto'),
   priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
-  data: z.record(z.any()).optional(),
-  metadata: z.record(z.string()).optional(),
+  data: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
   scheduledFor: z.date().optional(),
   expiresAt: z.date().optional(),
-  enableFallback: z.boolean().default(true),
-  enableTracking: z.boolean().default(true),
+  enableFallback: z.boolean().optional().default(true),
+  enableTracking: z.boolean().optional().default(true),
 });
 
 export const UserPreferences = z.object({
@@ -119,14 +119,6 @@ export class NotificationOrchestrationService {
   private readonly userPrefixPrefix = 'user_notification_prefs:';
   private readonly stateExpiry = 7 * 24 * 60 * 60; // 7 days in seconds
 
-  private emailService: EmailService;
-  private smsService: SMSService;
-
-  constructor() {
-    this.emailService = new EmailService();
-    this.smsService = new SMSService();
-  }
-
   /**
    * Send notification with intelligent orchestration
    */
@@ -164,7 +156,7 @@ export class NotificationOrchestrationService {
       return result;
 
     } catch (error) {
-      logger.error('Notification orchestration failed', {
+      logger.error('Notification orchestration failed', undefined, {
         notificationId,
         userId: request.userId,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -193,7 +185,7 @@ export class NotificationOrchestrationService {
     shouldDelay: boolean;
   }> {
     // Determine primary channel
-    let primaryChannel = request.channel;
+    let primaryChannel: string = request.channel;
 
     if (primaryChannel === 'auto') {
       primaryChannel = await this.selectOptimalChannel(request, userPrefs);
@@ -470,16 +462,15 @@ export class NotificationOrchestrationService {
       }
 
       // Send via email service
-      const result = await this.emailService.sendNotificationEmail(
-        user.email,
-        content.subject,
-        content.body,
-        content.template
-      );
+      const success = await sendEmail({
+        to: user.email,
+        template: content.template || 'notification',
+        data: { subject: content.subject, body: content.body },
+      });
 
       return {
-        success: true,
-        messageId: result.messageId,
+        success,
+        messageId: success ? `email_${Date.now()}` : undefined,
       };
 
     } catch (error) {
@@ -507,13 +498,13 @@ export class NotificationOrchestrationService {
       }
 
       // Send via SMS service
-      const result = await this.smsService.sendNotificationSMS(
+      const result = await sendRawSMS(
         user.phone,
         content.message
       );
 
       return {
-        success: true,
+        success: result.success,
         messageId: result.messageId,
       };
 
@@ -607,7 +598,7 @@ export class NotificationOrchestrationService {
   async getUserPreferences(userId: string): Promise<UserPreferencesType> {
     try {
       // Try cache first
-      const cached = await redisHelpers.getJson(`${this.userPrefixPrefix}${userId}`);
+      const cached = await redisHelpers.getCache(`${this.userPrefixPrefix}${userId}`);
       if (cached) {
         return UserPreferences.parse(cached);
       }
@@ -624,7 +615,7 @@ export class NotificationOrchestrationService {
         : UserPreferences.parse({}); // Use defaults
 
       // Cache for 1 hour
-      await redisHelpers.setJson(`${this.userPrefixPrefix}${userId}`, preferences, 3600);
+      await redisHelpers.setCache(`${this.userPrefixPrefix}${userId}`, preferences, 3600);
 
       return preferences;
 
@@ -684,9 +675,9 @@ export class NotificationOrchestrationService {
   private async updateNotificationState(notificationId: string, state: NotificationState): Promise<void> {
     // Similar implementation to payment orchestration state management
     try {
-      await redisHelpers.setJson(`${this.cacheKeyPrefix}${notificationId}`, state, this.stateExpiry);
+      await redisHelpers.setCache(`${this.cacheKeyPrefix}${notificationId}`, state, this.stateExpiry);
     } catch (error) {
-      logger.error('Failed to update notification state', {
+      logger.error('Failed to update notification state', undefined, {
         notificationId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
