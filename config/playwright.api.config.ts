@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
 dotenv.config();
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: '../e2e',
   testMatch: /api\.spec\.ts/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -39,12 +39,16 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    // Use /docs for readiness so local runs don't require a healthy DB connection.
-    url: 'http://127.0.0.1:3000/docs/',
-    reuseExistingServer: !process.env.CI,
-    timeout: 180000,
-    cwd: '.',
-  },
+  // Only auto-start server in CI; locally start manually with `npm run dev`
+  ...(process.env.CI
+    ? {
+        webServer: {
+          command: 'npm run dev',
+          url: 'http://127.0.0.1:3000/health',
+          reuseExistingServer: false,
+          timeout: 180000,
+          cwd: '..',
+        },
+      }
+    : {}),
 });
