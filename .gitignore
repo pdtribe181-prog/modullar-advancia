@@ -47,6 +47,9 @@ coverage/
 playwright-report/
 test-results/
 
+# Generated test artifacts
+temp_email_previews/
+
 # Hostinger deployment build output (generated, do not commit)
 hostingerdeployments/
 

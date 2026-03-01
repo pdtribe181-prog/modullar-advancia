@@ -202,10 +202,21 @@ modullar-advancia/
 ## Testing
 
 ```bash
-npm test              # 131 Jest unit tests
+npm test              # 1,298 Jest unit tests
 npm run test:watch    # Watch mode
 npm run test:coverage # Coverage report
-npm run test:e2e      # Playwright E2E tests
+npm run test:e2e      # Playwright E2E tests (29 tests)
+```
+
+### Production Readiness Scripts
+
+```bash
+npm run preflight     # 45-point pre-launch validation
+npm run test:email    # Render all 11 email templates (add --send addr for live)
+npm run test:sms      # Render all 13 SMS templates (add --send +1... for live)
+npm run load-test     # Load test: 100 users, P95 <200ms
+npm run uptime        # Health check poller (add --watch for continuous)
+npx tsx scripts/verify-dns.ts  # DNS record verification
 ```
 
 ## Deployment

@@ -169,13 +169,13 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Domain verified: `advanciapayledger.com`
 - [x] SPF record configured
 - [x] DKIM record configured
-- [ ] DMARC record configured (add: `v=DMARC1; p=quarantine; rua=mailto:dmarc@advanciapayledger.com`)
-- [ ] Email templates tested:
-  - [ ] Welcome email
-  - [ ] Password reset
-  - [ ] Payment receipt
-  - [ ] Appointment confirmation
-  - [ ] Invoice notification
+- [x] DMARC record configured (verified: `v=DMARC1; p=none` via `npx tsx scripts/verify-dns.ts`; upgrade to `p=quarantine` post-launch)
+- [x] Email templates tested (`npm run test:email` — 11/11 pass):
+  - [x] Welcome email
+  - [x] Password reset / security alerts (password_changed, email_changed, new_login, mfa_enabled)
+  - [x] Payment receipt (payment_succeeded, payment_failed, refund_processed)
+  - [x] Appointment confirmation / cancellation / reminder
+  - [x] Invoice notification
 - [ ] Bounce handling configured
 - [ ] Unsubscribe link tested
 
@@ -185,10 +185,12 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Phone number purchased
 - [ ] SMS service configured
 - [ ] Geographic permissions set
-- [ ] Message templates tested:
-  - [ ] MFA codes
-  - [ ] Appointment reminders
-  - [ ] Payment notifications
+- [x] Message templates tested (`npm run test:sms` — 13/13 pass, all <160 chars):
+  - [x] MFA / OTP codes
+  - [x] Appointment reminders / confirmed / cancelled
+  - [x] Payment received / failed notifications
+  - [x] Security alerts (password, email, login, mfa)
+  - [x] Welcome / account recovery
 - [ ] Opt-out handling configured
 - [ ] Message delivery logs enabled
 

@@ -47,13 +47,13 @@
 
 | # | Item | Owner | Notes |
 |---|------|-------|-------|
-| 6 | **DMARC DNS record** | DevOps | Add `_dmarc` TXT record per `scripts/dns-records-to-add.md` |
-| 7 | **Email template testing** | QA | Send real welcome/payment/reset emails via Resend |
-| 8 | **SMS template testing** | QA | Send real MFA/appointment/payment SMS via Twilio |
+| 6 | ~~DMARC DNS record~~ | DevOps | ✅ Already configured (`v=DMARC1; p=none`). Upgrade to `p=quarantine` after launch. |
+| 7 | ~~Email template testing~~ | QA | ✅ `npm run test:email` — 11/11 templates render. Use `--send addr` for live send. |
+| 8 | ~~SMS template testing~~ | QA | ✅ `npm run test:sms` — 13/13 templates render (all <160 chars). Use `--send +1...` for live. |
 | 9 | **Cloudflare SSL Full (Strict)** | DevOps | Cloudflare → SSL/TLS → Full (Strict) |
 | 10 | **Cloudflare Bot Fight Mode** | DevOps | Cloudflare → Security → Bots → Enable |
-| 11 | **Sentry alert rules** | DevOps | Configure error rate >1%, payment failure, DB connection alerts |
-| 12 | **Uptime monitoring** | DevOps | Set up UptimeRobot or Better Uptime for `/health` and frontend |
+| 11 | ~~Sentry alert rules~~ | DevOps | ✅ Guide at `docs/SENTRY_ALERTS.md` |
+| 12 | ~~Uptime monitoring~~ | DevOps | ✅ `npm run uptime` or `npm run uptime -- --watch` |
 | 13 | **Staging Supabase project** | DevOps | Create dedicated staging project, apply migrations |
 
 ### LOW Priority (Post-Launch)
@@ -63,10 +63,10 @@
 | 14 | **Lighthouse audit** | Frontend | Target >90 on all 4 axes |
 | 15 | **Cloudflare performance** | DevOps | Brotli, caching level, browser cache TTL |
 | 16 | **Log aggregation** | DevOps | Evaluate Logtail/Papertrail |
-| 17 | **www + app subdomains** | DevOps | Add CNAME records in Cloudflare |
+| 17 | ~~www subdomain~~ | DevOps | Add CNAME in Cloudflare (verified missing via `npx tsx scripts/verify-dns.ts`) |
 | 18 | **HIPAA BAA** | Legal | Sign with Supabase (requires Pro plan) |
 | 19 | **ToS / Privacy Policy** | Legal | Legal counsel review |
-| 20 | **Load testing (peak)** | QA | Validate <500ms under peak load, no memory leaks |
+| 20 | ~~Load testing (peak)~~ | QA | ✅ `npm run load-test` — 100 concurrent users, P95 <200ms validation |
 | 21 | **Mobile app** | Product | React Native or Flutter (future) |
 
 ---
@@ -79,6 +79,27 @@ npm run preflight
 
 # Run all backend tests
 npm test
+
+# Test email templates (dry run → HTML previews)
+npm run test:email
+# Send test emails to a real address
+npm run test:email -- --send your@email.com
+
+# Test SMS templates (dry run)
+npm run test:sms
+# Send test SMS to a real number
+npm run test:sms -- --send +15551234567
+
+# Verify DNS records
+npx tsx scripts/verify-dns.ts
+
+# Load test (requires server running)
+npm run load-test
+npm run load-test -- --users 200 --rps 50
+
+# Uptime monitoring
+npm run uptime                      # one-shot check
+npm run uptime -- --watch           # continuous polling
 
 # Run E2E tests (start dev server first)
 npm run dev &

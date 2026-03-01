@@ -30,7 +30,11 @@
     "build:prod": "npm run clean && npm run build",
     "docker:build": "docker build -t healthcare-payment-api .",
     "docker:run": "docker run -p 3000:3000 --env-file .env healthcare-payment-api",
-    "preflight": "tsx scripts/preflight-check.ts"
+    "preflight": "tsx scripts/preflight-check.ts",
+    "test:email": "tsx scripts/test-email-templates.ts",
+    "test:sms": "tsx scripts/test-sms-templates.ts",
+    "load-test": "tsx scripts/load-test.ts",
+    "uptime": "tsx scripts/uptime-monitor.ts"
   },
   "keywords": [
     "healthcare",
