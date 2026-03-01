@@ -28,13 +28,12 @@ const SHARED_DB_OPTIONS = {
   },
   global: {
     headers: {
-      'x-connection-pool': 'transaction', // hint for edge/proxy routing
+      'x-connection-pool': 'transaction',
       'x-client-info': 'modullar-advancia/1.0.0',
-      'cache-control': 'no-cache', // prevent stale cached responses
     },
   },
   realtime: {
-    timeout: 30000, // 30s timeout for real-time connections
+    timeout: 15000, // Balanced 15s timeout
   },
   auth: {
     flowType: 'pkce',

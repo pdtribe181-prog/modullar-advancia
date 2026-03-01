@@ -29,8 +29,8 @@ interface CompressionOptions {
 }
 
 const defaultOptions: CompressionOptions = {
-  threshold: 1024, // 1KB minimum
-  level: 6, // Balanced compression/speed
+  threshold: 1024, // 1KB minimum - balanced threshold
+  level: 4, // Moderate compression for balanced performance
 };
 
 // MIME types that should be compressed
@@ -140,7 +140,9 @@ export function createCompressionMiddleware(opts: Partial<CompressionOptions> = 
         return originalEnd.call(this, chunk, encoding, callback);
       }
 
-      const contentLength = Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(chunk, encoding);
+      const contentLength = Buffer.isBuffer(chunk)
+        ? chunk.length
+        : Buffer.byteLength(chunk, encoding);
 
       if (contentLength < options.threshold) {
         return originalEnd.call(this, chunk, encoding, callback);
@@ -160,8 +162,8 @@ export function createCompressionMiddleware(opts: Partial<CompressionOptions> = 
           case 'br':
             compressor = createBrotliCompress({
               params: {
-                [require('zlib').constants.BROTLI_PARAM_QUALITY]: options.level
-              }
+                [require('zlib').constants.BROTLI_PARAM_QUALITY]: options.level,
+              },
             });
             break;
           case 'gzip':
@@ -191,7 +193,6 @@ export function createCompressionMiddleware(opts: Partial<CompressionOptions> = 
         });
 
         compressor.end(bufferChunk);
-
       } catch (error) {
         console.error('[Compression] Unexpected error:', error);
         // Fallback to uncompressed response

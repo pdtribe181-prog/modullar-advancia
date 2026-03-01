@@ -53,11 +53,11 @@ export function getUpstashRedis(): UpstashRedis {
       url,
       token,
       retry: {
-        retries: 3,
-        backoff: (retryCount) => Math.exp(retryCount) * 50, // exponential backoff
+        retries: 2, // Reasonable retry count for balanced reliability
+        backoff: (retryCount) => retryCount * 100, // Simple linear backoff
       },
       responseEncoding: 'utf8',
-      cache: 'force-cache', // Enable HTTP caching for GET requests
+      automaticDeserialization: true, // Balanced feature set
     });
   }
   return _upstash;

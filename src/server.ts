@@ -27,7 +27,10 @@ import { metricsMiddleware } from './middleware/metrics.middleware.js';
 import { apiVersioning } from './middleware/api-versioning.middleware.js';
 import { apiLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
-import { compressionMiddleware, fastCompressionMiddleware } from './middleware/compression.middleware.js';
+import {
+  compressionMiddleware,
+  fastCompressionMiddleware,
+} from './middleware/compression.middleware.js';
 import { getRedisKind, redisHelpers } from './lib/redis.js';
 import { getAllCircuitBreakerStats } from './utils/circuit-breaker.js';
 import { csrfProtection } from './middleware/csrf.middleware.js';
@@ -119,8 +122,8 @@ app.use(requestLogger);
 // Security headers (helmet)
 configureSecurityHeaders(app);
 
-// Response compression (early in middleware stack for efficiency)
-app.use(fastCompressionMiddleware);
+// Response compression (balanced performance)
+app.use(compressionMiddleware);
 
 // CORS configuration
 app.use(cors(getCorsConfig()));
