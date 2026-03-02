@@ -41,6 +41,26 @@ Quick reference for all related GitHub repos and how they fit together.
 
 ---
 
+## Attachments needed (two domains already live)
+
+**advanciapayledger.com** and **advancia-healthcare.com** are live. For the **canonical** repo (modullar-advancia) that serves them, you still need to attach/configure:
+
+| Attachment | Where | Purpose |
+|------------|--------|---------|
+| **Supabase Redirect URLs** | Supabase → Auth → URL Configuration | So login/callback works on both domains. |
+| **Google OAuth origins** | Google Cloud Console → OAuth client | So “Sign in with Google” works on both domains. |
+| **support@** for both domains | Cloudflare Email Routing (or DNS) | So Contact/footer mail reaches you. |
+| **VPS .env** | Hostinger VPS (`api.advanciapayledger.com`) | FRONTEND_URL, CORS, Supabase, Stripe, Resend, etc. |
+| **Cloudflare security** | Cloudflare dashboard | SSL Full (strict), Bot Fight Mode, optional rate limits. |
+| **advanciapayroll.com redirect** | Hostinger → Redirects | 301 → advanciapayledger.com (if not already). |
+
+**Copy-paste details:** [MANUAL_STEPS_DETAILS.md](MANUAL_STEPS_DETAILS.md)  
+**Checklist:** [MANUAL_STEPS_CHECKLIST.md](MANUAL_STEPS_CHECKLIST.md)
+
+**Other repos** (advancia-healthcare1, advanciapayledger-new, modular-saas-platform-nw, etc.): not used for the live domains. No attachments to those repos for advanciapayledger.com / advancia-healthcare.com. Payroll domain = redirect only; do not deploy advancia-healthcare1 there.
+
+---
+
 ## Quick links
 
 - **Production (canonical):** [pdtribe181-prog/modullar-advancia](https://github.com/pdtribe181-prog/modullar-advancia) — PayLedger + Healthcare

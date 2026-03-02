@@ -37,18 +37,19 @@
 - ⚠️ Bot Fight Mode not yet enabled in Cloudflare
 - ⚠️ Rate limiting not active (needs Cloudflare configuration)
 
-### API Endpoints (73%)
+### API Endpoints (100%)
 
 - ✅ Core health checks operational
 - ✅ Authentication (register/login/logout) endpoints secured
 - ✅ Admin dashboard endpoints protected
 - ✅ Stripe webhook endpoint configured
 - ✅ Provider profile endpoints exist
-- ⚠️ Password reset flow: 404 (not yet implemented)
-- ⚠️ Stripe Connect account creation: 404 (not yet implemented)
-- ⚠️ Provider list endpoint: 404 (not yet implemented)
+- ✅ Password reset flow: `POST /api/v1/auth/forgot-password` (implemented)
+- ✅ Stripe Connect account creation: `POST /api/v1/connect/account` (implemented)
+- ✅ Stripe Connect account link: `POST /api/v1/connect/account-link` (implemented)
+- ✅ Provider list: `GET /api/v1/provider` (implemented; auth required)
 
-**Test Results**: 11/15 endpoint structure tests passing (73%)
+**Test Results**: All core endpoint structure tests passing
 
 ### Database (100%)
 

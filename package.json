@@ -42,6 +42,7 @@
     "deploy:vps": "tsx scripts/vps-deploy.ts",
     "verify:dns": "tsx scripts/verify-dns.ts",
     "verify:domains": "tsx scripts/verify-all-domains.ts",
+    "whats-needed": "npm run verify:domains && node -e \"console.log('\\nManual steps checklist: docs/MANUAL_STEPS_CHECKLIST.md')\"",
     "cloudflare:check": "tsx scripts/cloudflare-setup.ts",
     "staging:setup": "tsx scripts/staging-setup.ts",
     "lighthouse": "tsx scripts/lighthouse-audit.ts",
