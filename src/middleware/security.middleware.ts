@@ -56,11 +56,21 @@ export function configureSecurityHeaders(app: Express) {
   );
 }
 
+/** Allowed app origins for the three domains — always allowed so they never get CORS errors */
+const APP_ORIGINS = [
+  'https://advanciapayledger.com',
+  'https://www.advanciapayledger.com',
+  'https://app.advanciapayledger.com',
+  'https://advancia-healthcare.com',
+  'https://www.advancia-healthcare.com',
+] as const;
+
 /**
- * Configure CORS based on environment
+ * Configure CORS based on environment.
+ * All three app domains (PayLedger, Healthcare, app subdomain) are always allowed.
  */
 export function getCorsConfig() {
-  const allowedOrigins: string[] = [];
+  const allowedOrigins: string[] = [...APP_ORIGINS];
 
   const envOrigins = (process.env.CORS_ORIGINS || '')
     .split(',')
@@ -68,27 +78,16 @@ export function getCorsConfig() {
     .filter(Boolean);
 
   if (process.env.NODE_ENV === 'production') {
-    // Production: only allow known production origins
     if (process.env.FRONTEND_URL) {
       allowedOrigins.push(process.env.FRONTEND_URL);
     }
-    allowedOrigins.push(
-      'https://advanciapayledger.com',
-      'https://www.advanciapayledger.com',
-      'https://app.advanciapayledger.com',
-      'https://advancia-healthcare.com',
-      'https://www.advancia-healthcare.com'
-    );
-
     allowedOrigins.push(...envOrigins);
   } else {
-    // Development: allow localhost origins (Vite dev server is 127.0.0.1:5173 / localhost:5173)
     allowedOrigins.push(
       process.env.FRONTEND_URL || 'http://localhost:5173',
       'http://localhost:5173',
       'http://127.0.0.1:5173'
     );
-
     allowedOrigins.push(...envOrigins);
   }
 
@@ -97,12 +96,8 @@ export function getCorsConfig() {
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void
     ) => {
-      // Allow requests with no origin in development (mobile apps, Postman, etc.)
-      // In production, require an origin header for browser-based requests
       if (!origin) {
         if (process.env.NODE_ENV === 'production') {
-          // Still allow server-to-server / mobile / curl requests in production
-          // but log for monitoring
           logger.debug('Request with no origin allowed (server-to-server)', {});
         }
         return callback(null, true);
@@ -112,7 +107,8 @@ export function getCorsConfig() {
         callback(null, true);
       } else {
         logger.warn('CORS blocked origin', { origin });
-        callback(new Error('Not allowed by CORS'));
+        // Deny without throwing so response is 200 and browser gets no CORS header (clean block)
+        callback(null, false);
       }
     },
     credentials: true,

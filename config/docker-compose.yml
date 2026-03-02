@@ -4,7 +4,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: config/Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -32,7 +32,7 @@ services:
   # Stripe CLI for local webhook testing
   stripe-cli:
     image: stripe/stripe-cli:latest
-    command: listen --forward-to http://api:3000/stripe/webhook
+    command: listen --forward-to http://api:3000/api/v1/stripe/webhook
     environment:
       - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
     profiles:

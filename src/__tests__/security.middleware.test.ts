@@ -201,14 +201,14 @@ describe('Security Middleware', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
-    it('should reject unknown origins in development', () => {
+    it('should reject unknown origins in development (deny without 500)', () => {
       process.env.NODE_ENV = 'development';
       const config = getCorsConfig();
       const callback = jest.fn();
 
       config.origin('https://malicious-site.com', callback);
 
-      expect(callback).toHaveBeenCalledWith(expect.any(Error));
+      expect(callback).toHaveBeenCalledWith(null, false);
     });
 
     it('should allow production origins in production mode', async () => {
@@ -247,6 +247,22 @@ describe('Security Middleware', () => {
 
       config.origin('https://app.advanciapayledger.com', callback);
 
+      expect(callback).toHaveBeenCalledWith(null, true);
+    });
+
+    it('should allow advancia-healthcare.com and www in production', async () => {
+      process.env.NODE_ENV = 'production';
+
+      jest.resetModules();
+      const { getCorsConfig: getFreshConfig } = await import('../middleware/security.middleware');
+      const config = getFreshConfig();
+      const callback = jest.fn();
+
+      config.origin('https://advancia-healthcare.com', callback);
+      expect(callback).toHaveBeenCalledWith(null, true);
+
+      callback.mockClear();
+      config.origin('https://www.advancia-healthcare.com', callback);
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 

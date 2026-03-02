@@ -300,8 +300,8 @@ router.get(
   '/transactions',
   validateQuery(transactionQuerySchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { status, provider_id, patient_id, start_date, end_date, page, limit } =
-      req.query as unknown as z.infer<typeof transactionQuerySchema>;
+    const { status, provider_id, patient_id, start_date, end_date, page, limit } = res.locals
+      .validatedQuery as z.infer<typeof transactionQuerySchema>;
 
     let query = supabase.from('transactions').select(
       `

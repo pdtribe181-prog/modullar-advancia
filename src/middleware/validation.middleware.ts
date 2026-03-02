@@ -120,6 +120,7 @@ export function validateQuery<T extends z.ZodSchema>(schema: T) {
 
     // Express 5 makes req.query a getter-only property, so use defineProperty
     Object.defineProperty(req, 'query', { value: result.data, writable: true, configurable: true });
+    res.locals.validatedQuery = result.data;
     next();
   };
 }
@@ -140,7 +141,12 @@ export function validateParams<T extends z.ZodSchema>(schema: T) {
     }
 
     // Express 5 makes req.params a getter-only property, so use defineProperty
-    Object.defineProperty(req, 'params', { value: result.data, writable: true, configurable: true });
+    Object.defineProperty(req, 'params', {
+      value: result.data,
+      writable: true,
+      configurable: true,
+    });
+    res.locals.validatedParams = result.data;
     next();
   };
 }

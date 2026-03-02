@@ -45,12 +45,10 @@ async function enablePwnedPasswordCheck() {
     }
 
     const currentConfig = await getResponse.json();
-    console.log('Current Auth Config (partial):', {
-      disable_signup: currentConfig.disable_signup,
-      password_hibp_enabled: currentConfig.password_hibp_enabled,
-    });
+    const hibpEnabled = currentConfig.password_hibp_enabled === true;
+    console.log('Current Auth Config: HIBP check', hibpEnabled ? 'already enabled' : 'disabled');
 
-    if (currentConfig.password_hibp_enabled === true) {
+    if (hibpEnabled) {
       console.log('✅ "Have I Been Pwned" check is already ENABLED.');
       return;
     }
@@ -76,11 +74,8 @@ async function enablePwnedPasswordCheck() {
       );
     }
 
-    const updatedConfig = await patchResponse.json();
-    console.log('Successfully updated Auth Config!');
-    console.log('New State:', {
-      password_hibp_enabled: updatedConfig.password_hibp_enabled,
-    });
+    await patchResponse.json();
+    console.log('Successfully updated Auth Config! HIBP check is now enabled.');
   } catch (error: any) {
     console.error('Error enabling HIBP check:', error.message);
     process.exit(1);

@@ -7,19 +7,23 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
+ * Neutralize HTML entity forms for angle brackets (single pass, no decode-to-raw).
+ * Prevents incomplete multi-character sanitization by never emitting < or > from entities.
+ */
+const ANGLE_ENTITY_PATTERN = /&(?:lt|gt|#x3[Cc]|#60|#062|#x3[Ee]|#62|#063);/gi;
+
+/**
  * Strip HTML tags from a string.
- * Replaces `<tag>`, `<tag attr="val">`, and `</tag>` with empty string.
- * Decodes common HTML entities that could bypass tag stripping.
+ * Neutralizes entity forms for < and > (no decode step), strips tags, then escapes remaining angle brackets.
  */
 export function stripHtmlTags(input: string): string {
   return (
     input
-      // Decode HTML entities that could hide tags
-      .replace(/&lt;/gi, '<')
-      .replace(/&gt;/gi, '>')
+      // Remove angle-bracket entities without decoding (avoids incomplete multi-char sanitization)
+      .replace(ANGLE_ENTITY_PATTERN, '')
       // Strip all HTML tags
       .replace(/<[^>]*>/g, '')
-      // Re-encode angle brackets that aren't part of tags but could be injected
+      // Escape any remaining angle brackets
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .trim()

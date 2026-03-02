@@ -298,7 +298,7 @@ router.get(
   validateParams(idParamsSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
-    const appointmentId = req.params.id;
+    const { id: appointmentId } = res.locals.validatedParams as { id: string };
 
     // Get provider ID
     const { data: provider } = await supabase
@@ -356,7 +356,7 @@ router.post(
   validateParams(idParamsSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
-    const appointmentId = req.params.id;
+    const { id: appointmentId } = res.locals.validatedParams as { id: string };
 
     // Get provider ID
     const { data: provider } = await supabase
@@ -399,7 +399,7 @@ router.post(
   validateBody(completeAppointmentSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
-    const appointmentId = req.params.id;
+    const { id: appointmentId } = res.locals.validatedParams as { id: string };
     const { notes } = req.body;
 
     // Get provider ID
@@ -445,7 +445,7 @@ router.post(
   validateBody(cancelAppointmentSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
-    const appointmentId = req.params.id;
+    const { id: appointmentId } = res.locals.validatedParams as { id: string };
     const { reason } = req.body;
 
     // Get provider ID

@@ -1,4 +1,5 @@
 import React from 'react';
+import { SIGNUP_ORIGIN } from '../config/domains';
 import '../styles.css';
 
 export const HealthcareLanding: React.FC = () => {
@@ -11,7 +12,8 @@ export const HealthcareLanding: React.FC = () => {
         <div className="lp-hero-inner">
           <span className="lp-eyebrow">Advancia Healthcare Wallet</span>
           <h1 className="lp-hero-title">
-            One Wallet for<br />
+            One Wallet for
+            <br />
             <span className="lp-gradient-text">Health, Cards &amp; Care</span>
           </h1>
           <p className="lp-hero-sub">
@@ -19,19 +21,14 @@ export const HealthcareLanding: React.FC = () => {
             single secure healthcare wallet.
           </p>
           <div className="lp-hero-actions">
-            <a
-              href="https://advanciapayledger.com/signup"
-              className="lp-btn lp-btn--primary lp-btn--lg"
-            >
+            <a href={`${SIGNUP_ORIGIN}/signup`} className="lp-btn lp-btn--primary lp-btn--lg">
               Get Started in PayLedger →
             </a>
             <a href="#wallet" className="lp-btn lp-btn--ghost lp-btn--lg">
               Learn How It Works
             </a>
           </div>
-          <p className="lp-hero-note">
-            Accounts and payments are powered by Advancia PayLedger.
-          </p>
+          <p className="lp-hero-note">Accounts and payments are powered by Advancia PayLedger.</p>
         </div>
       </section>
 
@@ -65,9 +62,7 @@ export const HealthcareLanding: React.FC = () => {
           <div className="lp-feature-card">
             <div className="lp-feature-card__icon">🧾</div>
             <h3>Unified balances</h3>
-            <p>
-              See wallet balances, recent health payments, and upcoming bills in a single view.
-            </p>
+            <p>See wallet balances, recent health payments, and upcoming bills in a single view.</p>
           </div>
         </div>
       </section>
@@ -189,13 +184,13 @@ export const HealthcareLanding: React.FC = () => {
           Module today.
         </p>
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
-          <a
-            href="https://advanciapayledger.com/signup"
-            className="lp-btn lp-btn--primary lp-btn--lg"
-          >
+          <a href={`${SIGNUP_ORIGIN}/signup`} className="lp-btn lp-btn--primary lp-btn--lg">
             Get Started in PayLedger
           </a>
-          <a href="mailto:support@advancia-healthcare.com" className="lp-btn lp-btn--ghost lp-btn--lg">
+          <a
+            href="mailto:support@advancia-healthcare.com"
+            className="lp-btn lp-btn--ghost lp-btn--lg"
+          >
             Talk to Our Team
           </a>
         </div>
@@ -205,4 +200,3 @@ export const HealthcareLanding: React.FC = () => {
 };
 
 export default HealthcareLanding;
-

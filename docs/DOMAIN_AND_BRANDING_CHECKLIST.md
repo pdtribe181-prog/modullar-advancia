@@ -1,18 +1,35 @@
 # Domain & Branding — Go-Live Checklist
 
-Use this checklist to finish domain and branding setup. Code and CORS are already in place.
+Use this checklist to finish domain and branding setup. Code and CORS are already in place so **all three app domains work without errors**.
+
+---
+
+## Domains working — quick verification
+
+After you complete the manual steps below, confirm:
+
+| Check | URL / action |
+|-------|----------------|
+| PayLedger app loads | `https://advanciapayledger.com` → PayLedger landing, nav works |
+| Healthcare app loads | `https://advancia-healthcare.com` → Healthcare Wallet landing, correct support email |
+| No CORS errors | From both domains, login and API calls (e.g. dashboard) work; browser console has no CORS errors |
+| OAuth works | Sign in with Google on both domains; callback stays on same domain |
+| Payroll redirects | `https://advanciapayroll.com` → 301 → `https://advanciapayledger.com` |
+
+**Code:** Backend always allows the five app origins (PayLedger, www, app, Healthcare, www); unknown origins are denied without returning 500. Frontend uses `frontend/src/config/domains.ts` as single source of truth for hostnames and support email.
 
 ---
 
 ## What we have already (reference)
 
 - **Frontend**
-  - **App.tsx**: Host check — `advancia-healthcare.com` / `www` → **HealthcareLanding**, else **LandingPage**.
-  - **Layout.tsx**: By host — brand “Advancia Healthcare” vs “Advancia PayLedger”, support email `support@advancia-healthcare.com` vs `support@advanciapayledger.com`, copyright entity.
-  - **HealthcareLanding.tsx**: Healthcare Wallet marketing page; CTAs to `https://advanciapayledger.com/signup` and `support@advancia-healthcare.com`.
+  - **config/domains.ts**: Single source of truth — `isHealthcareHost()`, `getSupportEmail()`, `SIGNUP_ORIGIN`.
+  - **App.tsx**: Uses `isHealthcareHost()` — `advancia-healthcare.com` / `www` → **HealthcareLanding**, else **LandingPage**.
+  - **Layout.tsx**: Uses `isHealthcareHost()` and `getSupportEmail()` for brand and support email.
+  - **HealthcareLanding.tsx**: Uses `SIGNUP_ORIGIN` for signup links; support mailto for Healthcare.
   - **Contact, FAQ, Withdraw, Policy**: Support/enterprise/privacy/gdpr/security/hello/legal addresses point to advanciapayledger.com (see EXTRA_EMAILS_SETUP.md).
 - **Backend**
-  - **security.middleware.ts**: Production CORS allows `advanciapayledger.com`, `www`, `app`, `advancia-healthcare.com`, `www` (plus `FRONTEND_URL` and `CORS_ORIGINS`).
+  - **security.middleware.ts**: **APP_ORIGINS** always includes all five app domains (PayLedger, www, app, Healthcare, www); unknown origins get `callback(null, false)` (no 500). Plus `FRONTEND_URL` and `CORS_ORIGINS`.
   - **auth.routes.ts**: Password reset and identity-link redirect use `FRONTEND_URL` (single primary origin).
   - **connect.routes.ts**, **stripe.routes.ts**: Stripe/Connect redirect URLs use `FRONTEND_URL`.
 - **Config / scripts**
@@ -33,9 +50,9 @@ Use this checklist to finish domain and branding setup. Code and CORS are alread
 
 ---
 
-## 1. Healthcare Wallet site (advancia-healthcare.com)
+## 1. Healthcare Wallet site — personal (advancia-healthcare.com)
 
-**Goal:** Same frontend build serves both PayLedger and Healthcare; the app shows the Healthcare Wallet landing when the host is `advancia-healthcare.com`.
+**Goal:** Same frontend build serves both PayLedger and Healthcare. **advancia-healthcare.com** is for the **personal** segment (individuals/patients, personal folder); the app shows the Healthcare Wallet landing when the host is `advancia-healthcare.com`.
 
 ### In Cloudflare Pages
 
@@ -110,7 +127,7 @@ Use this checklist to finish domain and branding setup. Code and CORS are alread
 | advanciapayledger.com | PayLedger marketing + app | Already live; ensure Cloudflare Pages deploys from `main`. |
 | app.advanciapayledger.com | App (optional alias) | Add as custom domain to same Pages project if desired. |
 | api.advanciapayledger.com | API | Already on VPS; no change. |
-| advancia-healthcare.com | Healthcare Wallet marketing | Add as custom domain to same Pages project (see §1). |
+| advancia-healthcare.com | **Personal** (personal folder); Healthcare Wallet marketing | Add as custom domain to same Pages project (see §1). |
 | advanciapayroll.com | Legacy / redirect only | 301 → advanciapayledger.com (see §2). |
 
 ---

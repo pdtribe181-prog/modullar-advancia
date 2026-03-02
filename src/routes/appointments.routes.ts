@@ -412,7 +412,7 @@ router.get(
   validateParams(idParamsSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
-    const appointmentId = req.params.id;
+    const { id: appointmentId } = res.locals.validatedParams as { id: string };
 
     // Get patient ID
     const { data: patient } = await supabase
@@ -456,7 +456,7 @@ router.post(
   validateBody(cancelAppointmentSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
-    const appointmentId = req.params.id;
+    const { id: appointmentId } = res.locals.validatedParams as { id: string };
     const { reason } = req.body;
 
     // Get patient ID
@@ -559,7 +559,7 @@ router.post(
   validateBody(rescheduleAppointmentSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
-    const appointmentId = req.params.id;
+    const { id: appointmentId } = res.locals.validatedParams as { id: string };
     const { date, time } = req.body;
 
     // Get patient ID

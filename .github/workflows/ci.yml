@@ -207,6 +207,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: config/Dockerfile
           push: false
           tags: healthcare-payment-api:${{ github.sha }}
           cache-from: type=gha

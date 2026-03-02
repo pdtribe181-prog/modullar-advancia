@@ -12,7 +12,7 @@ How the three domains fit together and what to configure for redirects and Googl
 | **www.advanciapayledger.com** | Alias | 301 → advanciapayledger.com (Nginx or Cloudflare). |
 | **app.advanciapayledger.com** | Optional app subdomain | Same app as apex; add as custom domain in Cloudflare Pages if desired. |
 | **api.advanciapayledger.com** | API | Served from VPS; no redirect. |
-| **advancia-healthcare.com** | Healthcare Wallet marketing | Same frontend build as PayLedger; add as custom domain in Cloudflare Pages. Shows Healthcare landing when host matches. **No redirect.** |
+| **advancia-healthcare.com** | **Personal** (individuals/patients, personal folder); Healthcare Wallet marketing | Same frontend build as PayLedger; add as custom domain in Cloudflare Pages. Shows Healthcare landing when host matches. **No redirect.** |
 | **www.advancia-healthcare.com** | Optional alias | Add in Pages if desired; or 301 → advancia-healthcare.com. |
 | **advanciapayroll.com** | Legacy / unused | **301 redirect** to `https://advanciapayledger.com` (and same for www). Do not serve app here. |
 

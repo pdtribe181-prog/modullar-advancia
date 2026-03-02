@@ -23,7 +23,7 @@ Single place for **Vercel**, **paths**, **VPS**, **Render**, **Supabase**, and t
 | **www.advanciapayledger.com** | Yes (alias) | Same as above | — | 301 → apex (Nginx or Cloudflare). |
 | **app.advanciapayledger.com** | Optional | Same build; add as custom domain in Pages | Same API | Optional subdomain. |
 | **api.advanciapayledger.com** | — | — | **VPS** (Nginx → PM2 :3000) | Production API only. |
-| **advancia-healthcare.com** | Yes | **Cloudflare Pages** (same build; add as custom domain) | Same API (VPS) | Healthcare landing when host matches. |
+| **advancia-healthcare.com** | Yes | **Cloudflare Pages** (same build; add as custom domain) | Same API (VPS) | **Personal** (individuals/patients, personal folder); Healthcare landing when host matches. |
 | **www.advancia-healthcare.com** | Optional | Same | Same | Add in Pages or 301 → apex. |
 | **advanciapayroll.com** | No | — | — | **301 redirect** to `https://advanciapayledger.com`. Do not serve app. |
 
@@ -97,7 +97,29 @@ Single place for **Vercel**, **paths**, **VPS**, **Render**, **Supabase**, and t
 
 ---
 
-## 8. Proceed — completion order
+## 8. Responsible way to follow (recommended order)
+
+Do the steps below **in this order** so each step builds on the previous one and you don’t break production.
+
+| Order | Step | Why this order |
+|-------|------|-----------------|
+| **1** | **Domains & DNS** | Get hostnames resolving and (for payroll) redirecting before relying on them for OAuth or app. |
+| **2** | **OAuth (Supabase + Google)** | Add callback URLs and origins for every domain that will run the app, so sign-in works on PayLedger and personal (advancia-healthcare.com). |
+| **3** | **Emails** | Configure support@ (and optional addresses) so users can reach you from both domains. |
+| **4** | **VPS `.env`** | Confirm production API has `FRONTEND_URL`, Supabase, Stripe, etc., so links and CORS work. |
+| **5** | **Staging (optional)** | Only after production is stable; follow [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md). |
+| **6** | **Tests** | Run `npm test` and E2E to confirm nothing is broken. |
+| **7** | **Verify DNS** | Run `npm run verify:domains` to confirm all three domains resolve and (where applicable) HTTPS and API health respond. |
+
+**Rules of thumb**
+
+- Don’t add a domain to Supabase/Google until DNS is pointing (or you’ll get invalid redirect errors).
+- Don’t switch production env (e.g. Stripe live) until OAuth and domains are correct.
+- After any DNS or env change, run `npm run verify:domains` and spot-check login on both PayLedger and advancia-healthcare.com.
+
+---
+
+## 9. Proceed — completion order (detailed)
 
 1. **Domains & DNS**
    - Cloudflare Pages: add `advancia-healthcare.com` (and optional www) as custom domain.
@@ -120,9 +142,13 @@ Single place for **Vercel**, **paths**, **VPS**, **Render**, **Supabase**, and t
 6. **Tests**
    - Run `npm install` (root) and `cd frontend && npm install`; then `npm test` and `npm run playwright:install` + `npm run test:e2e` or `test:e2e:api`. See [PROJECT_COMPLETION_STATUS.md](PROJECT_COMPLETION_STATUS.md).
 
+7. **Verify DNS (all three domains)**
+   - Run: `npm run verify:domains` (runs DNS checks for advanciapayledger.com, advancia-healthcare.com, advanciapayroll.com).
+   - Or per domain: `npm run verify:dns -- --domain advanciapayledger.com` (then repeat for the other two).
+
 ---
 
-## 9. Related docs
+## 10. Related docs
 
 | Doc | Content |
 |-----|--------|
