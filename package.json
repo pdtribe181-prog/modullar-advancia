@@ -45,6 +45,9 @@
     "staging:setup": "tsx scripts/staging-setup.ts",
     "lighthouse": "tsx scripts/lighthouse-audit.ts",
     "logs:setup": "tsx scripts/log-aggregation.ts",
+    "health:check": "tsx scripts/server-health-monitor.ts",
+    "health:json": "tsx scripts/server-health-monitor.ts --json",
+    "memory:test": "tsx scripts/memory-leak-test.ts",
     "push:mirror": "git push origin main && git push together main"
   },
   "keywords": [

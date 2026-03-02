@@ -60,3 +60,6 @@ hostingerdeployments/
 
 # Google Cloud
 .gcloud/
+
+# Nested project copy
+modullar-advancia/
