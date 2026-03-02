@@ -36,7 +36,7 @@ test.describe('API Health & Endpoints', () => {
 
   test('API should have CORS headers', async ({ request }) => {
     const origin =
-      process.env.CORS_TEST_ORIGIN || process.env.FRONTEND_URL || 'http://127.0.0.1:5173';
+      process.env.CORS_TEST_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:5173';
     const response = await request.get(`${API_ROOT}/health`, {
       headers: {
         Origin: origin,
