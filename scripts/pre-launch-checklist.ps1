@@ -30,10 +30,11 @@ Write-Host "1️⃣  Security Verification..." -ForegroundColor Yellow
 Write-Host "   Running automated security tests...`n" -ForegroundColor Gray
 
 try {
-    & "$PSScriptRoot\verify-production-security.ps1" -Quiet 2>&1 | Out-Null
-    
+    $verifyScript = Join-Path -Path $PSScriptRoot -ChildPath "verify-production-security.ps1"
+    & $verifyScript -Quiet 2>&1 | Out-Null
+
     # Re-run to capture output for analysis
-    $secOutput = & "$PSScriptRoot\verify-production-security.ps1" 2>&1 | Out-String
+    $secOutput = & $verifyScript 2>&1 | Out-String
     
     # Parse results
     $passedCount = ([regex]::Matches($secOutput, "✓")).Count
@@ -63,7 +64,8 @@ Write-Host "`n2️⃣  API Endpoint Verification..." -ForegroundColor Yellow
 Write-Host "   Testing production API structure...`n" -ForegroundColor Gray
 
 try {
-    $apiOutput = & "$PSScriptRoot\test-production-api.ps1" 2>&1 | Out-String
+    $apiScript = Join-Path -Path $PSScriptRoot -ChildPath "test-production-api.ps1"
+    $apiOutput = & $apiScript 2>&1 | Out-String
     
     $passedCount = ([regex]::Matches($apiOutput, "✓")).Count
     $failedCount = ([regex]::Matches($apiOutput, "✗")).Count
@@ -92,7 +94,8 @@ Write-Host "`n3️⃣  Staging Environment Check..." -ForegroundColor Yellow
 Write-Host "   Testing staging deployment...`n" -ForegroundColor Gray
 
 try {
-    $stagingOutput = & "$PSScriptRoot\staging-smoke-check.ps1" 2>&1 | Out-String
+    $stagingScript = Join-Path -Path $PSScriptRoot -ChildPath "staging-smoke-check.ps1"
+    $stagingOutput = & $stagingScript 2>&1 | Out-String
     
     $passedCount = ([regex]::Matches($stagingOutput, "✓")).Count
     $failedCount = ([regex]::Matches($stagingOutput, "✗")).Count
@@ -237,9 +240,10 @@ $automatedPass = ($results.Security.Status -eq "PASS") -and
 ($results.API.Status -eq "PASS") -and 
 ($results.Staging.Status -eq "PASS")
 
-$criticalManualPass = ($results.Manual.stripe_prod.Status -eq "YES") -and
-($results.Manual.auth_flow.Status -eq "YES") -and
-($results.Manual.secrets.Status -eq "YES")
+$m = $results.Manual
+$criticalManualPass = ($m['stripe_prod'].Status -eq "YES") -and
+    ($m['auth_flow'].Status -eq "YES") -and
+    ($m['secrets'].Status -eq "YES")
 
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "OVERALL STATUS: " -NoNewline

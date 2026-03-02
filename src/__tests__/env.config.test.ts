@@ -28,7 +28,7 @@ describe('Environment Configuration', () => {
     FRONTEND_URL: z
       .string()
       .url('FRONTEND_URL must be a valid URL')
-      .default('http://localhost:3001'),
+      .default('http://localhost:5173'),
     CORS_ORIGINS: z.string().optional(),
     RATE_LIMIT_API_WINDOW_MS: z.coerce
       .number()
@@ -77,7 +77,7 @@ describe('Environment Configuration', () => {
     STRIPE_SECRET_KEY: 'sk_test_12345',
     STRIPE_PUBLISHABLE_KEY: 'pk_test_12345',
     STRIPE_WEBHOOK_SECRET: 'whsec_12345',
-    FRONTEND_URL: 'http://localhost:3001',
+    FRONTEND_URL: 'http://localhost:5173',
   };
 
   beforeEach(() => {
@@ -298,7 +298,7 @@ describe('Environment Configuration', () => {
       const result = envSchema.safeParse(envWithoutFrontendUrl);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.FRONTEND_URL).toBe('http://localhost:3001');
+        expect(result.data.FRONTEND_URL).toBe('http://localhost:5173');
       }
     });
   });

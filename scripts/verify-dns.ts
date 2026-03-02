@@ -188,11 +188,11 @@ async function main() {
     })
   );
 
-  // 9. Check API health endpoint
+  // 9. Check API health endpoint (server exposes GET /health at root, not under /api/v1)
   await checkRecord(
-    `API Health (https://api.${DOMAIN}/api/v1/health)`,
+    `API Health (https://api.${DOMAIN}/health)`,
     async () => {
-      const resp = await fetch(`https://api.${DOMAIN}/api/v1/health`, {
+      const resp = await fetch(`https://api.${DOMAIN}/health`, {
         signal: AbortSignal.timeout(10000),
       });
       return resp;

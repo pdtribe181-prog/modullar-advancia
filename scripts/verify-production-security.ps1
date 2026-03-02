@@ -11,7 +11,7 @@ param(
   [string]$FrontendDomain = "advanciapayledger.com"
 )
 
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
 function Write-TestHeader {
   param([string]$Message)
@@ -75,9 +75,9 @@ try {
     $warnings++
   }
   
-  # Check if using Cloudflare
+  # Check if using Cloudflare (Server header can be string or array; -match works for both)
   $server = $response.Headers['Server']
-  if ($server -contains 'cloudflare') {
+  if ($server -and ($server -match 'cloudflare')) {
     Write-Pass "Cloudflare proxy active"
     $passed++
   } else {

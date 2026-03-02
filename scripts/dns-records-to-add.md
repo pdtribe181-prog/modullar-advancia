@@ -23,6 +23,8 @@ Proxy: DNS only (gray cloud)
 
 ## 2. WWW Alias (Optional - if you want www.advanciapayledger.com)
 
+**Option A — CNAME (recommended if you want www to resolve):**
+
 ```
 Type: CNAME
 Name: www
@@ -30,6 +32,8 @@ Target: advanciapayledger.com
 TTL: Auto
 Proxy: Proxied (orange cloud)
 ```
+
+**Option B — Redirect only:** If you use a Cloudflare Redirect Rule (e.g. 301 from `www.advanciapayledger.com` to `https://advanciapayledger.com`) and do not add a CNAME, `npm run verify:dns` will still report "CNAME (www) — Record not found". That is expected; the redirect is valid and users will reach the apex. To clear the script warning, add the CNAME above.
 
 ## 3. App Subdomain (Optional - if you plan separate app hosting)
 

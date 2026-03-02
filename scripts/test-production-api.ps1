@@ -16,7 +16,8 @@ param(
   [switch]$Verbose
 )
 
-$ErrorActionPreference = "Continue"
+# Stop on unexpected errors; Test-Endpoint catches per-request failures and returns result
+$ErrorActionPreference = "Stop"
 
 function Write-TestHeader {
   param([string]$Message)

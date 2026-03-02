@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────
-  # JOB: Backend Unit Tests (matrix across Node 18/20/22)
+  # JOB: Backend Unit Tests (matrix across Node 20/22; Node 18 removed — ESM/Jest issues)
   # ─────────────────────────────────────────────────────────────────────────
   unit-tests:
     name: Unit Tests (Node ${{ matrix.node-version }})
@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: ['20', '22']
+        node-version: ['20', '22']  # LTS + current; matches package.json engines
 
     steps:
       - uses: actions/checkout@v6

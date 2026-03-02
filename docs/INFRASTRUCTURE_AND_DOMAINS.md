@@ -1,0 +1,134 @@
+# Infrastructure & domains — organized reference
+
+Single place for **Vercel**, **paths**, **VPS**, **Render**, **Supabase**, and the **three domains**.
+
+---
+
+## 1. Hosting overview
+
+| Layer | Production | Staging |
+|-------|------------|---------|
+| **Frontend (app)** | **Cloudflare Pages** (deploys from `main`) | Optional: separate Pages project or same project with branch; or not used. |
+| **API (backend)** | **VPS** (Hostinger) — `api.advanciapayledger.com` | **Render** — `api-staging.advanciapayledger.com` → `modullar-advancia.onrender.com` |
+| **Database + Auth** | **Supabase** (one production project) | **Supabase** (separate staging project; see [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md)) |
+| **Vercel** | **Not used.** No vercel.json; frontend is on Cloudflare Pages. | — |
+
+---
+
+## 2. Three domains — where each is served
+
+| Domain | Serves app? | Frontend | API | Notes |
+|--------|-------------|----------|-----|--------|
+| **advanciapayledger.com** | Yes | Cloudflare Pages (same build) | VPS: `api.advanciapayledger.com` | Primary. No redirect. |
+| **www.advanciapayledger.com** | Yes (alias) | Same as above | — | 301 → apex (Nginx or Cloudflare). |
+| **app.advanciapayledger.com** | Optional | Same build; add as custom domain in Pages | Same API | Optional subdomain. |
+| **api.advanciapayledger.com** | — | — | **VPS** (Nginx → PM2 :3000) | Production API only. |
+| **advancia-healthcare.com** | Yes | **Cloudflare Pages** (same build; add as custom domain) | Same API (VPS) | Healthcare landing when host matches. |
+| **www.advancia-healthcare.com** | Optional | Same | Same | Add in Pages or 301 → apex. |
+| **advanciapayroll.com** | No | — | — | **301 redirect** to `https://advanciapayledger.com`. Do not serve app. |
+
+**Path summary**
+
+- **Frontend (all app domains):** One build; one Cloudflare Pages project. Custom domains: `advanciapayledger.com`, (optional) `www`, (optional) `app`, `advancia-healthcare.com`, (optional) `www`.
+- **API:** One production host (`api.advanciapayledger.com` → VPS). One staging host (`api-staging.advanciapayledger.com` → Render).
+- **Auth callbacks:** `https://<domain>/auth/callback` for each domain that runs the app; add all in Supabase Redirect URLs (see [DOMAINS_AND_GOOGLE_OAUTH.md](DOMAINS_AND_GOOGLE_OAUTH.md)).
+
+---
+
+## 3. Vercel
+
+**Not used.** Frontend is on **Cloudflare Pages**. No `vercel.json` in repo. If you add Vercel later (e.g. previews), add `frontend/vercel.json` with build/output; CORS already allows production domains.
+
+---
+
+## 4. Paths and URLs (quick reference)
+
+| Purpose | Production | Staging |
+|---------|------------|---------|
+| **App (root)** | `https://advanciapayledger.com` | — |
+| **App (Healthcare)** | `https://advancia-healthcare.com` | — |
+| **API base** | `https://api.advanciapayledger.com/api/v1` | `https://api-staging.advanciapayledger.com/api/v1` |
+| **Health** | `https://api.advanciapayledger.com/health` | `https://api-staging.advanciapayledger.com/health` |
+| **Docs** | `https://api.advanciapayledger.com/docs` | Same path on staging URL |
+| **Supabase** | One production project URL/keys in VPS `.env` | Separate staging project URL/keys in Render env |
+| **Stripe webhook (API)** | `https://api.advanciapayledger.com/api/v1/stripe/webhook` | `https://api-staging.advanciapayledger.com/api/v1/stripe/webhook` (use separate secret) |
+
+---
+
+## 5. VPS (production API)
+
+| Item | Value |
+|------|--------|
+| **Provider** | Hostinger |
+| **IP** | `76.13.77.8` |
+| **App dir** | `/var/www/advancia` |
+| **PM2 process** | `advancia-api` |
+| **Port** | `3000` (Nginx proxies to it) |
+| **Public hostname** | `api.advanciapayledger.com` |
+
+**Deploy:** `npm run deploy:vps -- --apply` (uses `scripts/vps-deploy.ts`). Optional env: `VPS_HOST`, `VPS_USER`, `VPS_APP_DIR`.  
+**Config:** `config/ecosystem.config.cjs`, `nginx/advancia.conf`.  
+**Full reference:** [VERCEL_AND_VPS_CONFIG.md](VERCEL_AND_VPS_CONFIG.md) (VPS section).
+
+---
+
+## 6. Render (staging API)
+
+| Item | Value |
+|------|--------|
+| **Service** | `modullar-advancia` (or advancia-api) on Render |
+| **URL (Render)** | `https://modullar-advancia.onrender.com` |
+| **Custom domain** | `api-staging.advanciapayledger.com` (DNS → Render) |
+| **Health** | `/health` |
+| **Supabase** | Use a **dedicated staging Supabase project** (not production). |
+
+**Config:** `config/render.yaml` (blueprint). Set env vars in Render Dashboard; see [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md).
+
+---
+
+## 7. Supabase
+
+| Environment | Use | Where configured |
+|-------------|-----|-------------------|
+| **Production** | One project. Used by VPS API and by frontend (auth, DB). | VPS `.env`: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Frontend build env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. |
+| **Staging** | Separate project. Used by Render staging API (and optionally staging frontend). | Render env vars; see [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md). |
+
+**Auth (all three domains):** In Supabase Dashboard → Authentication → URL Configuration, add **Redirect URLs** for every domain that runs the app (advanciapayledger.com, www, app, advancia-healthcare.com, www, localhost). See [DOMAINS_AND_GOOGLE_OAUTH.md](DOMAINS_AND_GOOGLE_OAUTH.md).
+
+---
+
+## 8. Proceed — completion order
+
+1. **Domains & DNS**
+   - Cloudflare Pages: add `advancia-healthcare.com` (and optional www) as custom domain.
+   - Cloudflare (or host): 301 redirect `advanciapayroll.com` and www → `https://advanciapayledger.com`.
+   - Optional: add www CNAME for advanciapayledger.com if not already (or keep redirect-only).
+
+2. **OAuth**
+   - Supabase: add all app callback URLs (see [DOMAINS_AND_GOOGLE_OAUTH.md](DOMAINS_AND_GOOGLE_OAUTH.md)).
+   - Google Cloud Console: add all app origins to Authorized JavaScript origins.
+
+3. **Emails**
+   - Configure support@ for advanciapayledger.com and advancia-healthcare.com ([EXTRA_EMAILS_SETUP.md](EXTRA_EMAILS_SETUP.md) for optional addresses).
+
+4. **VPS**
+   - Confirm `.env` on VPS has `FRONTEND_URL`, Supabase, Stripe, etc. ([PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)).
+
+5. **Staging (optional)**
+   - Follow [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md): Supabase staging project → Render env → migrations → webhooks.
+
+6. **Tests**
+   - Run `npm install` (root) and `cd frontend && npm install`; then `npm test` and `npm run playwright:install` + `npm run test:e2e` or `test:e2e:api`. See [PROJECT_COMPLETION_STATUS.md](PROJECT_COMPLETION_STATUS.md).
+
+---
+
+## 9. Related docs
+
+| Doc | Content |
+|-----|--------|
+| [VERCEL_AND_VPS_CONFIG.md](VERCEL_AND_VPS_CONFIG.md) | Vercel (not used), VPS details, deploy commands |
+| [DOMAINS_AND_GOOGLE_OAUTH.md](DOMAINS_AND_GOOGLE_OAUTH.md) | Three domains, redirects, Supabase/Google OAuth |
+| [DOMAIN_AND_BRANDING_CHECKLIST.md](DOMAIN_AND_BRANDING_CHECKLIST.md) | Healthcare domain, payroll redirect, support emails |
+| [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md) | Render + Supabase staging setup |
+| [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) | Full production go-live checklist |
+| [PROJECT_COMPLETION_STATUS.md](PROJECT_COMPLETION_STATUS.md) | Build/test status and remaining manual steps |

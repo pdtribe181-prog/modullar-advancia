@@ -19,7 +19,7 @@
 
 This repository (`modullar-advancia`) is the canonical production codebase for **Advancia PayLedger** (app + API at `advanciapayledger.com` and `api.advanciapayledger.com`). A mirror is kept at [pdtribe181-prog/advancia-get-together](https://github.com/pdtribe181-prog/advancia-get-together); push to both with `npm run push:mirror` after committing.
 
-**Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
+**Infrastructure & domains:** Vercel (not used), VPS, Render, Supabase, and the three domains are summarized in [docs/INFRASTRUCTURE_AND_DOMAINS.md](docs/INFRASTRUCTURE_AND_DOMAINS.md). **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
 
 **All related repos:** See [docs/REPO_MAP.md](docs/REPO_MAP.md) for the full list and how each fits (canonical, mirror, variants).
 
@@ -45,8 +45,8 @@ cd modullar-advancia
 npm install
 
 # Configure environment
-cp env/.env.example env/.env
-# Edit env/.env with your credentials
+cp .env.example .env
+# Edit .env with your credentials
 
 # Start backend
 npm run dev           # API at http://127.0.0.1:3000
@@ -58,6 +58,8 @@ npm run dev           # App at http://127.0.0.1:5173
 ```
 
 **Full build (backend + frontend):** From repo root run `npm run build` for the API; then `cd frontend && npm install && npm run build` for the app. Frontend build requires frontend dependencies installed.
+
+**Status:** Build and typecheck are verified. For tests, run `npm install` (and `cd frontend && npm install`) first. See [docs/PROJECT_COMPLETION_STATUS.md](docs/PROJECT_COMPLETION_STATUS.md) for a full “everything working” checklist and remaining manual steps.
 
 ## Environment Variables
 
@@ -215,8 +217,10 @@ modullar-advancia/
 npm test              # 1,298 Jest unit tests
 npm run test:watch    # Watch mode
 npm run test:coverage # Coverage report
-npm run test:e2e      # Playwright E2E tests (29 tests)
+npm run test:e2e      # Playwright E2E tests (auth, api, payments, appointments, admin)
 ```
+
+Admin routes and E2E coverage (including optional admin token/creds): [docs/ADMIN_AND_E2E_TESTING.md](docs/ADMIN_AND_E2E_TESTING.md).
 
 ### Production Readiness Scripts
 

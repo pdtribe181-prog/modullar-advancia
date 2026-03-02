@@ -10,6 +10,8 @@ This document gives a high-level overview of how the healthcare payment and comp
 - **advancia-healthcare.com**: Marketing site for the **Advancia Healthcare Wallet** + health cards/records module, which can link into the PayLedger app for authentication and account management.
 - **advanciapayroll.com**: Legacy/alternate entry domain; recommended to 301 redirect to `advanciapayledger.com` unless a separate payroll product is built.
 
+For **redirect rules**, **Google OAuth**, and **Supabase redirect URLs**, see **[docs/DOMAINS_AND_GOOGLE_OAUTH.md](docs/DOMAINS_AND_GOOGLE_OAUTH.md)**. For **router, API, navigation, and responsiveness** on all three domains, see **[docs/DOMAIN_ROUTER_AND_API.md](docs/DOMAIN_ROUTER_AND_API.md)**.
+
 ---
 
 ## Backend (Node / Express / TypeScript)

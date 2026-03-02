@@ -43,7 +43,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
 
   // Frontend URL (required for redirects)
-  FRONTEND_URL: z.string().url('FRONTEND_URL must be a valid URL').default('http://localhost:3001'),
+  FRONTEND_URL: z.string().url('FRONTEND_URL must be a valid URL').default('http://localhost:5173'),
 
   // CORS allowlist (optional, comma-separated). Example:
   // CORS_ORIGINS=https://advanciapayledger.com,https://www.advanciapayledger.com

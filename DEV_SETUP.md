@@ -44,7 +44,20 @@ Frontend API base (Vite):
 - `frontend/.env` is ignored by git (do not commit it)
 - Use `VITE_API_URL=http://127.0.0.1:3000/api/v1`
 
+**Localhost ports (no conflicts):**
+
+| Service | URL | Purpose |
+|--------|-----|--------|
+| API | `http://127.0.0.1:3000` | Backend (health: `/health`, API: `/api/v1`) |
+| Frontend | `http://127.0.0.1:5173` | Vite dev server (`npm run dev` in `frontend/`) |
+
+Set `FRONTEND_URL=http://localhost:5173` (or `http://127.0.0.1:5173`) in backend `.env` so redirects and CORS match. CORS allows both `localhost:5173` and `127.0.0.1:5173`.
+
+**Wallets:** Wallet linking uses challenge/verify (no server-side address generation). Addresses come from the client (e.g. Phantom). **WebKit:** Only CSS vendor prefixes in the app (e.g. gradient text); no separate WebKit config. **Alchemy:** Optional; add `ALCHEMY_API_KEY` to `.env` if you use Alchemy for RPC; see `.env.example`.
+
 ## Option B: WSL2 Ubuntu (recommended)
+
+**Recommended:** Clone the repo inside WSL’s Linux filesystem (e.g. `~/src/modullar-advancia`) for speed and reliable file watching. Avoid running Node tooling from `/mnt/c/...` if possible.
 
 From PowerShell (Windows), run the helper script inside WSL. Replace `<YOU>` with your Windows username (e.g. `mucha.DESKTOP-H7T9NPM`). If the repo is in a nested folder `modullar-advancia/modullar-advancia`, use that in the path:
 
@@ -60,7 +73,7 @@ What it does:
 - Installs Node based on `.nvmrc` (defaults to 20)
 - Adds an `nvm` init block to `~/.bashrc` / `~/.profile`
 
-Then open the repo in VS Code using Remote-WSL and run the same `npm` commands as above.
+Then open the repo in VS Code using Remote-WSL and run the same `npm` commands as above. For E2E tests, install Playwright browsers and system deps once: `npm run playwright:install` (or `npx playwright install --with-deps`).
 
 ## Testing
 

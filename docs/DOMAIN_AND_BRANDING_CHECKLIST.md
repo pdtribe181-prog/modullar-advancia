@@ -4,6 +4,35 @@ Use this checklist to finish domain and branding setup. Code and CORS are alread
 
 ---
 
+## What we have already (reference)
+
+- **Frontend**
+  - **App.tsx**: Host check — `advancia-healthcare.com` / `www` → **HealthcareLanding**, else **LandingPage**.
+  - **Layout.tsx**: By host — brand “Advancia Healthcare” vs “Advancia PayLedger”, support email `support@advancia-healthcare.com` vs `support@advanciapayledger.com`, copyright entity.
+  - **HealthcareLanding.tsx**: Healthcare Wallet marketing page; CTAs to `https://advanciapayledger.com/signup` and `support@advancia-healthcare.com`.
+  - **Contact, FAQ, Withdraw, Policy**: Support/enterprise/privacy/gdpr/security/hello/legal addresses point to advanciapayledger.com (see EXTRA_EMAILS_SETUP.md).
+- **Backend**
+  - **security.middleware.ts**: Production CORS allows `advanciapayledger.com`, `www`, `app`, `advancia-healthcare.com`, `www` (plus `FRONTEND_URL` and `CORS_ORIGINS`).
+  - **auth.routes.ts**: Password reset and identity-link redirect use `FRONTEND_URL` (single primary origin).
+  - **connect.routes.ts**, **stripe.routes.ts**: Stripe/Connect redirect URLs use `FRONTEND_URL`.
+- **Config / scripts**
+  - **.env.example**: `FRONTEND_URL`, `CORS_ORIGINS` commented example including Healthcare.
+  - **scripts/setup-vps.sh**: Generated `.env` includes `FRONTEND_URL` and `CORS_ORIGINS` with PayLedger + Healthcare origins.
+  - **nginx/advancia.conf**: www.advanciapayledger.com → 301 → apex; API on api.advanciapayledger.com.
+- **Docs**
+  - **ARCHITECTURE.md**: Domains & products mapping + link to DOMAINS_AND_GOOGLE_OAUTH.md.
+  - **DOMAINS_AND_GOOGLE_OAUTH.md**: Domain roles, redirects, Supabase/Google OAuth checklist.
+  - **DOMAIN_ROUTER_AND_API.md**: Router, API, navigation, and responsiveness for all 3 domains (same behavior on both app domains).
+  - **DOMAIN_AND_BRANDING_CHECKLIST.md**: This checklist (Healthcare, payroll redirect, support emails, OAuth link).
+  - **EXTRA_EMAILS_SETUP.md**: enterprise@, privacy@, gdpr@, security@, hello@, legal@ — where used, how to configure.
+  - **OPEN_PRS_TRIAGE.md**: Open PR list + merge order and `gh` commands.
+  - **STAGING_COMPLETION_RUNBOOK.md**: Staging Supabase, Render env, migrations, webhooks, verification.
+  - **PRODUCTION_CHECKLIST.md**: Links to staging runbook; full pre-flight checklist.
+  - **REPO_MAP.md**, **CANONICAL_REPO_BANNER.md**: Repo roles and canonical/mirror.
+  - **README.md**: Canonical repo note, mirror, `push:mirror`, link to domain checklist and REPO_MAP.
+
+---
+
 ## 1. Healthcare Wallet site (advancia-healthcare.com)
 
 **Goal:** Same frontend build serves both PayLedger and Healthcare; the app shows the Healthcare Wallet landing when the host is `advancia-healthcare.com`.
@@ -86,10 +115,52 @@ Use this checklist to finish domain and branding setup. Code and CORS are alread
 
 ---
 
-## 5. After you finish
+## 5. Google OAuth & Supabase redirects
+
+For **Google sign-in** to work on both **advanciapayledger.com** and **advancia-healthcare.com**, you must add each domain’s callback URL in **Supabase** (and, if needed, origins in **Google Cloud Console**). See **[DOMAINS_AND_GOOGLE_OAUTH.md](./DOMAINS_AND_GOOGLE_OAUTH.md)** for:
+
+- Which redirect URIs to add in Supabase (Redirect URLs).
+- What to set in Google OAuth client (Authorized redirect URIs and JavaScript origins).
+- Why **advanciapayroll.com** does not need OAuth (redirect-only).
+
+---
+
+## 6. After you finish
 
 - Confirm Healthcare landing: `https://advancia-healthcare.com`
 - Confirm redirect: `https://advanciapayroll.com` → `https://advanciapayledger.com`
 - Confirm support: test both support@ addresses
 
 Code and CORS for advancia-healthcare.com are already in the repo; no further code changes needed for this checklist.
+
+---
+
+## 7. What’s still to do (gaps)
+
+### Manual / external (you do these)
+
+| Item | Where | Status |
+|------|--------|--------|
+| Add **advancia-healthcare.com** (and optional www) as custom domain | Cloudflare Pages → same project as PayLedger | [ ] |
+| 301 redirect **advanciapayroll.com** and www → advanciapayledger.com | Cloudflare Redirect Rules or DNS/host | [ ] |
+| Add all app callback URLs | Supabase → Authentication → URL Configuration → Redirect URLs | [ ] |
+| Add all app origins | Google Cloud Console → OAuth client → Authorized JavaScript origins | [ ] |
+| Configure **support@** for both domains | Email routing / forwarding (e.g. Cloudflare Email Routing) | [ ] |
+| VPS `.env`: `FRONTEND_URL`, optional `CORS_ORIGINS` | VPS where API runs | [ ] |
+
+### Optional email addresses (advanciapayledger.com)
+
+The app and docs reference these; set up forwarding or mailboxes if you want them to work:
+
+- **support@** — required (checklist above)
+- **enterprise@** — Contact page
+- **privacy@**, **gdpr@**, **security@**, **hello@** — Policy, Security, docs
+- **legal@** — Terms of Service (links to Contact)
+
+**Step-by-step:** [docs/EXTRA_EMAILS_SETUP.md](docs/EXTRA_EMAILS_SETUP.md) — addresses, where they’re used, and Cloudflare/registrar setup.
+
+### Optional / later
+
+- **Staging**: PRODUCTION_CHECKLIST has unchecked staging items (Supabase staging project, Render env, webhook secrets, etc.).
+- **Backend “Link Google” from Healthcare**: If a user on advancia-healthcare.com uses a backend-initiated link flow, they are sent to `FRONTEND_URL/auth/callback` (PayLedger). Normal sign-in from Healthcare uses the current origin, so callbacks stay on Healthcare. Only relevant if you add a “Link Google” flow that runs from the Healthcare site.
+- **Open PRs**: See `docs/OPEN_PRS_TRIAGE.md` for suggested merge order if you want to land doc/feature branches.

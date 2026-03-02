@@ -39,8 +39,8 @@ $checks = @()
 try {
     Write-Step "DNS lookup ($DnsName via $DnsServer)"
     $dnsResult = Resolve-DnsName $DnsName -Server $DnsServer -ErrorAction Stop
-    $addresses = $dnsResult | Where-Object { $_.Type -in @("A", "AAAA") } | Select-Object -ExpandProperty IPAddress
-    if ($addresses -and $addresses.Count -gt 0) {
+    $addresses = @($dnsResult | Where-Object { $_.Type -in @("A", "AAAA") } | Select-Object -ExpandProperty IPAddress)
+    if ($addresses.Count -gt 0) {
         Write-Pass "DNS resolves: $($addresses -join ', ')"
         $checks += $true
     }

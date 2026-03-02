@@ -58,6 +58,8 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Staging webhook secrets separated from production
 - [ ] Full staging functional tests pass (auth, payments-test flow)
 
+**To complete the unchecked items above:** follow [docs/STAGING_COMPLETION_RUNBOOK.md](docs/STAGING_COMPLETION_RUNBOOK.md) (Supabase staging project, Render env vars, migrations, webhooks, verification).
+
 ### Backend Environment Variables
 
 - [x] `NODE_ENV=production`

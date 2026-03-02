@@ -92,8 +92,10 @@ STRIPE_SECRET_KEY=
 STRIPE_PUBLISHABLE_KEY=
 STRIPE_WEBHOOK_SECRET=
 RESEND_API_KEY=
-    FRONTEND_URL=https://advanciapayledger.com
-    CORS_ORIGINS=https://advanciapayledger.com,https://www.advanciapayledger.com
+# Primary app origin (password reset, Stripe redirects, identity link callback)
+FRONTEND_URL=https://advanciapayledger.com
+# Optional: extra CORS origins (PayLedger + Healthcare; code also allows these by default in production)
+CORS_ORIGINS=https://advanciapayledger.com,https://www.advanciapayledger.com,https://app.advanciapayledger.com,https://advancia-healthcare.com,https://www.advancia-healthcare.com
 APP_URL=https://api.advanciapayledger.com
 TRUST_PROXY=true
 ENVEOF

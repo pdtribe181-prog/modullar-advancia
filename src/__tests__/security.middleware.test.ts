@@ -155,20 +155,20 @@ describe('Security Middleware', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
-    it('should allow localhost:3001 (default frontend)', () => {
-      const config = getCorsConfig();
-      const callback = jest.fn();
-
-      config.origin('http://localhost:3001', callback);
-
-      expect(callback).toHaveBeenCalledWith(null, true);
-    });
-
-    it('should allow localhost:5173 (Vite dev server)', () => {
+    it('should allow localhost:5173 (default / Vite dev server)', () => {
       const config = getCorsConfig();
       const callback = jest.fn();
 
       config.origin('http://localhost:5173', callback);
+
+      expect(callback).toHaveBeenCalledWith(null, true);
+    });
+
+    it('should allow 127.0.0.1:5173 (Vite dev server)', () => {
+      const config = getCorsConfig();
+      const callback = jest.fn();
+
+      config.origin('http://127.0.0.1:5173', callback);
 
       expect(callback).toHaveBeenCalledWith(null, true);
     });

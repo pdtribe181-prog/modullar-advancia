@@ -35,6 +35,7 @@ test.describe('API Health & Endpoints', () => {
   });
 
   test('API should have CORS headers', async ({ request }) => {
+    // Use localhost so CI (NODE_ENV=test) gets an allowed origin; set CORS_TEST_ORIGIN for prod testing
     const origin =
       process.env.CORS_TEST_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:5173';
     const response = await request.get(`${API_ROOT}/health`, {
