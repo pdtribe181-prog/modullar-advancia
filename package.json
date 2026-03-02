@@ -48,7 +48,9 @@
     "health:check": "tsx scripts/server-health-monitor.ts",
     "health:json": "tsx scripts/server-health-monitor.ts --json",
     "memory:test": "tsx scripts/memory-leak-test.ts",
-    "push:mirror": "git push origin main && git push together main"
+    "push:mirror": "git push origin main && git push together main",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "keywords": [
     "healthcare",
@@ -112,7 +114,8 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0"
+    "typescript-eslint": "^8.56.0",
+    "wrangler": "^4.69.0"
   },
   "overrides": {
     "tar": ">=6.2.1",

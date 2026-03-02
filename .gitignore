@@ -63,3 +63,9 @@ hostingerdeployments/
 
 # Nested project copy
 modullar-advancia/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
