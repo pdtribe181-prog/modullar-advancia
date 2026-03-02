@@ -65,8 +65,17 @@ jest.unstable_mockModule('../middleware/auth.middleware.js', () => ({
 
 jest.unstable_mockModule('../middleware/validation.middleware.js', () => ({
   validateBody: () => (_req: Request, _res: Response, next: NextFunction) => next(),
-  validateParams: () => (_req: Request, _res: Response, next: NextFunction) => next(),
+  validateParams: () => (req: Request, res: Response, next: NextFunction) => {
+    (res.locals as any).validatedParams = req.params;
+    next();
+  },
   validateQuery: () => (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
+
+const mockEnv = { FRONTEND_URL: 'http://localhost:5173' } as any;
+jest.unstable_mockModule('../config/env.js', () => ({
+  getEnv: () => mockEnv,
+  validateEnv: () => mockEnv,
 }));
 
 // ── Dynamic imports ──

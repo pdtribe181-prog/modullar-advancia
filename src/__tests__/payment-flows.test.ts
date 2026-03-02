@@ -168,6 +168,12 @@ jest.unstable_mockModule('../lib/supabase.js', () => ({
   supabase: { from: jest.fn<any>() },
 }));
 
+const mockEnv = { FRONTEND_URL: 'http://localhost:5173' } as any;
+jest.unstable_mockModule('../config/env.js', () => ({
+  getEnv: () => mockEnv,
+  validateEnv: () => mockEnv,
+}));
+
 // ── Dynamic imports ──
 
 const { default: express } = await import('express');

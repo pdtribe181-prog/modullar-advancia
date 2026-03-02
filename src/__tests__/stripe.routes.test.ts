@@ -132,6 +132,15 @@ jest.unstable_mockModule('../lib/supabase.js', () => ({
   supabase: { from: jest.fn<any>() },
 }));
 
+const mockEnv = {
+  STRIPE_WEBHOOK_SECRET: 'whsec_test',
+  FRONTEND_URL: 'http://localhost:5173',
+} as any;
+jest.unstable_mockModule('../config/env.js', () => ({
+  getEnv: () => mockEnv,
+  validateEnv: () => mockEnv,
+}));
+
 const mockIsWebhookProcessed = jest.fn<any>();
 const mockMarkWebhookProcessed = jest.fn<any>();
 
