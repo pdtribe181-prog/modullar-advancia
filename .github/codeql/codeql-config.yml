@@ -1,0 +1,16 @@
+# CodeQL configuration for modullar-advancia
+# See: https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning
+
+name: "Modullar Advancia CodeQL"
+
+# Exclude queries that were reviewed and closed as false positives in the Security tab:
+# - js/incomplete-multi-character-sanitization: sanitize.middleware uses fixed-point loop (CWE-116).
+# - js/clear-text-logging: enable-pwned-check.ts logs only status/error messages, no secrets.
+# - js/sensitive-get-query: GET params are resource IDs and filters (validated), not passwords.
+query-filters:
+  - exclude:
+      id: js/incomplete-multi-character-sanitization
+  - exclude:
+      id: js/clear-text-logging
+  - exclude:
+      id: js/sensitive-get-query

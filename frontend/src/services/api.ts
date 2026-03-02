@@ -213,10 +213,11 @@ class ApiService {
 
         if (!response.ok) {
           const errorData = typeof data === 'object' && data !== null ? data : { message: data };
+          const body = errorData as { message?: string; code?: string };
           const error = new ApiError(
-            (errorData as any).message || `HTTP error! status: ${response.status}`,
+            body.message ?? `HTTP error! status: ${response.status}`,
             response.status,
-            (errorData as any).code,
+            body.code,
             errorData
           );
 

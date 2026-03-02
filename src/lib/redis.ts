@@ -195,7 +195,9 @@ export function getRedis(): RedisLike {
   // 3. In-memory fallback
   _activeKind = 'memory';
   _unified = new MemoryRedis();
-  console.log('[Redis] Using in-memory fallback (single-process only)');
+  if (process.env.NODE_ENV !== 'test' && !process.env.JEST_WORKER_ID) {
+    console.log('[Redis] Using in-memory fallback (single-process only)');
+  }
   return _unified;
 }
 
@@ -205,6 +207,23 @@ export function getRedis(): RedisLike {
 export function getRedisKind(): ClientKind {
   if (!_activeKind) getRedis(); // ensure initialized
   return _activeKind!;
+}
+
+/**
+ * Teardown for tests: close connections and clear singletons so the process can exit.
+ * Only use in test afterAll; not for production.
+ */
+export async function closeForTests(): Promise<void> {
+  if (_ioredis) {
+    try {
+      await _ioredis.quit();
+    } catch {
+      // ignore
+    }
+    _ioredis = null;
+  }
+  _unified = null;
+  _activeKind = null;
 }
 
 // ---------------------------------------------------------------------------

@@ -36,6 +36,11 @@ describe('Rate Limit Middleware', () => {
   let mockNext: NextFunction;
   let mockHandler: ReturnType<typeof jest.fn>;
 
+  afterAll(async () => {
+    const { closeForTests } = await import('../lib/redis.js');
+    await closeForTests();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
