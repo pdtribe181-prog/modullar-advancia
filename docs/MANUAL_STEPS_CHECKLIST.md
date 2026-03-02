@@ -2,6 +2,8 @@
 
 Everything in this list requires **your** access to a dashboard or server. The repo cannot do these for you. Tick as you complete.
 
+**After merging the PR:** `git checkout main && git pull` so your repo matches this checklist.
+
 **Copy-paste values and full instructions:** [MANUAL_STEPS_DETAILS.md](MANUAL_STEPS_DETAILS.md)
 
 ---
