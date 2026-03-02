@@ -55,6 +55,8 @@ npm install
 npm run dev           # App at http://127.0.0.1:5173
 ```
 
+**Full build (backend + frontend):** From repo root run `npm run build` for the API; then `cd frontend && npm install && npm run build` for the app. Frontend build requires frontend dependencies installed.
+
 ## Environment Variables
 
 ```env
