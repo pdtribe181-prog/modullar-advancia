@@ -21,6 +21,8 @@ This repository (`modullar-advancia`) is the canonical production codebase for *
 
 **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
 
+**All related repos:** See [docs/REPO_MAP.md](docs/REPO_MAP.md) for the full list and how each fits (canonical, mirror, variants).
+
 ## Tech Stack
 
 - **Backend**: Node.js + Express + TypeScript
