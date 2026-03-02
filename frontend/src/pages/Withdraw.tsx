@@ -314,7 +314,7 @@ export function Withdraw() {
       {/* Info */}
       <div style={{ marginTop: '20px', background: 'rgba(96,128,245,0.06)', border: '1px solid rgba(96,128,245,0.15)', borderRadius: '12px', padding: '14px 18px' }}>
         <p style={{ color: '#8ea4f8', fontSize: '13px', lineHeight: '1.6', margin: 0 }}>
-          <strong>Processing time:</strong> Crypto withdrawals settle in 10–30 minutes. ACH bank transfers take 1–3 business days. For support, contact <a href="mailto:support@advancia.io" style={{ color: '#8ea4f8' }}>support@advancia.io</a>
+          <strong>Processing time:</strong> Crypto withdrawals settle in 10–30 minutes. ACH bank transfers take 1–3 business days. For support, contact <a href="mailto:support@advanciapayledger.com" style={{ color: '#8ea4f8' }}>support@advanciapayledger.com</a>
         </p>
       </div>
     </div>

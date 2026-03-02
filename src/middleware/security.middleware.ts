@@ -75,7 +75,9 @@ export function getCorsConfig() {
     allowedOrigins.push(
       'https://advanciapayledger.com',
       'https://www.advanciapayledger.com',
-      'https://app.advanciapayledger.com'
+      'https://app.advanciapayledger.com',
+      'https://advancia-healthcare.com',
+      'https://www.advancia-healthcare.com'
     );
 
     allowedOrigins.push(...envOrigins);

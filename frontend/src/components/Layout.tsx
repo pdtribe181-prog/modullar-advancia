@@ -8,6 +8,15 @@ export function Layout() {
 
   const closeMenu = () => setMenuOpen(false);
 
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isHealthcareHost =
+    host === 'advancia-healthcare.com' || host === 'www.advancia-healthcare.com';
+  const brandProductLabel = isHealthcareHost ? 'Healthcare' : 'PayLedger';
+  const supportEmail = isHealthcareHost
+    ? 'support@advancia-healthcare.com'
+    : 'support@advanciapayledger.com';
+  const copyrightEntity = isHealthcareHost ? 'Advancia Healthcare' : 'Advancia PayLedger, Inc.';
+
   return (
     <div className="layout">
       {/* ── Header ─────────────────────────────────────── */}
@@ -26,7 +35,10 @@ export function Layout() {
               </defs>
             </svg>
             <span className="app-logo__text">
-              <span className="app-logo__name"><span className="app-logo__grad">Advancia</span><span className="app-logo__sub"> PayLedger</span></span>
+              <span className="app-logo__name">
+                <span className="app-logo__grad">Advancia</span>
+                <span className="app-logo__sub"> {brandProductLabel}</span>
+              </span>
             </span>
           </Link>
 
@@ -122,8 +134,19 @@ export function Layout() {
                 </linearGradient>
               </defs>
             </svg>
-            <span className="app-footer__name"><span className="app-logo__grad">Advancia</span> PayLedger</span>
-            <p className="app-footer__tagline">Web3-native healthcare payments,<br/>HIPAA-compliant &amp; PCI DSS Level 1.</p>
+            <span className="app-footer__name">
+              <span className="app-logo__grad">Advancia</span> {brandProductLabel}
+            </span>
+            <p className="app-footer__tagline">
+              {isHealthcareHost ? (
+                <>Healthcare wallet and encrypted health records.</>
+              ) : (
+                <>
+                  Web3-native healthcare payments,<br />
+                  HIPAA-compliant &amp; PCI DSS Level 1.
+                </>
+              )}
+            </p>
           </div>
 
           <div className="app-footer__cols">
@@ -139,7 +162,7 @@ export function Layout() {
               <Link to="/faq" className="app-footer__link">FAQ</Link>
               <Link to="/policy" className="app-footer__link">Privacy Policy</Link>
               <Link to="/policy#terms" className="app-footer__link">Terms of Service</Link>
-              <a href="mailto:support@advanciapayledger.com" className="app-footer__link">Contact</a>
+              <a href={`mailto:${supportEmail}`} className="app-footer__link">Contact</a>
             </div>
             <div className="app-footer__col">
               <p className="app-footer__col-title">Compliance</p>
@@ -152,7 +175,7 @@ export function Layout() {
         </div>
 
         <div className="app-footer__bottom">
-          <span>&copy; 2026 Advancia PayLedger, Inc. All rights reserved.</span>
+          <span>&copy; 2026 {copyrightEntity}. All rights reserved.</span>
           <span className="app-footer__bottom-links">
             <Link to="/policy">Privacy</Link>
             <Link to="/policy#terms">Terms</Link>

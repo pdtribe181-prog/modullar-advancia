@@ -130,7 +130,7 @@ function generateMigrationGuide() {
   );
 
   console.log('═'.repeat(80));
-  console.log('\n✨ Your Modullar Advancia Healthcare Platform will be fully configured!\n');
+  console.log('\n✨ Your Advancia PayLedger platform will be fully configured!\n');
 }
 
 generateMigrationGuide();

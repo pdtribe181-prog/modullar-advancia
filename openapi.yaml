@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Modullar Advancia Healthcare API
+  title: Advancia PayLedger API
   description: Healthcare payment and compliance management platform
   version: 1.0.0
   contact:

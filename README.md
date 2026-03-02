@@ -15,6 +15,10 @@
 | **API**   | <https://api.advanciapayledger.com/api/v1> | ✅ Live |
 | **Brand** | <https://advanciapayledger.com>            | ✅ Live |
 
+### Canonical repository
+
+This repository (`modullar-advancia`) is the canonical production codebase for **Advancia PayLedger** (app + API at `advanciapayledger.com` and `api.advanciapayledger.com`).
+
 ## Tech Stack
 
 - **Backend**: Node.js + Express + TypeScript

@@ -10,6 +10,7 @@ import { CookieConsent } from './components/CookieConsent';
 
 // Eager load the home and login pages for fast initial render
 import { LandingPage } from './pages/LandingPage';
+import { HealthcareLanding } from './pages/HealthcareLanding';
 import { Login } from './pages/Login';
 
 // Lazy load other pages for better code splitting
@@ -56,6 +57,11 @@ const KYCVerification = lazy(() => import('./pages/KYCVerification'));
 const AuditLog = lazy(() => import('./pages/AuditLog'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 
+const isHealthcareHost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'advancia-healthcare.com' ||
+    window.location.hostname === 'www.advancia-healthcare.com');
+
 /**
  * Role-based route guard — redirects to dashboard if user lacks required role.
  */
@@ -73,7 +79,7 @@ export default function App() {
       <Suspense fallback={<LoadingOverlay message="Loading page..." />}>
         <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<LandingPage />} />
+          <Route index element={isHealthcareHost ? <HealthcareLanding /> : <LandingPage />} />
           <Route path="features" element={<Features />} />
           <Route path="policy" element={<Policy />} />
           <Route path="subscriptions" element={<Subscriptions />} />
