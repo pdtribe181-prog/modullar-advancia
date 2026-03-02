@@ -17,7 +17,7 @@
 
 ### Canonical repository
 
-This repository (`modullar-advancia`) is the canonical production codebase for **Advancia PayLedger** (app + API at `advanciapayledger.com` and `api.advanciapayledger.com`).
+This repository (`modullar-advancia`) is the canonical production codebase for **Advancia PayLedger** (app + API at `advanciapayledger.com` and `api.advanciapayledger.com`). A mirror is kept at [pdtribe181-prog/advancia-get-together](https://github.com/pdtribe181-prog/advancia-get-together); push to both with `npm run push:mirror` after committing.
 
 **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
 
