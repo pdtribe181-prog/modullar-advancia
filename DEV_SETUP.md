@@ -46,11 +46,13 @@ Frontend API base (Vite):
 
 ## Option B: WSL2 Ubuntu (recommended)
 
-From PowerShell (Windows), you can run the helper script inside WSL:
+From PowerShell (Windows), run the helper script inside WSL. Replace `<YOU>` with your Windows username (e.g. `mucha.DESKTOP-H7T9NPM`). If the repo is in a nested folder `modullar-advancia/modullar-advancia`, use that in the path:
 
 ```powershell
-wsl.exe -d Ubuntu -- bash -lc "bash /mnt/c/Users/<YOU>/modullar-advancia/scripts/wsl-setup-node.sh"
+wsl.exe -d Ubuntu -- bash -lc "bash /mnt/c/Users/<YOU>/modullar-advancia/modullar-advancia/scripts/wsl-setup-node.sh"
 ```
+
+**WSL config summary:** See [docs/WSL_CONFIG.md](docs/WSL_CONFIG.md) for repo vs system settings and optional `.wslconfig`.
 
 What it does:
 
