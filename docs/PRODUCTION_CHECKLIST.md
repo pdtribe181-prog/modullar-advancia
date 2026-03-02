@@ -76,7 +76,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] `UPSTASH_REDIS_REST_URL` - Production Redis URL
 - [x] `UPSTASH_REDIS_REST_TOKEN` - Production Redis token
 - [x] `FRONTEND_URL=https://advanciapayledger.com`
-- [x] `CORS_ORIGINS` - Production domains configured
+- [x] `CORS_ORIGINS` - Production domains configured (PayLedger + app subdomain; advancia-healthcare.com is allowed by default in code)
 
 ### Frontend Environment Variables
 

@@ -19,6 +19,8 @@
 
 This repository (`modullar-advancia`) is the canonical production codebase for **Advancia PayLedger** (app + API at `advanciapayledger.com` and `api.advanciapayledger.com`).
 
+**Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
+
 ## Tech Stack
 
 - **Backend**: Node.js + Express + TypeScript
