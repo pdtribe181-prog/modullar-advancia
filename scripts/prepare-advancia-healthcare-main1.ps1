@@ -107,6 +107,8 @@ Single app: one landing, wallet connect, booking & sessions, features, FAQ, poli
 
 **Repo:** [pdtribe181-prog/Advancia-Healthcare-main1](https://github.com/pdtribe181-prog/Advancia-Healthcare-main1)
 
+**Quick start:** ``npm install`` → ``cd frontend && npm install`` → copy ``.env.example`` to ``.env`` (set Supabase + Stripe) → ``npm run dev`` (backend) → ``cd frontend && npm run dev`` (frontend). App: http://127.0.0.1:5174
+
 ## Full stack: frontend to backend
 
 - **Frontend** (React + Vite) calls the API via `VITE_API_URL` or, when unset, relative `/api/v1` (dev proxy).
