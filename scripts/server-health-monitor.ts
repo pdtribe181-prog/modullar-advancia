@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+
 /**
  * Server Health Monitor — disk, memory, CPU, and process monitoring
  * ---
@@ -17,7 +18,7 @@
  *   - PM2 process not online
  *
  * Cron example (every 30 min):
- *   */30 * * * * cd /var/www/advancia && npx tsx scripts/server-health-monitor.ts --alert >> /var/log/advancia-health.log 2>&1
+ *   0,30 * * * * cd /var/www/advancia && npx tsx scripts/server-health-monitor.ts --alert >> /var/log/advancia-health.log 2>&1
  */
 
 import 'dotenv/config';
@@ -76,7 +77,7 @@ function checkDiskUsage() {
     // Windows: use wmic or PowerShell
     try {
       const out = execSync(
-        'powershell -Command "Get-PSDrive -PSProvider FileSystem | Select-Object Name,@{N=\'UsedGB\';E={[math]::Round($_.Used/1GB,1)}},@{N=\'FreeGB\';E={[math]::Round($_.Free/1GB,1)}},@{N=\'TotalGB\';E={[math]::Round(($_.Used+$_.Free)/1GB,1)}} | ConvertTo-Json"',
+        "powershell -Command \"Get-PSDrive -PSProvider FileSystem | Select-Object Name,@{N='UsedGB';E={[math]::Round($_.Used/1GB,1)}},@{N='FreeGB';E={[math]::Round($_.Free/1GB,1)}},@{N='TotalGB';E={[math]::Round(($_.Used+$_.Free)/1GB,1)}} | ConvertTo-Json\"",
         { encoding: 'utf-8', timeout: 10000 }
       );
       const drives = JSON.parse(out);
@@ -246,9 +247,8 @@ function checkSslCert() {
 
 // ── Network Connectivity ──
 
-async function checkNetwork() {
-  const apiUrl =
-    process.env.UPTIME_API_URL || 'https://api.advanciapayledger.com/health';
+async function checkNetwork(): Promise<void> {
+  const apiUrl = process.env.UPTIME_API_URL || 'https://api.advanciapayledger.com/api/v1/health';
 
   try {
     const start = Date.now();
@@ -307,7 +307,7 @@ function checkLogSizes() {
 
 // ── Main ──
 
-async function main() {
+async function main(): Promise<void> {
   getSystemInfo();
   checkDiskUsage();
   checkMemory();
