@@ -12,7 +12,7 @@ Same frontend build serves **advanciapayledger.com** and **advancia-healthcare.c
 | **www.advanciapayledger.com** | Yes (if CNAME/redirect) | Same | Same | Alias; 301 to apex or CNAME. |
 | **advancia-healthcare.com** | Yes | Healthcare Wallet landing | Same API | **Personal** (individuals/patients, personal folder); same build, host-based branding. |
 | **www.advancia-healthcare.com** | Yes (optional) | Same | Same | Alias. |
-| **advanciapayroll.com** | No | — | — | 301 → advanciapayledger.com only. |
+| **advanciapayroll.com** | No | Hostinger | — | 301 → advanciapayledger.com (set in Hostinger). |
 
 ---
 

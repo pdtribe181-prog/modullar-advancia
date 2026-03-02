@@ -1,17 +1,24 @@
 # Vercel & VPS config — quick reference
 
-## Vercel
+## Vercel (frontend)
 
-**This repo does not use Vercel for production.**
+**Production frontend is on Cloudflare Pages.** Vercel is optional (previews or alternate host).
 
 | Item | Status |
 |------|--------|
-| **vercel.json / vercel.yaml** | None in repo |
-| **Frontend host** | **Cloudflare Pages** (auto-deploys from `main`) |
+| **vercel.json** | `frontend/vercel.json` — Vite build, output `dist`, SPA rewrites |
+| **Frontend host** | **Cloudflare Pages** (production); Vercel optional |
 | **frontend/.gitignore** | Contains `.vercel` (local Vercel link ignored) |
-| **CORS** | Tests allow `https://preview.vercel.app` for previews; production allows advanciapayledger.com and advancia-healthcare.com |
+| **CORS** | Add Vercel preview URLs to backend `CORS_ORIGINS` if the app calls the API from Vercel |
 
-If you ever connect the frontend to Vercel (e.g. previews), add a **vercel.json** in `frontend/` with build/output settings; no Vercel config is required for current Cloudflare-based deployment.
+### Deploy frontend to Vercel
+
+1. In Vercel: **Add Project** → import repo → set **Root Directory** to `frontend`.
+2. Vercel will use `frontend/vercel.json` (build: `npm run build`, output: `dist`, framework: vite, SPA rewrites).
+3. **Environment variables** (in Vercel project settings):  
+   `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and any other `VITE_*` the app needs.
+4. **Preview URLs:** Hostnames like `advancia-healthcare-*.vercel.app` are treated as Healthcare branding (see `frontend/src/config/domains.ts`). For 401 on previews, turn off Vercel Password Protection or open in a browser where you’re logged into Vercel.
+5. **Backend CORS:** If the frontend on Vercel calls your API, add the Vercel deployment origin(s) to the API’s `CORS_ORIGINS` (e.g. `https://your-project.vercel.app`, or use a wildcard for previews if your backend allows it).
 
 ---
 

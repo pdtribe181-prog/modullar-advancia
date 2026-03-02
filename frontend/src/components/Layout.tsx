@@ -2,6 +2,7 @@ import { Outlet, Link, NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../providers/AuthProvider';
 import { isHealthcareHost, getSupportEmail } from '../config/domains';
+import { OPEN_COOKIE_PREFS_EVENT } from './CookieConsent';
 
 export function Layout() {
   const { user, logout } = useAuth();
@@ -399,6 +400,14 @@ export function Layout() {
           <span className="app-footer__bottom-links">
             <Link to="/policy">Privacy</Link>
             <Link to="/policy#terms">Terms</Link>
+            <button
+              type="button"
+              className="app-footer__cookie-prefs"
+              onClick={() => window.dispatchEvent(new CustomEvent(OPEN_COOKIE_PREFS_EVENT))}
+              aria-label="Cookie preferences"
+            >
+              Cookie preferences
+            </button>
           </span>
         </div>
       </footer>

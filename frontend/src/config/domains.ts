@@ -12,8 +12,12 @@ export const HEALTHCARE_HOSTNAMES = [
   'www.advancia-healthcare.com',
 ] as const;
 
+/** Vercel preview URLs like advancia-healthcare-xxx.vercel.app */
+const HEALTHCARE_PREVIEW_PATTERN = /advancia-healthcare.*\.vercel\.app$/i;
+
 export function isHealthcareHost(hostname: string): boolean {
-  return HEALTHCARE_HOSTNAMES.includes(hostname as (typeof HEALTHCARE_HOSTNAMES)[number]);
+  if (HEALTHCARE_HOSTNAMES.includes(hostname as (typeof HEALTHCARE_HOSTNAMES)[number])) return true;
+  return HEALTHCARE_PREVIEW_PATTERN.test(hostname);
 }
 
 export function getSupportEmail(hostname: string): string {

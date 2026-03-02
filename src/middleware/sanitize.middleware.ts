@@ -2,32 +2,44 @@
  * Input Sanitization Middleware
  * Strips HTML tags from string fields in request bodies to prevent stored XSS.
  * Defense-in-depth: React escapes output by default, but we also sanitize on ingress.
+ *
+ * CodeQL js/incomplete-multi-character-sanitization (CWE-116): entity and tag removal
+ * are applied in a loop until fixed point so removed multi-char sequences cannot reappear.
  */
 
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * Neutralize HTML entity forms for angle brackets (single pass, no decode-to-raw).
- * Prevents incomplete multi-character sanitization by never emitting < or > from entities.
+ * HTML entity forms for < and > (no decode step — we remove, never emit raw < or >).
+ * Covers named, decimal, hex; semicolon optional (HTML5).
+ * CodeQL: multi-char sanitization must be applied repeatedly so removed text cannot reappear.
  */
-const ANGLE_ENTITY_PATTERN = /&(?:lt|gt|#x3[Cc]|#60|#062|#x3[Ee]|#62|#063);/gi;
+const ANGLE_ENTITY_PATTERN =
+  /&(?:lt|gt|#x3[Cc]|#x0*3[Cc]|#60|#0*60|#62|#0*62|#x3[Ee]|#x0*3[Ee]);?/gi;
+
+/** Match HTML tags for removal. Applied in a loop to satisfy CodeQL (incomplete multi-char sanitization). */
+const HTML_TAG_PATTERN = /<[^>]*>/g;
 
 /**
  * Strip HTML tags from a string.
- * Neutralizes entity forms for < and > (no decode step), strips tags, then escapes remaining angle brackets.
+ * Neutralizes entity forms for < and > (no decode), strips tags, then escapes remaining angle brackets.
+ * Uses repeated replacement until fixed point so no unsafe multi-char sequence can reappear (CodeQL CWE-116).
  */
 export function stripHtmlTags(input: string): string {
-  return (
-    input
-      // Remove angle-bracket entities without decoding (avoids incomplete multi-char sanitization)
-      .replace(ANGLE_ENTITY_PATTERN, '')
-      // Strip all HTML tags
-      .replace(/<[^>]*>/g, '')
-      // Escape any remaining angle brackets
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .trim()
-  );
+  let s = input.trim();
+  let prev: string;
+  // Remove angle-bracket entities until none left (avoids incomplete multi-char sanitization)
+  do {
+    prev = s;
+    s = s.replace(ANGLE_ENTITY_PATTERN, '');
+  } while (s !== prev);
+  // Strip tags until none left (removed content cannot form new tags)
+  do {
+    prev = s;
+    s = s.replace(HTML_TAG_PATTERN, '');
+  } while (s !== prev);
+  // Escape any remaining angle brackets (single-char replace is safe after above)
+  return s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**

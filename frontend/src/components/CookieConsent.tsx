@@ -31,14 +31,56 @@ const CATEGORIES = [
   },
 ];
 
+export const OPEN_COOKIE_PREFS_EVENT = 'adv-open-cookie-prefs';
+
 export const CookieConsent: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [prefs, setPrefs] = useState<Prefs>({ analytics: true, preferences: true, marketing: false });
+  const [prefs, setPrefs] = useState<Prefs>({
+    analytics: true,
+    preferences: true,
+    marketing: false,
+  });
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) setVisible(true);
+    if (!stored) {
+      setVisible(true);
+    } else {
+      try {
+        const parsed = JSON.parse(stored) as Prefs & { savedAt?: number };
+        if (parsed.analytics !== undefined)
+          setPrefs((p) => ({ ...p, analytics: parsed.analytics }));
+        if (parsed.preferences !== undefined)
+          setPrefs((p) => ({ ...p, preferences: parsed.preferences }));
+        if (parsed.marketing !== undefined)
+          setPrefs((p) => ({ ...p, marketing: parsed.marketing }));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const onOpen = () => {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as Prefs & { savedAt?: number };
+          setPrefs({
+            analytics: parsed.analytics ?? true,
+            preferences: parsed.preferences ?? true,
+            marketing: parsed.marketing ?? false,
+          });
+        } catch {
+          /* ignore */
+        }
+      }
+      setVisible(true);
+      setExpanded(true);
+    };
+    window.addEventListener(OPEN_COOKIE_PREFS_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_COOKIE_PREFS_EVENT, onOpen);
   }, []);
 
   const save = (override?: Partial<Prefs>) => {
@@ -51,7 +93,7 @@ export const CookieConsent: React.FC = () => {
   };
 
   const toggle = (key: keyof Prefs) => {
-    setPrefs(p => ({ ...p, [key]: !p[key] }));
+    setPrefs((p) => ({ ...p, [key]: !p[key] }));
   };
 
   if (!visible) return null;
@@ -66,16 +108,15 @@ export const CookieConsent: React.FC = () => {
             <p>
               We use cookies to keep you logged in, secure payments, and improve your experience.
               You control what optional cookies we set.{' '}
-              <a href="/policy#cookies" className="ck-link">Learn more</a>
+              <a href="/policy#cookies" className="ck-link">
+                Learn more
+              </a>
             </p>
           </div>
         </div>
 
         <div className="ck-banner__actions">
-          <button
-            className="ck-btn ck-btn--ghost"
-            onClick={() => setExpanded(e => !e)}
-          >
+          <button className="ck-btn ck-btn--ghost" onClick={() => setExpanded((e) => !e)}>
             {expanded ? 'Hide settings' : 'Customise'}
           </button>
           <button
@@ -95,8 +136,10 @@ export const CookieConsent: React.FC = () => {
 
       {expanded && (
         <div className="ck-prefs">
-          <p className="ck-prefs__intro">Manage which cookies are active. Necessary cookies cannot be disabled.</p>
-          {CATEGORIES.map(cat => {
+          <p className="ck-prefs__intro">
+            Manage which cookies are active. Necessary cookies cannot be disabled.
+          </p>
+          {CATEGORIES.map((cat) => {
             const value = cat.key === 'necessary' ? true : prefs[cat.key as keyof Prefs];
             return (
               <div key={cat.key} className="ck-pref-row">

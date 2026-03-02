@@ -18,8 +18,8 @@ How the three domains fit together and what to configure for redirects and Googl
 
 ### Redirect summary
 
-- **advanciapayroll.com** → **301** → `https://advanciapayledger.com`  
-  (Configure in Cloudflare Redirect Rules or at your DNS/host.)
+- **advanciapayroll.com** → **301** → `https://advanciapayledger.com`
+  (Configure in **Hostinger** → Websites → Redirects; payroll domain is on Hostinger; PayLedger is on Cloudflare.)
 - **www.advanciapayledger.com** → **301** → `https://advanciapayledger.com`  
   (Already in Nginx; ensure CNAME www → apex in Cloudflare.)
 

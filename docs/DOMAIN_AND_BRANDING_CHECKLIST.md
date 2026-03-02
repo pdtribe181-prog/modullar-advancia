@@ -78,23 +78,26 @@ After you complete the manual steps below, confirm:
 
 **Goal:** All traffic to advanciapayroll.com goes permanently to advanciapayledger.com (no duplicate content, no wrong branding).
 
-### In Cloudflare (if advanciapayroll.com is on Cloudflare)
+**Hosting:** **advanciapayroll.com** is on **Hostinger**. **advanciapayledger.com** is on **Cloudflare** (Pages + API on VPS). Do **not** add payroll as a custom domain on Cloudflare Pages — redirect is configured on Hostinger only.
 
-1. **Pages / Redirect:**  
-   - **Rules** → **Page Rules** or **Redirect Rules** (depending on your plan).  
-   - Create a rule:
-     - **If:** Hostname equals `advanciapayroll.com` (and optionally `www.advanciapayroll.com`).
-     - **Then:** Dynamic redirect → **301** → `https://advanciapayledger.com$request_uri`.
-2. Save. New visits to advanciapayroll.com will get a 301 to advanciapayledger.com.
+**If www.advanciapayroll.com (or apex) currently shows the app** (e.g. “Advancia Healthcare”): remove `advanciapayroll.com` and `www.advanciapayroll.com` from any other host (e.g. Cloudflare Pages → Custom domains) so only Hostinger handles payroll. Then set up the redirect in Hostinger below.
 
-### If advanciapayroll.com is elsewhere
+### In Hostinger (payroll domain)
 
-- At your DNS/hosting provider, add a **redirect** (301) from `advanciapayroll.com` and `www.advanciapayroll.com` to `https://advanciapayledger.com`.
-- Or point the domain to a small host that only returns a 301 (e.g. Netlify/Cloudflare redirect-only page).
+1. Log in to **Hostinger** → **Websites** → select the site or domain for **advanciapayroll.com**.
+2. Open **Redirects** (sidebar or in the dashboard).
+3. Create **two** 301 redirects (or one rule that covers both if your plan allows):
+   - **From:** `advanciapayroll.com` (and optionally `www.advanciapayroll.com` if listed separately)  
+   - **To:** `https://advanciapayledger.com`  
+   - Type: **Permanent (301)**.
+4. If you have both apex and www, add a second redirect for `www.advanciapayroll.com` → `https://advanciapayledger.com` (301).
+5. Save. Ensure SSL is active for the payroll domain if redirecting to HTTPS (Hostinger usually provides it).
+
+Reference: [Hostinger – Set up a redirect](https://www.hostinger.com/support/1583406-how-to-set-up-a-redirect-in-hostinger).
 
 ### Verify
 
-- Open `https://advanciapayroll.com` (or `http://`). Browser should end up on `https://advanciapayledger.com` with no “Advancia Healthcare” or SmartWallet content on the payroll URL.
+- Open `https://advanciapayroll.com` and `https://www.advanciapayroll.com`. Both should immediately redirect to `https://advanciapayledger.com` with no app content on the payroll URL.
 
 ---
 
@@ -130,6 +133,8 @@ After you complete the manual steps below, confirm:
 | advancia-healthcare.com | **Personal** (personal folder); Healthcare Wallet marketing | Add as custom domain to same Pages project (see §1). |
 | advanciapayroll.com | Legacy / redirect only | 301 → advanciapayledger.com (see §2). |
 
+**Important:** Do **not** add `advanciapayroll.com` or `www.advanciapayroll.com` as custom domains to Cloudflare Pages. If they are added, the app will be served there (e.g. Healthcare-style landing) instead of redirecting. Use **redirect rules only** so both apex and www → `https://advanciapayledger.com`.
+
 ---
 
 ## 5. Google OAuth & Supabase redirects
@@ -159,11 +164,11 @@ Code and CORS for advancia-healthcare.com are already in the repo; no further co
 | Item | Where | Status |
 |------|--------|--------|
 | Add **advancia-healthcare.com** (and optional www) as custom domain | Cloudflare Pages → same project as PayLedger | [ ] |
-| 301 redirect **advanciapayroll.com** and www → advanciapayledger.com | Cloudflare Redirect Rules or DNS/host | [ ] |
+| 301 redirect **advanciapayroll.com** and www → advanciapayledger.com | Hostinger → Websites → Redirects | [ ] |
 | Add all app callback URLs | Supabase → Authentication → URL Configuration → Redirect URLs | [ ] |
 | Add all app origins | Google Cloud Console → OAuth client → Authorized JavaScript origins | [ ] |
 | Configure **support@** for both domains | Email routing / forwarding (e.g. Cloudflare Email Routing) | [ ] |
-| VPS `.env`: `FRONTEND_URL`, optional `CORS_ORIGINS` | VPS where API runs | [ ] |
+| VPS `.env`: `FRONTEND_URL`, optional `CORS_ORIGINS` | Hostinger VPS (api.advanciapayledger.com) | [ ] |
 
 ### Optional email addresses (advanciapayledger.com)
 
