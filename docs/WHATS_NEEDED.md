@@ -17,6 +17,14 @@ One-place checklist of **manual / infra** items. Code and CORS are done in the r
 
 ---
 
+## After you add the CNAME
+
+1. **Host (Cloudflare Pages / Vercel):** Add the custom domain in the project (Custom domains / Domains). SSL is provisioned automatically.
+2. **Backend CORS:** If the new domain calls the API, add it to `CORS_ORIGINS` on the VPS (or it may already be in code for payledger/healthcare).
+3. **Supabase:** Authentication → URL configuration → add Site URL and Redirect URLs for the new domain.
+4. **Google OAuth:** Add the domain to Authorized JavaScript origins and redirect URIs.
+5. **Verify:** Run `npm run verify:dns`; open the URL in a browser and test login.
+
 ## Verify after
 
 - `npm run verify:domains` (DNS for all three domains)

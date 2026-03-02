@@ -14,25 +14,29 @@ const FEATURES = [
   {
     icon: '🛏️',
     title: 'MedBed Access',
-    description: 'Book advanced quantum healing sessions at certified clinics worldwide. Priority scheduling included.',
+    description:
+      'Book advanced quantum healing sessions at certified clinics worldwide. Priority scheduling included.',
     badge: 'New',
   },
   {
     icon: '💳',
     title: 'Multi-Rail Payments',
-    description: 'Accept fiat, crypto, and wallet payments in one unified dashboard with instant settlement.',
+    description:
+      'Accept fiat, crypto, and wallet payments in one unified dashboard with instant settlement.',
     badge: null,
   },
   {
     icon: '🔐',
     title: 'HIPAA Compliance',
-    description: 'End-to-end encrypted patient data with full audit trails and role-based access control.',
+    description:
+      'End-to-end encrypted patient data with full audit trails and role-based access control.',
     badge: null,
   },
   {
     icon: '🪙',
     title: 'Crypto Wallet',
-    description: 'Send and receive SOL, ETH and stablecoins. Non-custodial wallet with hardware key support.',
+    description:
+      'Send and receive SOL, ETH and stablecoins. Non-custodial wallet with hardware key support.',
     badge: null,
   },
   {
@@ -44,7 +48,8 @@ const FEATURES = [
   {
     icon: '📊',
     title: 'Analytics & Reporting',
-    description: 'Real-time revenue, compliance, and patient engagement dashboards for your whole organisation.',
+    description:
+      'Real-time revenue, compliance, and patient engagement dashboards for your whole organisation.',
     badge: null,
   },
 ];
@@ -53,17 +58,20 @@ const STEPS = [
   {
     step: '01',
     title: 'Create Your Account',
-    description: 'Sign up in minutes. Choose a patient, provider, or admin role and get instantly verified.',
+    description:
+      'Sign up in minutes. Choose a patient, provider, or admin role and get instantly verified.',
   },
   {
     step: '02',
     title: 'Connect & Configure',
-    description: 'Link your Stripe account or crypto wallet, set up your schedule and compliance preferences.',
+    description:
+      'Link your Stripe account or crypto wallet, set up your schedule and compliance preferences.',
   },
   {
     step: '03',
     title: 'Start Transacting',
-    description: 'Book appointments, process payments and generate compliance reports — all in one place.',
+    description:
+      'Book appointments, process payments and generate compliance reports — all in one place.',
   },
 ];
 
@@ -72,19 +80,22 @@ const TESTIMONIALS = [
     name: 'Dr. Sarah Chen',
     role: 'Chief Medical Officer, Quantum Health',
     avatar: '👩‍⚕️',
-    quote: 'Advancia cut our billing cycle from two weeks to same-day. The HIPAA audit trails alone saved us thousands in compliance work.',
+    quote:
+      'Advancia cut our billing cycle from two weeks to same-day. The HIPAA audit trails alone saved us thousands in compliance work.',
   },
   {
     name: 'Marcus Williams',
     role: 'Patient',
     avatar: '🧑',
-    quote: 'Paying for my MedBed sessions with crypto is seamless. No bank delays, no hidden fees — just instant confirmations.',
+    quote:
+      'Paying for my MedBed sessions with crypto is seamless. No bank delays, no hidden fees — just instant confirmations.',
   },
   {
     name: 'Priya Nair',
     role: 'Operations Director, FutureCare Inc.',
     avatar: '👩‍💼',
-    quote: 'The provider dashboard gives us full visibility across 40 clinics. Advancia is the backbone of our payment infrastructure.',
+    quote:
+      'The provider dashboard gives us full visibility across 40 clinics. Advancia is the backbone of our payment infrastructure.',
   },
 ];
 
@@ -104,7 +115,13 @@ const PLANS = [
     price: '$49',
     period: '/mo',
     color: 'plan-pro',
-    features: ['Everything in Patient', 'Revenue analytics', 'SMS & email reminders', 'Stripe Connect payouts', 'Priority support'],
+    features: [
+      'Everything in Patient',
+      'Revenue analytics',
+      'SMS & email reminders',
+      'Stripe Connect payouts',
+      'Priority support',
+    ],
     cta: 'Start Free Trial',
     href: '/signup',
     highlight: true,
@@ -114,7 +131,13 @@ const PLANS = [
     price: 'Custom',
     period: '',
     color: 'plan-enterprise',
-    features: ['Everything in Provider', 'Dedicated SLA', 'Custom integrations', 'HIPAA BAA included', 'Dedicated account manager'],
+    features: [
+      'Everything in Provider',
+      'Dedicated SLA',
+      'Custom integrations',
+      'HIPAA BAA included',
+      'Dedicated account manager',
+    ],
     cta: 'Contact Sales',
     href: '/contact',
     highlight: false,
@@ -140,20 +163,21 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="lp-root">
-
       {/* ── HERO ── */}
       <section className="lp-hero" ref={heroRef}>
         <div className="lp-hero-glow lp-hero-glow--a" />
         <div className="lp-hero-glow lp-hero-glow--b" />
+        <div className="lp-hero-glow lp-hero-glow--c" aria-hidden="true" />
         <div className="lp-hero-inner">
           <span className="lp-eyebrow">Healthcare Payments · Reimagined</span>
           <h1 className="lp-hero-title">
-            The Complete Platform for<br />
+            The Complete Platform for
+            <br />
             <span className="lp-gradient-text">Modern Healthcare Finance</span>
           </h1>
           <p className="lp-hero-sub">
-            One secure platform for healthcare payments, crypto wallets,
-            HIPAA compliance and provider scheduling.
+            One secure platform for healthcare payments, crypto wallets, HIPAA compliance and
+            provider scheduling.
           </p>
           <div className="lp-hero-actions">
             <Link to="/signup" className="lp-btn lp-btn--primary lp-btn--lg">
@@ -181,7 +205,7 @@ export const LandingPage: React.FC = () => {
 
       {/* ── STATS ── */}
       <section className="lp-stats">
-        {STATS.map(s => (
+        {STATS.map((s) => (
           <div key={s.label} className="lp-stat">
             <div className="lp-stat__value">{s.value}</div>
             <div className="lp-stat__label">{s.label}</div>
@@ -199,10 +223,12 @@ export const LandingPage: React.FC = () => {
         <div className="lp-section__header">
           <span className="lp-tag">Features</span>
           <h2>Everything your practice needs</h2>
-          <p>A fully integrated suite built specifically for healthcare organisations at every scale.</p>
+          <p>
+            A fully integrated suite built specifically for healthcare organisations at every scale.
+          </p>
         </div>
         <div className="lp-features-grid">
-          {FEATURES.map(f => (
+          {FEATURES.map((f) => (
             <div key={f.title} className="lp-feature-card">
               <div className="lp-feature-card__icon">{f.icon}</div>
               {f.badge && <span className="lp-badge lp-badge--new">{f.badge}</span>}
@@ -212,7 +238,9 @@ export const LandingPage: React.FC = () => {
           ))}
         </div>
         <div className="lp-center" style={{ marginTop: '2.5rem' }}>
-          <Link to="/features" className="lp-btn lp-btn--outline">View All Features</Link>
+          <Link to="/features" className="lp-btn lp-btn--outline">
+            View All Features
+          </Link>
         </div>
       </section>
 
@@ -242,7 +270,7 @@ export const LandingPage: React.FC = () => {
           <h2>Loved by patients &amp; providers</h2>
         </div>
         <div className="lp-testimonials-grid">
-          {TESTIMONIALS.map(t => (
+          {TESTIMONIALS.map((t) => (
             <div key={t.name} className="lp-testimonial">
               <div className="lp-testimonial__stars">★★★★★</div>
               <p className="lp-testimonial__quote">"{t.quote}"</p>
@@ -266,20 +294,27 @@ export const LandingPage: React.FC = () => {
           <p>Start free. Scale as you grow. No hidden fees, ever.</p>
         </div>
         <div className="lp-plans-grid">
-          {PLANS.map(p => (
+          {PLANS.map((p) => (
             <div key={p.name} className={`lp-plan ${p.highlight ? 'lp-plan--highlight' : ''}`}>
               {p.highlight && <div className="lp-plan__popular">Most Popular</div>}
               <div className={`lp-plan__color-bar ${p.color}`} />
               <div className="lp-plan__name">{p.name}</div>
               <div className="lp-plan__price">
-                {p.price}<span className="lp-plan__period">{p.period}</span>
+                {p.price}
+                <span className="lp-plan__period">{p.period}</span>
               </div>
               <ul className="lp-plan__features">
-                {p.features.map(f => (
-                  <li key={f}><span className="lp-check">✓</span>{f}</li>
+                {p.features.map((f) => (
+                  <li key={f}>
+                    <span className="lp-check">✓</span>
+                    {f}
+                  </li>
                 ))}
               </ul>
-              <Link to={p.href} className={`lp-btn ${p.highlight ? 'lp-btn--primary' : 'lp-btn--outline'} lp-btn--full`}>
+              <Link
+                to={p.href}
+                className={`lp-btn ${p.highlight ? 'lp-btn--primary' : 'lp-btn--outline'} lp-btn--full`}
+              >
                 {p.cta}
               </Link>
             </div>
@@ -295,31 +330,66 @@ export const LandingPage: React.FC = () => {
           <p>We take compliance seriously so you don't have to worry about it.</p>
         </div>
         <div className="lp-badges">
-          <div className="lp-badge-card"><span>🏥</span><strong>HIPAA Compliant</strong><p>Full audit trails &amp; BAA available</p></div>
-          <div className="lp-badge-card"><span>🔒</span><strong>PCI DSS Level 1</strong><p>Highest card payment security</p></div>
-          <div className="lp-badge-card"><span>✅</span><strong>SOC 2 Type II</strong><p>Annual independent audits</p></div>
-          <div className="lp-badge-card"><span>🌐</span><strong>GDPR Ready</strong><p>EU data residency available</p></div>
-          <div className="lp-badge-card"><span>⚡</span><strong>256-bit Encryption</strong><p>AES-256 at rest &amp; in transit</p></div>
+          <div className="lp-badge-card">
+            <span>🏥</span>
+            <strong>HIPAA Compliant</strong>
+            <p>Full audit trails &amp; BAA available</p>
+          </div>
+          <div className="lp-badge-card">
+            <span>🔒</span>
+            <strong>PCI DSS Level 1</strong>
+            <p>Highest card payment security</p>
+          </div>
+          <div className="lp-badge-card">
+            <span>✅</span>
+            <strong>SOC 2 Type II</strong>
+            <p>Annual independent audits</p>
+          </div>
+          <div className="lp-badge-card">
+            <span>🌐</span>
+            <strong>GDPR Ready</strong>
+            <p>EU data residency available</p>
+          </div>
+          <div className="lp-badge-card">
+            <span>⚡</span>
+            <strong>256-bit Encryption</strong>
+            <p>AES-256 at rest &amp; in transit</p>
+          </div>
         </div>
       </section>
 
       {/* ── FINAL CTA ── */}
       <section className="lp-cta-banner">
         <div className="lp-cta-banner__glow" aria-hidden="true" />
-        <h2>Ready to modernise your<br /><span className="lp-gradient-text">healthcare payments?</span></h2>
+        <h2>
+          Ready to modernise your
+          <br />
+          <span className="lp-gradient-text">healthcare payments?</span>
+        </h2>
         <p>Join thousands of providers and patients already on Advancia PayLedger.</p>
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
-          <Link to="/signup" className="lp-btn lp-btn--primary lp-btn--lg">Create Free Account</Link>
-          <Link to="/faq" className="lp-btn lp-btn--ghost lp-btn--lg">Talk to Sales</Link>
+          <Link to="/signup" className="lp-btn lp-btn--primary lp-btn--lg">
+            Create Free Account
+          </Link>
+          <Link to="/faq" className="lp-btn lp-btn--ghost lp-btn--lg">
+            Talk to Sales
+          </Link>
         </div>
         <div className="lp-partners">
           <span className="lp-partners__label">Trusted by</span>
-          {['Quantum Health', 'MediTech Global', 'FutureCare Inc.', 'NovaClinics', 'Alethea Medical'].map(p => (
-            <span key={p} className="lp-partner-name">{p}</span>
+          {[
+            'Quantum Health',
+            'MediTech Global',
+            'FutureCare Inc.',
+            'NovaClinics',
+            'Alethea Medical',
+          ].map((p) => (
+            <span key={p} className="lp-partner-name">
+              {p}
+            </span>
           ))}
         </div>
       </section>
-
     </div>
   );
 };
