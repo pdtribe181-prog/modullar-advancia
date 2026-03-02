@@ -20,7 +20,12 @@ if (-not (Test-Path (Join-Path $root "package.json"))) {
 $dest = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $TargetDir))
 if (Test-Path $dest) {
     Write-Host "Removing existing $dest ..."
-    Remove-Item -Recurse -Force $dest
+    try {
+        Remove-Item -Recurse -Force $dest -ErrorAction Stop
+    } catch {
+        Write-Error "Cannot remove $dest (folder in use). Close Explorer/IDE using it or use a different -TargetDir (e.g. ..\Advancia-Healthcare-main1-$(Get-Date -Format 'yyyyMMdd'))."
+        exit 1
+    }
 }
 
 Write-Host "Copying repo to $dest (excluding node_modules, .git, dist) ..."

@@ -9,7 +9,10 @@
  * The client automatically selects the best available option.
  */
 import { Redis as UpstashRedis } from '@upstash/redis';
-import Redis from 'ioredis';
+import IORedis from 'ioredis';
+
+/** ioredis client type (avoids using namespace as type under strict TS) */
+type IORedisClient = InstanceType<typeof IORedis>;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,7 +34,7 @@ type ClientKind = 'upstash' | 'ioredis' | 'memory';
 // ---------------------------------------------------------------------------
 
 let _upstash: UpstashRedis | null = null;
-let _ioredis: Redis | null = null;
+let _ioredis: IORedisClient | null = null;
 let _activeKind: ClientKind | null = null;
 
 // ---------------------------------------------------------------------------
@@ -67,9 +70,9 @@ export function getUpstashRedis(): UpstashRedis {
 // ioredis (TCP – fallback for local development)
 // ---------------------------------------------------------------------------
 
-export function getRedisClient(): Redis {
+export function getRedisClient(): IORedisClient {
   if (!_ioredis) {
-    _ioredis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    _ioredis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
       retryStrategy: (times) => Math.min(times * 200, 5000),
       maxRetriesPerRequest: 3,
       lazyConnect: true,
@@ -239,7 +242,7 @@ export const redisHelpers = {
   },
 
   async getSession<T = unknown>(sessionId: string): Promise<T | null> {
-    return this.getCache<T>(`session:${sessionId}`);
+    return this.getCache(`session:${sessionId}`) as Promise<T | null>;
   },
 
   async deleteSession(sessionId: string): Promise<void> {
