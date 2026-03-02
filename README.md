@@ -21,6 +21,8 @@ This repository (`modullar-advancia`) is the canonical production codebase for *
 
 **Infrastructure & domains:** VPS, Render, Supabase, and the three domains are in [docs/INFRASTRUCTURE_AND_DOMAINS.md](docs/INFRASTRUCTURE_AND_DOMAINS.md). **Connect frontend to Vercel and Cloudflare Pages:** [docs/CONNECT_VERCEL_AND_CLOUDFLARE.md](docs/CONNECT_VERCEL_AND_CLOUDFLARE.md) (root dir = `frontend`, build = `npm run build`, output = `dist`). **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
 
+**Production setup (manual steps):** Run `npm run whats-needed` to verify domains, then use [docs/MANUAL_STEPS_CHECKLIST.md](docs/MANUAL_STEPS_CHECKLIST.md) and [docs/MANUAL_STEPS_DETAILS.md](docs/MANUAL_STEPS_DETAILS.md) for Supabase, Google OAuth, support@, VPS `.env`, and Cloudflare.
+
 **All related repos:** See [docs/REPO_MAP.md](docs/REPO_MAP.md) for the full list and how each fits (canonical, mirror, variants).
 
 ## Tech Stack

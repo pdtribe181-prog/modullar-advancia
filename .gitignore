@@ -25,6 +25,7 @@ frontend/dist/
 !.vscode/extensions.json
 !.vscode/launch.json
 .idea/
+.cursor/
 
 # OS
 .DS_Store

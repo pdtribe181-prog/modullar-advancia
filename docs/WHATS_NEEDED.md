@@ -47,4 +47,6 @@ One-place checklist of **manual / infra** items. Code and CORS are done in the r
 - **Payroll:** Leave as redirect only. advanciapayroll.com (Hostinger) 301 → advanciapayledger.com. Do not serve the payroll repo (advancia-healthcare1) on that domain; no active payroll app.
 - **productution / modular-saas-platform-nw:** Different bundle (Next.js, microservices, Prisma/Neon). Use as reference only; do not deploy to the live domains.
 
+**Single checklist for human-only steps:** [MANUAL_STEPS_CHECKLIST.md](MANUAL_STEPS_CHECKLIST.md) — domains, Supabase, Google OAuth, support@, VPS .env, Cloudflare security.
+
 Details: [INFRASTRUCTURE_AND_DOMAINS.md](INFRASTRUCTURE_AND_DOMAINS.md), [DOMAIN_AND_BRANDING_CHECKLIST.md](DOMAIN_AND_BRANDING_CHECKLIST.md), [REPO_MAP.md](REPO_MAP.md).
