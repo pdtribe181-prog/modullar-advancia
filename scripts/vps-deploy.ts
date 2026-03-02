@@ -47,11 +47,15 @@ const steps: Step[] = [
   },
   {
     label: 'Install dependencies',
-    remote: `cd ${VPS_APP_DIR} && npm ci --omit=dev`,
+    remote: `cd ${VPS_APP_DIR} && npm ci --ignore-scripts`,
   },
   {
     label: 'Build',
     remote: `cd ${VPS_APP_DIR} && npm run build`,
+  },
+  {
+    label: 'Prune dev dependencies',
+    remote: `cd ${VPS_APP_DIR} && npm prune --omit=dev`,
   },
   {
     label: 'Run preflight checks',
