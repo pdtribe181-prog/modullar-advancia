@@ -146,7 +146,7 @@ Landing, features, FAQ, contact, policy, subscriptions, login/signup, dashboard,
 
 ## Deploy
 
-- **Frontend:** Cloudflare Pages or Vercel; set VITE_API_URL to your API.
+- **Frontend:** Cloudflare Pages or Vercel; set VITE_API_URL to your API. On Vercel set Root Directory to frontend so only the frontend is built.
 - **Backend:** Hostinger VPS or Render; set PORT, FRONTEND_URL (e.g. https://advancia-healthcare.com), CORS, Supabase, Stripe.
 - **Domain:** advancia-healthcare.com in Supabase Redirect URLs and Google OAuth origins.
 "@
