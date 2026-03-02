@@ -349,7 +349,7 @@ describe('Validation Schemas', () => {
       const middleware = validateQuery(paginationSchema);
 
       const req = { query: { page: '2', limit: '10' } } as any;
-      const res = {} as any;
+      const res = { locals: {} } as any;
       const next = jest.fn<any>();
 
       middleware(req, res, next);
@@ -357,6 +357,7 @@ describe('Validation Schemas', () => {
       expect(next).toHaveBeenCalled();
       expect(req.query.page).toBe(2);
       expect(req.query.limit).toBe(10);
+      expect(res.locals.validatedQuery).toEqual({ page: 2, limit: 10, sortOrder: 'desc' });
     });
   });
 });
