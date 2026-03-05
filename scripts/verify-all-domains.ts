@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env tsx
 /**
  * Run DNS verification for all three app domains.
  * Usage: npm run verify:domains   or   npx tsx scripts/verify-all-domains.ts
@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const script = path.join(__dirname, 'verify-dns.ts');
+const tsxCli = path.resolve(__dirname, '..', 'node_modules', 'tsx', 'dist', 'cli.mjs');
 
 const DOMAINS = [
   'advanciapayledger.com',
@@ -19,7 +20,9 @@ const DOMAINS = [
 
 function run(domain: string): Promise<number> {
   return new Promise((resolve) => {
-    const child = spawn('npx', ['tsx', script, '--domain', domain], {
+    // Invoke tsx via the local Node binary and CLI entrypoint so we
+    // don't depend on `npx` or a globally available `tsx` binary.
+    const child = spawn(process.execPath, [tsxCli, script, '--domain', domain], {
       stdio: 'inherit',
       cwd: path.resolve(__dirname, '..'),
     });

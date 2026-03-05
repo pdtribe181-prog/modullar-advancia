@@ -68,3 +68,24 @@ Resolve-DnsName -Name _dmarc.advanciapayledger.com -Type TXT
 - TXT: SPF record (`v=spf1 include:_spf.mx.cloudflare.net ~all`) ✓
 - TXT: DKIM record (`resend._domainkey`) ✓
 - MX: Email routing configured ✓
+
+---
+
+## Additional Domains (`advancia-healthcare.com`, `advanciapayroll.com`)
+
+`npm run verify:domains` also checks:
+
+- `advancia-healthcare.com`
+- `advanciapayroll.com`
+
+**Notes when reading the output:**
+
+- For **advancia-healthcare.com**, you should eventually mirror the **email posture** of `advanciapayledger.com`:
+  - Add SPF, DKIM (`resend._domainkey.advancia-healthcare.com`) and DMARC (`_dmarc.advancia-healthcare.com`) records following the same pattern as in this file and in `MANUAL_STEPS_DETAILS.md`.
+  - Add `MX` records appropriate for your mail provider (Cloudflare Email Routing or Hostinger) if you want `support@advancia-healthcare.com` to receive mail.
+- For **advanciapayroll.com**:
+  - This domain is only intended to **301 redirect** to `https://advanciapayledger.com`.
+  - It is normal for `API Health (https://api.advanciapayroll.com/health)` to **fail** if you do not host an API there.
+  - You may choose **not** to configure DKIM for Resend on this domain if it never sends mail directly; you only need SPF/MX/DMARC if you plan to send or receive email for `@advanciapayroll.com`.
+
+Use the failures printed by `npm run verify:domains` as a checklist and cross‑reference with `MANUAL_STEPS_DETAILS.md` when deciding which records to add for each secondary domain.
