@@ -43,7 +43,7 @@
     "verify:dns": "tsx scripts/verify-dns.ts",
     "verify:domains": "tsx scripts/verify-all-domains.ts",
     "whats-needed": "npm run verify:domains && node -e \"console.log('\\nManual steps checklist: docs/MANUAL_STEPS_CHECKLIST.md')\"",
-    "proceed": "node -e \"const m='\\nProceed: 1) Approve & merge PR #32 → https://github.com/pdtribe181-prog/modullar-advancia/pull/32\\n        2) git pull origin main\\n        3) Checklist: docs/MANUAL_STEPS_CHECKLIST.md  Details: docs/MANUAL_STEPS_DETAILS.md\\n'; console.log(m)\"",
+    "proceed": "node -e \"const m='\\nNext steps (you do these):\\n  1) Merge PR #32: https://github.com/pdtribe181-prog/modullar-advancia/pull/32 (Approve → Merge)\\n  2) git pull origin main\\n  3) Cloudflare: add CNAME www → advanciapayledger.com (see docs/MANUAL_STEPS_DETAILS.md §1b)\\n  4) npm run verify:domains\\n  5) Checklist: docs/MANUAL_STEPS_CHECKLIST.md  Details: docs/MANUAL_STEPS_DETAILS.md\\n'; console.log(m)\"",
     "cloudflare:check": "tsx scripts/cloudflare-setup.ts",
     "staging:setup": "tsx scripts/staging-setup.ts",
     "lighthouse": "tsx scripts/lighthouse-audit.ts",
