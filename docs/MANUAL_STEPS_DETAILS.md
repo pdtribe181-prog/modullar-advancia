@@ -21,6 +21,20 @@ Use this with [MANUAL_STEPS_CHECKLIST.md](MANUAL_STEPS_CHECKLIST.md). All values
 
 ---
 
+## 1b. Cloudflare DNS — www for advanciapayledger.com
+
+**Where:** [Cloudflare Dashboard](https://dash.cloudflare.com) → **advanciapayledger.com** → **DNS** → **Records**.
+
+**Add one record** (so `npm run verify:domains` passes for www):
+
+| Type | Name | Target | Proxy |
+|------|------|--------|--------|
+| CNAME | `www` | `advanciapayledger.com` | Proxied (orange cloud) |
+
+**Verify:** `npm run verify:domains` — CNAME (www.advanciapayledger.com) should show ✅.
+
+---
+
 ## 2. Hostinger — 301 redirect advanciapayroll.com
 
 **Where:** [Hostinger](https://www.hostinger.com) → **Websites** → select the site/domain for **advanciapayroll.com** → **Redirects**.
