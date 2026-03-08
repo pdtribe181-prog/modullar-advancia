@@ -98,7 +98,17 @@
   },
   "files.exclude": {
     "node_modules": true,
-    "dist": true
+    "dist": true,
+    "Advancia-Healthcare-main1": true,
+    "Advancia-Healthcare-main1-20260302": true,
+    "Advancia-Healthcare-main1-fresh": true,
+    "Advancia-Healthcare-main1-new": true
+  },
+  "search.exclude": {
+    "Advancia-Healthcare-main1/**": true,
+    "Advancia-Healthcare-main1-20260302/**": true,
+    "Advancia-Healthcare-main1-fresh/**": true,
+    "Advancia-Healthcare-main1-new/**": true
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "sql.linter.executablePath": "",
