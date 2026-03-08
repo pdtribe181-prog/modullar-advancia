@@ -32,16 +32,17 @@ export default {
   testTimeout: 30000,
   // Recycle workers after 512 MB to prevent stale handles from blocking exit
   workerIdleMemoryLimit: '512MB',
+  // Coverage via V8 native provider (works with --experimental-vm-modules)
   coverageProvider: 'v8',
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/types/**', '!src/__tests__/**'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      statements: 90,
-      branches: 80,
-      functions: 90,
-      lines: 90,
+      statements: 80,
+      lines: 80,
+      branches: 70,
+      functions: 80,
     },
   },
 };

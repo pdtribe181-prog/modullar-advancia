@@ -61,5 +61,19 @@ hostingerdeployments/
 # Google Cloud
 .gcloud/
 
-# Nested project copy
+# Nested project copies
 modullar-advancia/
+Advancia-Healthcare-main1/
+Advancia-Healthcare-main1-*/
+
+# Debug/output text files (local test runs)
+*.txt
+!README.md
+!ARCHITECTURE.md
+!DATABASE_SCHEMA.md
+!DEV_SETUP.md
+!STAGING_RUNBOOK.md
+*.csv
+
+# c8 coverage config (local)
+.c8rc.json
