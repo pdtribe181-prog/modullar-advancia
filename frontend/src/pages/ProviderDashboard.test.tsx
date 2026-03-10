@@ -148,7 +148,9 @@ describe('ProviderDashboard', () => {
   describe('quick stats', () => {
     it('displays upcoming appointment count', async () => {
       render(<ProviderDashboard />);
-      await waitFor(() => expect(screen.getByText('Upcoming Appointments')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getAllByText('Upcoming Appointments').length).toBeGreaterThanOrEqual(1)
+      );
       // scheduled + confirmed = 2
       expect(screen.getByText('2')).toBeInTheDocument();
     });
@@ -245,19 +247,27 @@ describe('ProviderDashboard', () => {
       await waitFor(() => expect(screen.getAllByText('Cancel')).toHaveLength(2));
       // Click the first Cancel button from the table rows (not modal)
       fireEvent.click(screen.getAllByText('Cancel')[0]);
-      await waitFor(() => expect(screen.getByText('Cancel Appointment')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getAllByText('Cancel Appointment').length).toBeGreaterThanOrEqual(1)
+      );
     });
 
     it('cancels appointment with reason', async () => {
       render(<ProviderDashboard />);
       await waitFor(() => expect(screen.getAllByText('Cancel')).toHaveLength(2));
       fireEvent.click(screen.getAllByText('Cancel')[0]);
-      await waitFor(() => expect(screen.getByText('Cancel Appointment')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getAllByText('Cancel Appointment').length).toBeGreaterThanOrEqual(1)
+      );
 
       fireEvent.change(screen.getByPlaceholderText('Enter reason for cancellation...'), {
         target: { value: 'Patient requested' },
       });
-      fireEvent.click(screen.getByText('Cancel Appointment'));
+      // Click the Cancel Appointment button (the one inside the modal)
+      const cancelBtns = screen.getAllByText('Cancel Appointment');
+      const submitBtn =
+        cancelBtns.find((el) => el.tagName === 'BUTTON') || cancelBtns[cancelBtns.length - 1];
+      fireEvent.click(submitBtn);
       await waitFor(() => {
         expect(mockPost).toHaveBeenCalledWith('/provider/appointments/apt1/cancel', {
           reason: 'Patient requested',
@@ -330,7 +340,7 @@ describe('ProviderDashboard', () => {
 
     it('displays provider details', async () => {
       await switchToProfile();
-      expect(screen.getByText('Health Clinic')).toBeInTheDocument();
+      expect(screen.getAllByText('Health Clinic').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Cardiology')).toBeInTheDocument();
       expect(screen.getByText('$200')).toBeInTheDocument();
       expect(screen.getByText('Expert cardiologist')).toBeInTheDocument();

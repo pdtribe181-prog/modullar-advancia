@@ -108,7 +108,7 @@ describe('Convert', () => {
       await waitFor(() => expect(screen.getByText(/1 ETH/)).toBeInTheDocument());
       fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '1' } });
       await waitFor(() => {
-        expect(screen.getByText(/\$3,200/)).toBeInTheDocument();
+        expect(screen.getAllByText(/\$3,200/).length).toBeGreaterThanOrEqual(1);
       });
     });
   });

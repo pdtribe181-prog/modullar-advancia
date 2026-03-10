@@ -16,6 +16,7 @@ import {
 } from '../middleware/rateLimit.middleware.js';
 import {
   validateBody,
+  validateParams,
   createPaymentIntentSchema,
   refundSchema,
   uuidSchema,
@@ -26,6 +27,30 @@ import { isWebhookProcessed, markWebhookProcessed } from '../utils/webhook-idemp
 import { z } from 'zod';
 
 const router = Router();
+
+// Param validation schemas
+const stripeIdParams = z.object({ id: z.string().min(1).max(255) });
+const accountIdParams = z.object({ accountId: z.string().min(1).max(255) });
+const customerIdParams = z.object({ customerId: z.string().min(1).max(255) });
+
+// Body validation schemas for unvalidated POST routes
+const transferBodySchema = z.object({
+  amount: z.number().positive(),
+  destinationAccountId: z.string().min(1),
+  transactionId: z.string().uuid().optional(),
+  description: z.string().max(500).optional(),
+});
+
+const subscriptionBodySchema = z.object({
+  customerId: z.string().min(1),
+  priceId: z.string().min(1),
+  patientId: z.string().uuid().optional(),
+  providerId: z.string().uuid().optional(),
+});
+
+const setupIntentBodySchema = z.object({
+  customerId: z.string().min(1),
+});
 
 // Additional validation schemas for Stripe routes
 const createCustomerSchema = z.object({
@@ -162,6 +187,7 @@ router.post(
 router.get(
   '/payment-intents/:id',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const paymentIntent = await stripeServices.paymentIntents.get(String(req.params.id));
     res.json({ success: true, data: paymentIntent });
@@ -172,6 +198,7 @@ router.post(
   '/payment-intents/:id/confirm',
   paymentLimiter,
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { paymentMethodId } = req.body;
     const paymentIntent = await stripeServices.paymentIntents.confirm(
@@ -185,6 +212,7 @@ router.post(
 router.post(
   '/payment-intents/:id/cancel',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const paymentIntent = await stripeServices.paymentIntents.cancel(String(req.params.id));
     res.json({ success: true, data: paymentIntent });
@@ -221,6 +249,7 @@ router.post(
 router.get(
   '/refunds/:id',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const refund = await stripeServices.refunds.get(String(req.params.id));
     res.json({ success: true, data: refund });
@@ -231,9 +260,17 @@ router.get(
 // CONNECT ROUTES (Provider Onboarding) - Protected
 // ============================================================
 
+const connectAccountBodySchema = z.object({
+  email: z.string().email(),
+  providerId: z.string().uuid(),
+  businessName: z.string().max(200).optional(),
+  country: z.string().length(2),
+});
+
 router.post(
   '/connect/accounts',
   authenticate,
+  validateBody(connectAccountBodySchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { email, providerId, businessName, country } = req.body;
     const account = await stripeServices.connect.createExpressAccount({
@@ -258,6 +295,7 @@ router.post(
 router.get(
   '/connect/accounts/:accountId',
   authenticate,
+  validateParams(accountIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const account = await stripeServices.connect.getAccount(String(req.params.accountId));
     res.json({ success: true, data: account });
@@ -268,6 +306,7 @@ router.post(
   '/connect/accounts/:accountId/onboarding-link',
   authenticate,
   sensitiveLimiter,
+  validateParams(accountIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { returnUrl, refreshUrl } = req.body;
     const env = getEnv();
@@ -289,6 +328,7 @@ router.post(
 router.post(
   '/connect/accounts/:accountId/dashboard-link',
   authenticate,
+  validateParams(accountIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const loginLink = await stripeServices.connect.createLoginLink(String(req.params.accountId));
     res.json({ success: true, data: { url: loginLink.url } });
@@ -298,6 +338,7 @@ router.post(
 router.get(
   '/connect/accounts/:accountId/balance',
   authenticate,
+  validateParams(accountIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const balance = await stripeServices.connect.getBalance(String(req.params.accountId));
     res.json({ success: true, data: balance });
@@ -312,6 +353,7 @@ router.post(
   '/transfers',
   authenticate,
   requireRole('admin'),
+  validateBody(transferBodySchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { amount, destinationAccountId, transactionId, description } = req.body;
     // amount is already in cents — do NOT multiply by 100
@@ -335,6 +377,7 @@ router.post(
 router.post(
   '/subscriptions',
   authenticate,
+  validateBody(subscriptionBodySchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { customerId, priceId, patientId, providerId } = req.body;
     const subscription = await stripeServices.subscriptions.create({
@@ -350,6 +393,7 @@ router.post(
 router.get(
   '/subscriptions/:id',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const subscription = await stripeServices.subscriptions.get(String(req.params.id));
     res.json({ success: true, data: subscription });
@@ -359,6 +403,7 @@ router.get(
 router.post(
   '/subscriptions/:id/cancel',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { cancelAtPeriodEnd } = req.body;
     const subscription = await stripeServices.subscriptions.cancel(
@@ -372,6 +417,7 @@ router.post(
 router.post(
   '/subscriptions/:id/pause',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const subscription = await stripeServices.subscriptions.pause(String(req.params.id));
     res.json({ success: true, data: subscription });
@@ -381,6 +427,7 @@ router.post(
 router.post(
   '/subscriptions/:id/resume',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const subscription = await stripeServices.subscriptions.resume(String(req.params.id));
     res.json({ success: true, data: subscription });
@@ -455,6 +502,7 @@ router.post(
 router.get(
   '/customers/:customerId/payment-methods',
   authenticate,
+  validateParams(customerIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const paymentMethods = await stripeServices.customers.listPaymentMethods(
       String(req.params.customerId)
@@ -466,6 +514,7 @@ router.get(
 router.post(
   '/payment-methods/:id/attach',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { customerId } = req.body;
     const paymentMethod = await stripeServices.paymentMethods.attach(
@@ -479,6 +528,7 @@ router.post(
 router.post(
   '/payment-methods/:id/detach',
   authenticate,
+  validateParams(stripeIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const paymentMethod = await stripeServices.paymentMethods.detach(String(req.params.id));
     res.json({ success: true, data: paymentMethod });
@@ -492,6 +542,7 @@ router.post(
 router.post(
   '/setup-intents',
   authenticate,
+  validateBody(setupIntentBodySchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { customerId } = req.body;
     const setupIntent = await stripeServices.setupIntents.create(customerId);

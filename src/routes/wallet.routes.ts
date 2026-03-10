@@ -16,9 +16,13 @@ import {
 } from '../middleware/auth.middleware.js';
 import { supabase } from '../lib/supabase.js';
 import { apiLimiter, sensitiveLimiter } from '../middleware/rateLimit.middleware.js';
+import { validateParams, uuidSchema } from '../middleware/validation.middleware.js';
 import { asyncHandler, AppError } from '../utils/errors.js';
+import { z } from 'zod';
 
 const router = Router();
+
+const idParams = z.object({ id: uuidSchema });
 
 /**
  * Web3 Wallet Routes
@@ -296,6 +300,7 @@ router.get(
   apiLimiter,
   authenticateWithProfile,
   requireRole('provider', 'admin'),
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const transactionId = req.params.id as string;
     // Get provider
@@ -330,6 +335,7 @@ router.get(
   '/:id',
   apiLimiter,
   authenticate,
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const walletId = req.params.id as string;
     const wallet = await linkedWalletsService.getById(walletId, req.user!.id);
@@ -370,6 +376,7 @@ router.patch(
   '/:id',
   apiLimiter,
   authenticate,
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const walletId = req.params.id as string;
     const { label, payoutEnabled, minPayoutAmount, payoutCurrency } = req.body;
@@ -422,6 +429,7 @@ router.post(
   sensitiveLimiter,
   authenticateWithProfile,
   requireRole('provider', 'admin'),
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const walletId = req.params.id as string;
     const wallet = await linkedWalletsService.setPrimaryPayout(walletId, req.user!.id);
@@ -456,6 +464,7 @@ router.delete(
   '/:id',
   sensitiveLimiter,
   authenticate,
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const walletId = req.params.id as string;
     // Get wallet before deleting for audit
@@ -496,6 +505,7 @@ router.post(
   sensitiveLimiter,
   authenticateWithProfile,
   requireRole('admin'),
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const walletId = req.params.id as string;
     const { reason } = req.body;

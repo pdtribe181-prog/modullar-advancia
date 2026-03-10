@@ -77,7 +77,7 @@ export function initSentry(config: SentryConfig): void {
     ],
   });
 
-  if (import.meta.env.DEV) console.log('Sentry initialized for frontend');
+  if (import.meta.env.DEV) console.warn('Sentry initialized for frontend');
 }
 
 // Error boundary wrapper component

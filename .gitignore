@@ -77,3 +77,9 @@ Advancia-Healthcare-main1-*/
 
 # c8 coverage config (local)
 .c8rc.json
+
+# Vitest results (local test artifacts)
+vitest-results.json
+
+# Temp files
+*.tmp

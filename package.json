@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "node config/esbuild.config.js",
-    "postbuild": "node -e \"require('fs').copyFileSync('openapi.yaml', 'dist/openapi.yaml')\" && echo Build completed successfully",
+    "postbuild": "node -e \"import('fs').then(f=>f.copyFileSync('openapi.yaml','dist/openapi.yaml'))\" && echo Build completed successfully",
     "start": "node dist/server.js",
     "dev": "tsx --watch src/server.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -51,7 +51,7 @@
     "health:check": "tsx scripts/server-health-monitor.ts",
     "health:json": "tsx scripts/server-health-monitor.ts --json",
     "memory:test": "tsx scripts/memory-leak-test.ts",
-    "push:mirror": "git push origin main && git push together main"
+    "push:mirror": "git push origin main"
   },
   "keywords": [
     "healthcare",
@@ -60,7 +60,7 @@
     "compliance"
   ],
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "author": "",
   "license": "ISC",

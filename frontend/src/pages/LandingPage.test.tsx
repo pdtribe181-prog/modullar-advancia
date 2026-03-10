@@ -26,9 +26,10 @@ describe('LandingPage', () => {
 
     it('shows main heading', () => {
       renderComponent();
-      expect(
-        screen.getByText(/Complete Platform for Modern Healthcare Finance/)
-      ).toBeInTheDocument();
+      // Text is split across <br/> and <span>, so query the h1 element directly
+      const h1 = document.querySelector('.lp-hero-title')!;
+      expect(h1.textContent).toMatch(/Complete Platform for/);
+      expect(h1.textContent).toMatch(/Modern Healthcare Finance/);
     });
 
     it('shows subtitle', () => {
@@ -114,7 +115,7 @@ describe('LandingPage', () => {
 
     it('shows three steps', () => {
       renderComponent();
-      expect(screen.getByText('Create Account')).toBeInTheDocument();
+      expect(screen.getByText('Create Your Account')).toBeInTheDocument();
       expect(screen.getByText('Connect & Configure')).toBeInTheDocument();
       expect(screen.getByText('Start Transacting')).toBeInTheDocument();
     });
@@ -142,9 +143,9 @@ describe('LandingPage', () => {
 
     it('shows plan names', () => {
       renderComponent();
-      expect(screen.getByText('Patient')).toBeInTheDocument();
-      expect(screen.getByText('Provider')).toBeInTheDocument();
-      expect(screen.getByText('Enterprise')).toBeInTheDocument();
+      expect(screen.getAllByText('Patient').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Provider').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Enterprise').length).toBeGreaterThanOrEqual(1);
     });
 
     it('shows Most Popular badge', () => {
@@ -170,7 +171,12 @@ describe('LandingPage', () => {
   describe('final CTA', () => {
     it('shows CTA heading', () => {
       renderComponent();
-      expect(screen.getByText(/Ready to modernise your healthcare payments/)).toBeInTheDocument();
+      // Text is split across <br/> and <span>, so query the heading element directly
+      const heading = Array.from(document.querySelectorAll('h2')).find((el) =>
+        el.textContent?.includes('Ready to modernise')
+      );
+      expect(heading).toBeTruthy();
+      expect(heading!.textContent).toMatch(/healthcare payments/);
     });
 
     it('shows CTA buttons', () => {
@@ -180,7 +186,7 @@ describe('LandingPage', () => {
 
     it('shows partner names', () => {
       renderComponent();
-      expect(screen.getByText(/Quantum Health/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Quantum Health/).length).toBeGreaterThanOrEqual(1);
     });
   });
 });

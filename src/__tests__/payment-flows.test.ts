@@ -219,8 +219,8 @@ describe('Payment Flows', () => {
         .send({
           customerId: 'cus_123',
           priceId: 'price_123',
-          patientId: 'patient-1',
-          providerId: 'provider-1',
+          patientId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+          providerId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
         });
 
       expect(res.status).toBe(200);
@@ -300,7 +300,12 @@ describe('Payment Flows', () => {
       const res = await request(app)
         .post('/stripe/connect/accounts')
         .set('Authorization', 'Bearer token')
-        .send({ email: 'dr@clinic.com', providerId: 'prov-1', businessName: 'Clinic' });
+        .send({
+          email: 'dr@clinic.com',
+          providerId: 'dddddddd-dddd-4ddd-addd-dddddddddddd',
+          businessName: 'Clinic',
+          country: 'US',
+        });
 
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe('acct_prov1');
@@ -381,7 +386,7 @@ describe('Payment Flows', () => {
         .send({
           amount: 5000,
           destinationAccountId: 'acct_prov1',
-          transactionId: 'txn_123',
+          transactionId: 'cccccccc-cccc-4ccc-accc-cccccccccccc',
         });
 
       expect(res.status).toBe(200);

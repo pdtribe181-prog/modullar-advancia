@@ -208,17 +208,22 @@ describe('AdminConsole', () => {
     it('renders all tab buttons', async () => {
       renderAdmin();
       await waitFor(() => expect(screen.getByText('Admin Console')).toBeInTheDocument());
-      expect(screen.getByText(/dashboard/i)).toBeInTheDocument();
-      expect(screen.getByText(/users/i)).toBeInTheDocument();
-      expect(screen.getByText(/transactions/i)).toBeInTheDocument();
-      expect(screen.getByText(/webhooks/i)).toBeInTheDocument();
-      expect(screen.getByText(/logs/i)).toBeInTheDocument();
+      const tabs = screen.getAllByRole('button');
+      const tabTexts = tabs.map((t) => t.textContent?.toLowerCase() || '');
+      expect(tabTexts.some((t) => t.includes('dashboard'))).toBe(true);
+      expect(tabTexts.some((t) => t.includes('users'))).toBe(true);
+      expect(tabTexts.some((t) => t.includes('transactions'))).toBe(true);
+      expect(tabTexts.some((t) => t.includes('webhooks'))).toBe(true);
+      expect(tabTexts.some((t) => t.includes('logs'))).toBe(true);
     });
 
     it('switches to users tab', async () => {
       renderAdmin();
       await waitFor(() => expect(screen.getByText('Admin Console')).toBeInTheDocument());
-      fireEvent.click(screen.getByText(/users/i));
+      const usersTab = screen
+        .getAllByRole('button')
+        .find((b) => /users/i.test(b.textContent || ''))!;
+      fireEvent.click(usersTab);
       await waitFor(() =>
         expect(screen.getByPlaceholderText('Search users...')).toBeInTheDocument()
       );
@@ -227,7 +232,10 @@ describe('AdminConsole', () => {
     it('switches to transactions tab', async () => {
       renderAdmin();
       await waitFor(() => expect(screen.getByText('Admin Console')).toBeInTheDocument());
-      fireEvent.click(screen.getByText(/transactions/i));
+      const txnTab = screen
+        .getAllByRole('button')
+        .find((b) => /transactions/i.test(b.textContent || ''))!;
+      fireEvent.click(txnTab);
       await waitFor(() => expect(screen.getByText('No transactions found')).toBeInTheDocument());
     });
   });
@@ -236,7 +244,10 @@ describe('AdminConsole', () => {
     async function switchToUsersTab() {
       renderAdmin();
       await waitFor(() => expect(screen.getByText('Admin Console')).toBeInTheDocument());
-      fireEvent.click(screen.getByText(/users/i));
+      const usersTab = screen
+        .getAllByRole('button')
+        .find((b) => /users/i.test(b.textContent || ''))!;
+      fireEvent.click(usersTab);
       await waitFor(() => expect(screen.getByText('alice@test.com')).toBeInTheDocument());
     }
 
@@ -249,7 +260,7 @@ describe('AdminConsole', () => {
 
     it('shows user roles', async () => {
       await switchToUsersTab();
-      expect(screen.getByText('patient')).toBeInTheDocument();
+      expect(screen.getAllByText('patient').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('provider')).toBeInTheDocument();
     });
 

@@ -88,7 +88,7 @@ describe('Disputes', () => {
 
     it('displays type badges', () => {
       renderDisputes();
-      expect(screen.getByText(/Refund/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Refund/).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText(/Billing Error/)).toBeInTheDocument();
     });
 
@@ -173,7 +173,7 @@ describe('Disputes', () => {
     });
 
     it('submits a new dispute', async () => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       renderDisputes();
       fireEvent.click(screen.getByText('+ New Dispute'));
 

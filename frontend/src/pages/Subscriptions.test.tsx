@@ -81,8 +81,8 @@ describe('Subscriptions', () => {
 
     it('shows CTA buttons', () => {
       renderComponent();
-      expect(screen.getByText('Start Free')).toBeInTheDocument();
-      expect(screen.getByText('Start 14-Day Trial')).toBeInTheDocument();
+      expect(screen.getByText('Get Started Free')).toBeInTheDocument();
+      expect(screen.getByText('Start 14-Day Free Trial')).toBeInTheDocument();
       expect(screen.getByText('Contact Sales')).toBeInTheDocument();
     });
   });
@@ -90,8 +90,7 @@ describe('Subscriptions', () => {
   describe('billing toggle', () => {
     it('switches to annual pricing', () => {
       renderComponent();
-      screen.getByRole('button', { name: '' });
-      // The toggle is the knob button with no text
+      // The toggle button has aria-label="Toggle annual billing"
       const toggleButtons = document.querySelectorAll('.sub-toggle__btn');
       expect(toggleButtons.length).toBeGreaterThanOrEqual(1);
       fireEvent.click(toggleButtons[0]);
@@ -118,7 +117,7 @@ describe('Subscriptions', () => {
   describe('FAQ section', () => {
     it('shows FAQ heading', () => {
       renderComponent();
-      expect(screen.getByText('Frequently Asked Questions')).toBeInTheDocument();
+      expect(screen.getByText('Common billing questions')).toBeInTheDocument();
     });
 
     it('shows all FAQ questions', () => {

@@ -6,7 +6,7 @@ esbuild
     entryPoints: ['src/server.ts'],
     bundle: true,
     platform: 'node',
-    target: 'node20',
+    target: 'node22',
     outfile: 'dist/server.js',
     format: 'esm',
     packages: 'external',

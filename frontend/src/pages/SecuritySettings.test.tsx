@@ -165,8 +165,8 @@ describe('SecuritySettings', () => {
     it('renders all tabs', async () => {
       renderSecuritySettings();
       await waitFor(() => {
-        expect(screen.getByText(/Notifications/)).toBeInTheDocument();
-        expect(screen.getByText(/Linked Accounts/)).toBeInTheDocument();
+        expect(screen.getAllByText(/Notifications/).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText(/Linked Accounts/).length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText(/Activity Log/)).toBeInTheDocument();
         expect(screen.getByText(/Recovery/)).toBeInTheDocument();
       });
@@ -231,7 +231,7 @@ describe('SecuritySettings', () => {
 
     it('shows linked identities', async () => {
       await switchToIdentitiesTab();
-      expect(screen.getByText('google')).toBeInTheDocument();
+      expect(screen.getAllByText('google').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('user@gmail.com')).toBeInTheDocument();
     });
 
@@ -287,7 +287,7 @@ describe('SecuritySettings', () => {
 
     it('shows IP addresses', async () => {
       await switchToActivityTab();
-      expect(screen.getByText(/192\.168\.1\.1/)).toBeInTheDocument();
+      expect(screen.getAllByText(/192\.168\.1\.1/).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText(/10\.0\.0\.1/)).toBeInTheDocument();
     });
 

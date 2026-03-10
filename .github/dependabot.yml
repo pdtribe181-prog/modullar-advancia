@@ -69,7 +69,7 @@ updates:
 
   # ── Docker ──
   - package-ecosystem: docker
-    directory: /
+    directory: /config
     schedule:
       interval: weekly
       day: monday

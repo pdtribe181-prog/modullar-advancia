@@ -47,11 +47,11 @@ describe('Features', () => {
     it('shows all category buttons', () => {
       renderComponent();
       expect(screen.getByText('All')).toBeInTheDocument();
-      expect(screen.getByText('Payments')).toBeInTheDocument();
-      expect(screen.getByText('MedBed')).toBeInTheDocument();
-      expect(screen.getByText('Security')).toBeInTheDocument();
-      expect(screen.getByText('Analytics')).toBeInTheDocument();
-      expect(screen.getByText('Integrations')).toBeInTheDocument();
+      expect(screen.getAllByText('Payments').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('MedBed').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Security').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Analytics').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Integrations').length).toBeGreaterThanOrEqual(1);
     });
 
     it('filters by category on click', () => {
@@ -59,7 +59,11 @@ describe('Features', () => {
       const allCards = document.querySelectorAll('.feat-card');
       const totalCards = allCards.length;
 
-      fireEvent.click(screen.getByText('Payments'));
+      // Click the Payments category button (not the card badge)
+      const paymentsBtn = screen
+        .getAllByText('Payments')
+        .find((el) => el.closest('button.faq-tab'))!;
+      fireEvent.click(paymentsBtn);
       const filteredCards = document.querySelectorAll('.feat-card');
       expect(filteredCards.length).toBeLessThan(totalCards);
       expect(filteredCards.length).toBeGreaterThan(0);
@@ -67,7 +71,10 @@ describe('Features', () => {
 
     it('shows all features when All is clicked', () => {
       renderComponent();
-      fireEvent.click(screen.getByText('Payments'));
+      const paymentsBtn = screen
+        .getAllByText('Payments')
+        .find((el) => el.closest('button.faq-tab'))!;
+      fireEvent.click(paymentsBtn);
       fireEvent.click(screen.getByText('All'));
       const allCards = document.querySelectorAll('.feat-card');
       expect(allCards.length).toBe(12);
@@ -75,8 +82,11 @@ describe('Features', () => {
 
     it('sets active class on selected category', () => {
       renderComponent();
-      fireEvent.click(screen.getByText('Security'));
-      const btn = screen.getByText('Security').closest('button')!;
+      const securityBtn = screen
+        .getAllByText('Security')
+        .find((el) => el.closest('button.faq-tab'))!;
+      fireEvent.click(securityBtn);
+      const btn = securityBtn.closest('button')!;
       expect(btn.className).toContain('faq-tab--active');
     });
   });
@@ -98,9 +108,7 @@ describe('Features', () => {
 
     it('shows feature descriptions', () => {
       renderComponent();
-      expect(
-        screen.getByText(/Book, manage and schedule quantum-enabled MedBed/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Book Standard, Quantum, and Premium MedBed/)).toBeInTheDocument();
     });
 
     it('shows bulleted feature details', () => {

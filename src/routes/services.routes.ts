@@ -24,7 +24,14 @@ import { Router, Request, Response } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { asyncHandler } from '../utils/errors.js';
 import { z } from 'zod';
-import { validateBody, validateQuery } from '../middleware/validation.middleware.js';
+import {
+  validateBody,
+  validateQuery,
+  validateParams,
+  uuidSchema,
+} from '../middleware/validation.middleware.js';
+
+const idParams = z.object({ id: uuidSchema });
 import {
   authenticate,
   requireRole,
@@ -135,6 +142,7 @@ router.get(
  */
 router.get(
   '/:id',
+  validateParams(idParams),
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params.id as string;
 
@@ -201,6 +209,7 @@ router.put(
   '/:id',
   authenticate,
   requireRole('admin'),
+  validateParams(idParams),
   validateBody(updateServiceSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
@@ -240,6 +249,7 @@ router.delete(
   '/:id',
   authenticate,
   requireRole('admin'),
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
 
@@ -277,6 +287,7 @@ router.post(
   '/:id/activate',
   authenticate,
   requireRole('admin'),
+  validateParams(idParams),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
 

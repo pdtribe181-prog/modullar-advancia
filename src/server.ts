@@ -1,13 +1,12 @@
 // Express API Server for Healthcare Platform
 import 'dotenv/config';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { readFileSync } from 'fs';
 import { parse } from 'yaml';
 import { validateEnv, getEnv } from './config/env.js';
-import { supabase, createServiceClient } from './lib/supabase.js';
-import * as apiServices from './services/api.service.js';
+import { createServiceClient } from './lib/supabase.js';
 import stripeRoutes from './routes/stripe.routes.js';
 import connectRoutes from './routes/connect.routes.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -24,26 +23,24 @@ import retentionRoutes from './routes/retention.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import orchestrationRoutes from './routes/orchestration.routes.js';
 import servicesRoutes from './routes/services.routes.js';
+import profileRoutes from './routes/profile.routes.js';
+import transactionsRoutes from './routes/transactions.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js';
+import disputesRoutes from './routes/disputes.routes.js';
+import providersRoutes from './routes/providers.routes.js';
+import patientsRoutes from './routes/patients.routes.js';
+import webhooksRoutes from './routes/webhooks.routes.js';
+import apiKeysRoutes from './routes/api-keys.routes.js';
 import { auditLog } from './middleware/audit.middleware.js';
 import { metricsMiddleware } from './middleware/metrics.middleware.js';
 import { apiVersioning } from './middleware/api-versioning.middleware.js';
-import { apiLimiter, paymentLimiter } from './middleware/rateLimit.middleware.js';
+import { apiLimiter } from './middleware/rateLimit.middleware.js';
 import { configureSecurityHeaders, getCorsConfig } from './middleware/security.middleware.js';
-import {
-  compressionMiddleware,
-  fastCompressionMiddleware,
-} from './middleware/compression.middleware.js';
+import { compressionMiddleware } from './middleware/compression.middleware.js';
 import { getRedisKind, redisHelpers } from './lib/redis.js';
 import { getAllCircuitBreakerStats } from './utils/circuit-breaker.js';
 import { csrfProtection } from './middleware/csrf.middleware.js';
 import { sanitizeBody } from './middleware/sanitize.middleware.js';
-import { z } from 'zod';
-import { validateParams, uuidSchema } from './middleware/validation.middleware.js';
-
-// Param validation schemas for inline routes
-const patientIdParams = z.object({ patientId: uuidSchema });
-const providerIdParams = z.object({ providerId: uuidSchema });
-const idParams = z.object({ id: uuidSchema });
 import {
   requestId,
   requestLogger,
@@ -51,15 +48,12 @@ import {
   notFoundHandler,
   logger,
 } from './middleware/logging.middleware.js';
-import type { AuthenticatedRequest } from './types/express.types.js';
-import type { AuthenticatedRequest as AuthReqWithProfile } from './middleware/auth.middleware.js';
-import { getErrorMessage, sendErrorResponse, asyncHandler, AppError } from './utils/errors.js';
+
 import type { OpenAPIV3 } from 'openapi-types';
 import {
   initializeMonitoring,
   sentryRequestHandler,
   sentryErrorHandler,
-  userContextMiddleware,
   getMonitoringHealth,
   flushEvents,
   captureError,
@@ -94,12 +88,8 @@ app.set('trust proxy', 1);
 // Sentry request handler (must be first middleware)
 app.use(sentryRequestHandler);
 
-// Body parser with size limit
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// Basic XSS sanitization
-app.use(sanitizeBody);
+// Basic XSS sanitization (applied after body parsing below)
+// Note: express.json is applied conditionally below to avoid conflict with Stripe raw body
 
 // Load OpenAPI spec
 let swaggerDocument: OpenAPIV3.Document | null = null;
@@ -140,7 +130,7 @@ app.use('/api', apiVersioning);
 // Apply rate limiting to all API routes
 app.use('/api/v1', apiLimiter);
 
-// Use raw body for Stripe webhook, JSON for everything else
+// Use raw body for Stripe webhook, JSON + URL-encoded for everything else
 app.use((req, res, next) => {
   if (req.path === '/api/v1/stripe/webhook') {
     express.raw({ type: 'application/json', limit: '1mb' })(req, res, next);
@@ -148,6 +138,10 @@ app.use((req, res, next) => {
     express.json({ limit: '10kb' })(req, res, next);
   }
 });
+app.use(express.urlencoded({ extended: true }));
+
+// Body sanitization (must come after body parsers)
+app.use(sanitizeBody);
 
 // CSRF protection for state-changing requests (POST/PUT/PATCH/DELETE)
 // Webhooks are excluded — they use their own signature verification
@@ -163,36 +157,6 @@ app.use('/api/v1', (req, res, next) => {
   }
   next();
 });
-
-// Auth middleware — fetches user + profile for role-based checks
-const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, error: 'Missing authorization header' });
-  }
-
-  const token = authHeader.split(' ')[1];
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(token);
-
-  if (error || !user) {
-    return res.status(401).json({ success: false, error: 'Invalid token' });
-  }
-
-  // Fetch user profile for role information
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  const authedReq = req as AuthenticatedRequest;
-  authedReq.user = user;
-  authedReq.userProfile = profile ?? undefined;
-  next();
-};
 
 // API Routes
 const apiRouter = express.Router();
@@ -211,289 +175,20 @@ apiRouter.use('/retention', retentionRoutes);
 apiRouter.use('/webhooks/supabase', databaseWebhookRoutes);
 apiRouter.use('/orchestration', orchestrationRoutes);
 apiRouter.use('/services', servicesRoutes); // Medical services catalog (local DB)
+apiRouter.use('/profile', profileRoutes);
+apiRouter.use('/transactions', transactionsRoutes);
+apiRouter.use('/notifications', notificationsRoutes);
+apiRouter.use('/disputes', disputesRoutes);
+apiRouter.use('/providers', providersRoutes);
+apiRouter.use('/patients', patientsRoutes);
+apiRouter.use('/webhooks', webhooksRoutes);
+apiRouter.use('/api-keys', apiKeysRoutes);
 
 app.use('/api/v1', apiRouter);
 
 // Metrics routes (outside /api/v1 — Prometheus scraper + admin dashboard)
 app.use('/metrics', metricsRoutes);
 
-// Profile routes (authenticated)
-// Expose under /api/v1 so frontend can call '/profile' when VITE_API_URL includes '/api/v1'.
-apiRouter.get(
-  '/profile',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const profile = await apiServices.userProfilesService.getById(user.id);
-    res.json({ success: true, data: profile });
-  })
-);
-
-apiRouter.patch(
-  '/profile',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    // Whitelist allowed fields to prevent mass assignment (e.g., role escalation)
-    const { full_name, phone, avatar_url, date_of_birth, address } = req.body;
-    const allowedUpdates = Object.fromEntries(
-      Object.entries({ full_name, phone, avatar_url, date_of_birth, address }).filter(
-        ([, v]) => v !== undefined
-      )
-    );
-    const profile = await apiServices.userProfilesService.update(user.id, allowedUpdates);
-    res.json({ success: true, data: profile });
-  })
-);
-// ─── Transactions ─────────────────────────────────────────────────────────
-// GET /api/v1/transactions — list the authenticated user's transactions
-apiRouter.get(
-  '/transactions',
-  authenticateToken,
-  apiLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const limit = Math.min(parseInt(String(req.query.limit || '50'), 10), 200);
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-
-    let transactions;
-    if (userRole === 'admin') {
-      // Admins can see all transactions
-      const { data, error } = await (
-        createServiceClient() as ReturnType<typeof createServiceClient>
-      )
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-      if (error) throw AppError.internal('Failed to fetch transactions');
-      transactions = data;
-    } else if (userRole === 'provider') {
-      transactions = await apiServices.transactionsService.getByProvider(user.id);
-    } else {
-      transactions = await apiServices.transactionsService.getByPatient(user.id);
-    }
-
-    res.json({ success: true, data: transactions?.slice(0, limit) ?? [] });
-  })
-);
-
-// POST /api/v1/transactions/by-patient — also reachable under /api/v1
-apiRouter.post(
-  '/transactions/by-patient',
-  authenticateToken,
-  apiLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    const patientId =
-      userRole === 'admin' || userRole === 'provider' ? String(req.body.patientId) : user.id;
-    const transactions = await apiServices.transactionsService.getByPatient(patientId);
-    res.json({ success: true, data: transactions });
-  })
-);
-
-// POST /api/v1/transactions/by-provider
-apiRouter.post(
-  '/transactions/by-provider',
-  authenticateToken,
-  apiLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    const providerId = userRole === 'admin' ? String(req.body.providerId) : user.id;
-    const transactions = await apiServices.transactionsService.getByProvider(providerId);
-    res.json({ success: true, data: transactions });
-  })
-);
-
-// POST /api/v1/transactions — create
-apiRouter.post(
-  '/transactions',
-  authenticateToken,
-  paymentLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const transaction = await apiServices.transactionsService.create(req.body);
-    res.status(201).json({ success: true, data: transaction });
-  })
-);
-
-// ─── Notifications ─────────────────────────────────────────────────────────
-apiRouter.get(
-  '/notifications',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const notifications = await apiServices.notificationsService.getUnread(user.id);
-    res.json({ success: true, data: notifications });
-  })
-);
-
-apiRouter.patch(
-  '/notifications/:id/read',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const notification = await apiServices.notificationsService.markAsRead(String(req.params.id));
-    res.json({ success: true, data: notification });
-  })
-);
-
-// ─── Disputes ──────────────────────────────────────────────────────────────
-apiRouter.get(
-  '/disputes',
-  authenticateToken,
-  asyncHandler(async (_req: Request, res: Response) => {
-    const disputes = await apiServices.disputesService.getAll();
-    res.json({ success: true, data: disputes });
-  })
-);
-
-apiRouter.get(
-  '/disputes/:id',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const dispute = await apiServices.disputesService.getById(String(req.params.id));
-    res.json({ success: true, data: dispute });
-  })
-);
-
-apiRouter.post(
-  '/disputes',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const dispute = await apiServices.disputesService.create(req.body);
-    res.status(201).json({ success: true, data: dispute });
-  })
-);
-
-// ─── Providers ─────────────────────────────────────────────────────────────
-apiRouter.get(
-  '/providers',
-  authenticateToken,
-  asyncHandler(async (_req: Request, res: Response) => {
-    const providers = await apiServices.providersService.getAll();
-    res.json({ success: true, data: providers });
-  })
-);
-
-apiRouter.get(
-  '/providers/specialty/:specialty',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const providers = await apiServices.providersService.getBySpecialty(
-      String(req.params.specialty)
-    );
-    res.json({ success: true, data: providers });
-  })
-);
-
-apiRouter.get(
-  '/providers/:id',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const provider = await apiServices.providersService.getById(String(req.params.id));
-    res.json({ success: true, data: provider });
-  })
-);
-
-// ─── Patients ──────────────────────────────────────────────────────────────
-apiRouter.get(
-  '/patients',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole === 'admin') {
-      const patients = await apiServices.patientsService.getAll();
-      return res.json({ success: true, data: patients });
-    }
-    const patient = await apiServices.patientsService.getById(user.id);
-    res.json({ success: true, data: patient ? [patient] : [] });
-  })
-);
-
-apiRouter.get(
-  '/patients/:id',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const patientId = String(req.params.id);
-    const userRole = (req as AuthReqWithProfile).userProfile?.role;
-    if (userRole !== 'admin' && userRole !== 'provider' && user.id !== patientId) {
-      return res
-        .status(403)
-        .json({ success: false, error: 'Forbidden: cannot access other patient records' });
-    }
-    const patient = await apiServices.patientsService.getById(patientId);
-    res.json({ success: true, data: patient });
-  })
-);
-
-// ─── Webhooks ──────────────────────────────────────────────────────────────
-apiRouter.get(
-  '/webhooks',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const webhooks = await apiServices.webhooksService.getByUser(user.id);
-    res.json({ success: true, data: webhooks });
-  })
-);
-
-apiRouter.post(
-  '/webhooks',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const webhook = await apiServices.webhooksService.create({ ...req.body, user_id: user.id });
-    res.status(201).json({ success: true, data: webhook });
-  })
-);
-
-apiRouter.delete(
-  '/webhooks/:id',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    await apiServices.webhooksService.delete(String(req.params.id));
-    res.status(204).send();
-  })
-);
-
-// ─── API Keys ──────────────────────────────────────────────────────────────
-apiRouter.get(
-  '/api-keys',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const apiKeys = await apiServices.apiKeysService.getByUser(user.id);
-    res.json({ success: true, data: apiKeys });
-  })
-);
-
-apiRouter.post(
-  '/api-keys',
-  authenticateToken,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req as AuthenticatedRequest;
-    const apiKey = await apiServices.apiKeysService.create({ ...req.body, user_id: user.id });
-    res.status(201).json({ success: true, data: apiKey });
-  })
-);
-
-apiRouter.delete(
-  '/api-keys/:id',
-  authenticateToken,
-  validateParams(idParams),
-  asyncHandler(async (req: Request, res: Response) => {
-    await apiServices.apiKeysService.revoke(String(req.params.id));
-    res.status(204).send();
-  })
-);
 const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
   try {
     // Use service role to perform a real, lightweight PostgREST query.

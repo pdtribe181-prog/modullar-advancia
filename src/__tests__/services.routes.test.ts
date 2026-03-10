@@ -56,6 +56,8 @@ jest.unstable_mockModule('../middleware/auth.middleware.js', () => ({
 jest.unstable_mockModule('../middleware/validation.middleware.js', () => ({
   validateBody: () => (_req: any, _res: any, next: any) => next(),
   validateQuery: () => (_req: any, _res: any, next: any) => next(),
+  validateParams: () => (_req: any, _res: any, next: any) => next(),
+  uuidSchema: { optional: () => ({}) },
 }));
 
 const { default: servicesRouter } = await import('../routes/services.routes.js');
