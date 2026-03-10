@@ -2,7 +2,8 @@ import { Outlet, Link, NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../providers/AuthProvider';
 import { isHealthcareHost, getSupportEmail } from '../config/domains';
-import { OPEN_COOKIE_PREFS_EVENT } from './CookieConsent';
+/** Must match the event name in CookieConsent.tsx */
+const OPEN_COOKIE_PREFS_EVENT = 'adv-open-cookie-prefs';
 
 export function Layout() {
   const { user, logout } = useAuth();

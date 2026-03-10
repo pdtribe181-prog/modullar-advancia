@@ -6,12 +6,17 @@ import { LoadingOverlay } from './components/Spinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './providers/AuthProvider';
 import type { ReactNode } from 'react';
-import { CookieConsent } from './components/CookieConsent';
-
-// Eager load the home and login pages for fast initial render
-import { LandingPage } from './pages/LandingPage';
-import { HealthcareLanding } from './pages/HealthcareLanding';
-import { Login } from './pages/Login';
+// Lazy load pages for better code splitting
+const CookieConsent = lazy(() =>
+  import('./components/CookieConsent').then((m) => ({ default: m.CookieConsent }))
+);
+const LandingPage = lazy(() =>
+  import('./pages/LandingPage').then((m) => ({ default: m.LandingPage }))
+);
+const HealthcareLanding = lazy(() =>
+  import('./pages/HealthcareLanding').then((m) => ({ default: m.HealthcareLanding }))
+);
+const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
 
 // Lazy load other pages for better code splitting
 const Features = lazy(() => import('./pages/Features').then((m) => ({ default: m.Features })));
