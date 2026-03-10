@@ -18,7 +18,7 @@
  * We serve. He creates. He gets the glory.
  */
 
-import { supabase } from '../lib/supabase.js';
+import { createServiceClient } from '../lib/supabase.js';
 import { logger } from '../middleware/logging.middleware.js';
 
 export interface Service {
@@ -60,7 +60,8 @@ class ServiceCatalog {
    */
   private async loadServices(): Promise<void> {
     try {
-      const { data, error } = await supabase
+      const serviceClient = createServiceClient();
+      const { data, error } = await serviceClient
         .from('services')
         .select('*')
         .order('category', { ascending: true })

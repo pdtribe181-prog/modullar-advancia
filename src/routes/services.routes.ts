@@ -21,7 +21,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { supabase } from '../lib/supabase.js';
+import { createServiceClient } from '../lib/supabase.js';
 import { asyncHandler } from '../utils/errors.js';
 import { z } from 'zod';
 import {
@@ -180,7 +180,11 @@ router.post(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const serviceData = req.body;
 
-    const { data, error } = await supabase.from('services').insert([serviceData]).select().single();
+    const { data, error } = await createServiceClient()
+      .from('services')
+      .insert([serviceData])
+      .select()
+      .single();
 
     if (error) {
       return res.status(400).json({
@@ -215,7 +219,7 @@ router.put(
     const { id } = req.params;
     const updates = req.body;
 
-    const { data, error } = await supabase
+    const { data, error } = await createServiceClient()
       .from('services')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -254,7 +258,7 @@ router.delete(
     const { id } = req.params;
 
     // Soft delete by setting is_active to false
-    const { data, error } = await supabase
+    const { data, error } = await createServiceClient()
       .from('services')
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -291,7 +295,7 @@ router.post(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
 
-    const { data, error } = await supabase
+    const { data, error } = await createServiceClient()
       .from('services')
       .update({ is_active: true, updated_at: new Date().toISOString() })
       .eq('id', id)

@@ -14,6 +14,7 @@ const mockOrder2 = jest.fn<any>();
 
 jest.unstable_mockModule('../lib/supabase.js', () => ({
   supabase: { from: mockFrom },
+  createServiceClient: () => ({ from: mockFrom }),
 }));
 
 jest.unstable_mockModule('../middleware/logging.middleware.js', () => ({

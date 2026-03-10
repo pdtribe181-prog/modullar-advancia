@@ -38,14 +38,15 @@ const mockDbSelect = jest.fn<any>();
 const mockDbEq = jest.fn<any>();
 const mockDbSingle = jest.fn<any>();
 
+const mockSupabaseFrom = jest.fn<any>().mockReturnValue({
+  insert: mockDbInsert,
+  update: mockDbUpdate,
+  select: mockDbSelect,
+});
+
 jest.unstable_mockModule('../lib/supabase.js', () => ({
-  supabase: {
-    from: jest.fn<any>().mockReturnValue({
-      insert: mockDbInsert,
-      update: mockDbUpdate,
-      select: mockDbSelect,
-    }),
-  },
+  supabase: { from: mockSupabaseFrom },
+  createServiceClient: () => ({ from: mockSupabaseFrom }),
 }));
 
 jest.unstable_mockModule('../middleware/auth.middleware.js', () => ({
