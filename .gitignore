@@ -81,5 +81,10 @@ Advancia-Healthcare-main1-*/
 # Vitest results (local test artifacts)
 vitest-results.json
 
+# Supabase CLI local state (contains project-ref, pooler URLs)
+supabase/.temp/
+# Supabase CLI migrations dir (source of truth is migrations/)
+supabase/migrations/
+
 # Temp files
 *.tmp

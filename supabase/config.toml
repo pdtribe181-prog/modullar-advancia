@@ -55,6 +55,9 @@ max_client_conn = 100
 enabled = true
 # Specifies an ordered list of schema files that describe your database.
 # Supports glob patterns relative to supabase directory: "./schemas/*.sql"
+# NOTE: Canonical migrations live in /migrations/ (54 files, numbered 001-054).
+# Use `npx tsx scripts/run-all-migrations.ts` or `npx tsx scripts/run-migration-rest.ts <file>`
+# to apply them. The supabase/migrations/ directory is intentionally empty.
 schema_paths = []
 
 [db.seed]
