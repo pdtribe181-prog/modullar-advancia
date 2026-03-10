@@ -179,7 +179,7 @@ paths:
                     type: string
                     format: date-time
 
-  /auth/signup:
+  /auth/register:
     post:
       summary: Register new user
       tags: [Authentication]
@@ -209,7 +209,7 @@ paths:
         '400':
           description: Invalid input
 
-  /auth/signin:
+  /auth/login:
     post:
       summary: Sign in user
       tags: [Authentication]
@@ -232,7 +232,7 @@ paths:
         '401':
           description: Invalid credentials
 
-  /auth/signout:
+  /auth/logout:
     post:
       summary: Sign out user
       tags: [Authentication]
@@ -241,6 +241,286 @@ paths:
       responses:
         '200':
           description: Signed out
+
+  /auth/csrf-token:
+    get:
+      summary: Get CSRF token
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: CSRF token returned
+
+  /auth/profile:
+    get:
+      summary: Get current user profile via auth
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+    put:
+      summary: Update user profile via auth
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                phone:
+                  type: string
+                avatar_url:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+
+  /auth/refresh:
+    post:
+      summary: Refresh session token
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: New tokens returned
+        '401':
+          description: Invalid refresh token
+
+  /auth/session:
+    get:
+      summary: Get current session info
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Session information
+
+  /auth/phone/signup:
+    post:
+      summary: Sign up with phone number
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                fullName:
+                  type: string
+                role:
+                  type: string
+                  enum: [patient, provider]
+      responses:
+        '200':
+          description: OTP sent via SMS
+
+  /auth/phone/signin:
+    post:
+      summary: Sign in with phone number
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: OTP sent
+
+  /auth/phone/verify:
+    post:
+      summary: Verify phone OTP
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, token]
+              properties:
+                phone:
+                  type: string
+                token:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        '200':
+          description: Phone verified, session returned
+
+  /auth/phone/resend:
+    post:
+      summary: Resend phone OTP
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: OTP resent
+
+  /auth/phone:
+    put:
+      summary: Update phone number
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Phone updated
+
+  /auth/mfa/factors:
+    get:
+      summary: List enrolled MFA factors
+      tags: [MFA]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of MFA factors
+
+  /auth/mfa/factors/{factorId}:
+    delete:
+      summary: Unenroll MFA factor
+      tags: [MFA]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Factor unenrolled
+
+  /auth/mfa/assurance:
+    get:
+      summary: Get MFA assurance level
+      tags: [MFA]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current MFA assurance level
+
+  /auth/email/resend-confirmation:
+    post:
+      summary: Resend email confirmation
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Confirmation email resent
+
+  /auth/email:
+    put:
+      summary: Update email address
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Email updated
+
+  /auth/password/reset:
+    post:
+      summary: Reset password with token
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Password reset
+
+  /auth/password:
+    put:
+      summary: Change password
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Password changed
 
   /auth/forgot-password:
     post:
@@ -421,6 +701,191 @@ paths:
                 items:
                   $ref: '#/components/schemas/Provider'
 
+  /provider/me:
+    get:
+      summary: Get provider profile
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Provider profile
+    put:
+      summary: Update provider profile
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                businessName:
+                  type: string
+                specialty:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                consultationFee:
+                  type: number
+                bio:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+
+  /provider/appointments:
+    get:
+      summary: Get provider appointments
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: upcoming
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Provider appointments
+
+  /provider/appointments/{id}:
+    get:
+      summary: Get provider appointment detail
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Appointment detail
+
+  /provider/appointments/{id}/confirm:
+    post:
+      summary: Confirm appointment
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Appointment confirmed
+
+  /provider/appointments/{id}/complete:
+    post:
+      summary: Complete appointment
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Appointment completed
+
+  /provider/appointments/{id}/cancel:
+    post:
+      summary: Cancel appointment (provider)
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Appointment cancelled
+
+  /provider/earnings:
+    get:
+      summary: Get provider earnings summary
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+      responses:
+        '200':
+          description: Earnings summary
+
+  /provider/schedule:
+    get:
+      summary: Get provider schedule
+      tags: [Providers]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Scheduled appointments
+
   /patients:
     get:
       summary: List all patients
@@ -437,7 +902,28 @@ paths:
                 items:
                   $ref: '#/components/schemas/Patient'
 
-  /appointments:
+  /patients/{id}:
+    get:
+      summary: Get patient by ID
+      tags: [Patients]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+
+  /appointments/book:
     post:
       summary: Create appointment
       tags: [Appointments]
@@ -473,19 +959,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Appointment'
 
-  /appointments/patient/{patientId}:
+  /appointments/my-appointments:
     get:
-      summary: Get patient appointments
+      summary: Get current user's appointments
       tags: [Appointments]
       security:
         - BearerAuth: []
-      parameters:
-        - name: patientId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       responses:
         '200':
           description: List of appointments
@@ -496,12 +975,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/Appointment'
 
-  /appointments/provider/{providerId}:
+  /appointments/providers:
     get:
-      summary: Get provider appointments
+      summary: Get available providers for appointments
       tags: [Appointments]
       security:
         - BearerAuth: []
+      responses:
+        '200':
+          description: List of available providers
+
+  /appointments/providers/{providerId}/availability:
+    get:
+      summary: Get provider availability
+      tags: [Appointments]
       parameters:
         - name: providerId
           in: path
@@ -509,23 +996,182 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
       responses:
         '200':
-          description: List of appointments
+          description: Available time slots
 
-  /transactions/patient/{patientId}:
+  /appointments/{id}:
     get:
-      summary: Get patient transactions
-      tags: [Transactions]
+      summary: Get appointment details
+      tags: [Appointments]
       security:
         - BearerAuth: []
       parameters:
-        - name: patientId
+        - name: id
           in: path
           required: true
           schema:
             type: string
             format: uuid
+      responses:
+        '200':
+          description: Appointment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+
+  /appointments/{id}/cancel:
+    post:
+      summary: Cancel appointment
+      tags: [Appointments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Appointment cancelled
+
+  /appointments/{id}/reschedule:
+    post:
+      summary: Reschedule appointment
+      tags: [Appointments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date, time]
+              properties:
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+      responses:
+        '200':
+          description: Appointment rescheduled
+
+  /transactions:
+    get:
+      summary: Get authenticated user transactions
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+    post:
+      summary: Create transaction
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [patient_id, provider_id, amount]
+              properties:
+                patient_id:
+                  type: string
+                  format: uuid
+                provider_id:
+                  type: string
+                  format: uuid
+                appointment_id:
+                  type: string
+                  format: uuid
+                amount:
+                  type: number
+                currency:
+                  type: string
+                payment_method:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Transaction created
+
+  /transactions/by-provider:
+    post:
+      summary: Get transactions by provider
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                providerId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: List of transactions
+
+  /transactions/by-patient:
+    post:
+      summary: Get patient transactions
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patientId:
+                  type: string
+                  format: uuid
       responses:
         '200':
           description: List of transactions
@@ -536,19 +1182,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Transaction'
 
-  /invoices/patient/{patientId}:
+  /invoices:
     get:
-      summary: Get patient invoices
+      summary: Get invoices
       tags: [Invoices]
       security:
         - BearerAuth: []
-      parameters:
-        - name: patientId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       responses:
         '200':
           description: List of invoices
@@ -558,6 +1197,27 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Invoice'
+
+  /invoices/{id}:
+    get:
+      summary: Get invoice details
+      tags: [Invoices]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Invoice detail with line items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
 
   /disputes:
     get:
@@ -597,6 +1257,23 @@ paths:
         '201':
           description: Dispute created
 
+  /disputes/{id}:
+    get:
+      summary: Get dispute details
+      tags: [Disputes]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dispute details
+
   /webhooks:
     get:
       summary: List user webhooks
@@ -634,6 +1311,23 @@ paths:
         '201':
           description: Webhook created
 
+  /webhooks/{id}:
+    delete:
+      summary: Delete webhook
+      tags: [Webhooks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Webhook deleted
+
   /api-keys:
     get:
       summary: List user API keys
@@ -670,6 +1364,23 @@ paths:
           description: API key created
 
   # MFA Routes
+  /api-keys/{id}:
+    delete:
+      summary: Revoke API key
+      tags: [API Keys]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: API key revoked
+
   /auth/mfa/enroll:
     post:
       summary: Enroll in MFA (TOTP)
@@ -1089,6 +1800,618 @@ paths:
           description: Refund created
 
   # Stripe Connect Routes
+  /stripe/customers/{customerId}:
+    get:
+      summary: Get Stripe customer
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer details
+    put:
+      summary: Update Stripe customer
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Customer updated
+
+  /stripe/customers/{customerId}/payment-methods:
+    get:
+      summary: List customer payment methods
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of payment methods
+
+  /stripe/payment-intents/{id}/confirm:
+    post:
+      summary: Confirm payment intent
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentMethodId:
+                  type: string
+      responses:
+        '200':
+          description: Payment intent confirmed
+
+  /stripe/payment-intents/{id}/cancel:
+    post:
+      summary: Cancel payment intent
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment intent cancelled
+
+  /stripe/refunds/{id}:
+    get:
+      summary: Get refund details
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Refund details
+
+  /stripe/payment-methods/{id}/attach:
+    post:
+      summary: Attach payment method to customer
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId]
+              properties:
+                customerId:
+                  type: string
+      responses:
+        '200':
+          description: Payment method attached
+
+  /stripe/payment-methods/{id}/detach:
+    post:
+      summary: Detach payment method from customer
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment method detached
+
+  /stripe/setup-intents:
+    post:
+      summary: Create setup intent
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId]
+              properties:
+                customerId:
+                  type: string
+      responses:
+        '200':
+          description: Setup intent created
+
+  /stripe/checkout/sessions/{id}:
+    get:
+      summary: Get checkout session details
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Checkout session details
+
+  /stripe/subscriptions:
+    post:
+      summary: Create subscription
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId, priceId]
+              properties:
+                customerId:
+                  type: string
+                priceId:
+                  type: string
+                patientId:
+                  type: string
+                providerId:
+                  type: string
+      responses:
+        '201':
+          description: Subscription created
+
+  /stripe/subscriptions/{id}:
+    get:
+      summary: Get subscription details
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription details
+
+  /stripe/subscriptions/{id}/cancel:
+    post:
+      summary: Cancel subscription
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cancelAtPeriodEnd:
+                  type: boolean
+      responses:
+        '200':
+          description: Subscription cancelled
+
+  /stripe/subscriptions/{id}/pause:
+    post:
+      summary: Pause subscription
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription paused
+
+  /stripe/subscriptions/{id}/resume:
+    post:
+      summary: Resume subscription
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription resumed
+
+  /stripe/products:
+    get:
+      summary: List products (deprecated - use /services)
+      tags: [Stripe Payments]
+      deprecated: true
+      responses:
+        '200':
+          description: List of products
+    post:
+      summary: Create product (deprecated - use /services)
+      tags: [Stripe Payments]
+      deprecated: true
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Product created
+
+  /stripe/prices:
+    post:
+      summary: Create price (deprecated - pricing in services table)
+      tags: [Stripe Payments]
+      deprecated: true
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Price created
+
+  /stripe/invoices:
+    post:
+      summary: Create Stripe invoice
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId]
+              properties:
+                customerId:
+                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '201':
+          description: Invoice created
+
+  /stripe/invoices/{id}/finalize:
+    post:
+      summary: Finalize and send invoice
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice finalized
+
+  /stripe/invoices/{id}/pay:
+    post:
+      summary: Pay invoice
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice paid
+
+  /stripe/invoices/{id}/void:
+    post:
+      summary: Void invoice
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice voided
+
+  /stripe/disputes:
+    get:
+      summary: List Stripe disputes
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of disputes
+
+  /stripe/disputes/{id}:
+    get:
+      summary: Get Stripe dispute details
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dispute details
+
+  /stripe/disputes/{id}/evidence:
+    post:
+      summary: Submit dispute evidence
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Evidence submitted
+
+  /stripe/disputes/{id}/close:
+    post:
+      summary: Close dispute
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dispute closed
+
+  /stripe/payment-history:
+    get:
+      summary: Get payment history
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Payment history with pagination
+
+  /stripe/payment-history/{id}:
+    get:
+      summary: Get payment history detail
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment detail
+
+  /stripe/transfers:
+    post:
+      summary: Create transfer (admin only)
+      tags: [Stripe Payments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, destinationAccountId]
+              properties:
+                amount:
+                  type: integer
+                destinationAccountId:
+                  type: string
+                transactionId:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Transfer created
+
+  /stripe/webhook:
+    post:
+      summary: Stripe webhook endpoint
+      tags: [Stripe Payments]
+      description: Receives Stripe events (raw body, signature verified)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+  # Stripe Connect Routes
+  /stripe/connect/accounts:
+    post:
+      summary: Create Stripe Connect account
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, providerId, country]
+              properties:
+                email:
+                  type: string
+                  format: email
+                providerId:
+                  type: string
+                businessName:
+                  type: string
+                country:
+                  type: string
+      responses:
+        '201':
+          description: Connect account created
+
+  /stripe/connect/accounts/{accountId}:
+    get:
+      summary: Get Connect account details
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account details
+
+  /stripe/connect/accounts/{accountId}/onboarding-link:
+    post:
+      summary: Generate onboarding link
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Onboarding link URL
+
+  /stripe/connect/accounts/{accountId}/dashboard-link:
+    post:
+      summary: Generate dashboard link
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard link URL
+
+  /stripe/connect/accounts/{accountId}/balance:
+    get:
+      summary: Get Connect account balance
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account balance
+
   /connect/account:
     post:
       summary: Create Stripe Connect account for provider
@@ -1206,9 +2529,19 @@ paths:
           description: Payout history
 
   # Wallet Routes
-  /wallet/link:
+  /connect/refresh:
     post:
-      summary: Link Web3 wallet
+      summary: Refresh onboarding link
+      tags: [Stripe Connect]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: New onboarding link
+
+  /wallet/challenge:
+    post:
+      summary: Create wallet verification challenge
       tags: [Wallet]
       security:
         - BearerAuth: []
@@ -1253,7 +2586,7 @@ paths:
         '200':
           description: Wallet verified and linked
 
-  /wallet/wallets:
+  /wallet/list:
     get:
       summary: Get linked wallets
       tags: [Wallet]
@@ -1264,6 +2597,133 @@ paths:
           description: List of linked wallets
 
   # Admin Routes
+  /wallet/transactions:
+    get:
+      summary: Get wallet transactions
+      tags: [Wallet]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of wallet transactions
+
+  /wallet/transactions/{id}:
+    get:
+      summary: Get wallet transaction detail
+      tags: [Wallet]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction detail
+
+  /wallet/{id}:
+    get:
+      summary: Get wallet details
+      tags: [Wallet]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Wallet details
+    patch:
+      summary: Update wallet settings
+      tags: [Wallet]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                payoutEnabled:
+                  type: boolean
+                minPayoutAmount:
+                  type: number
+                payoutCurrency:
+                  type: string
+      responses:
+        '200':
+          description: Wallet updated
+    delete:
+      summary: Unlink wallet
+      tags: [Wallet]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Wallet unlinked
+
+  /wallet/{id}/primary:
+    post:
+      summary: Set wallet as primary payout destination
+      tags: [Wallet]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Wallet set as primary
+
+  /wallet/{id}/revoke:
+    post:
+      summary: Revoke wallet access
+      tags: [Wallet]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Wallet access revoked
+
   /admin/dashboard:
     get:
       summary: Get admin dashboard stats
@@ -1407,6 +2867,711 @@ paths:
         '200':
           description: System health status
 
+  /admin/users:
+    get:
+      summary: List users (admin)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated user list
+
+  /admin/users/online:
+    get:
+      summary: Get online users
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Currently online users
+
+  /admin/users/{id}:
+    get:
+      summary: Get user details (admin)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User details
+
+  /admin/users/{id}/status:
+    put:
+      summary: Update user status (approve/suspend)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Status updated
+
+  /admin/transactions/{id}:
+    get:
+      summary: Get transaction details (admin)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction details with Stripe info
+
+  /admin/providers/{id}/stripe:
+    get:
+      summary: Get provider Stripe account details
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Provider Stripe account and balance
+
+  /admin/webhooks:
+    get:
+      summary: List webhook events (admin)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated webhook events
+
+  # ── Notifications Endpoints ──────────────────────────────────
+  /notifications:
+    get:
+      summary: List unread notifications
+      tags: [Notifications]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Unread notifications
+
+  /notifications/{id}/read:
+    patch:
+      summary: Mark notification as read
+      tags: [Notifications]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification marked as read
+
+  # ── Service Catalog Endpoints ────────────────────────────────
+  /services:
+    get:
+      summary: List services from catalog
+      tags: [Services]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated service list
+    post:
+      summary: Create service (admin only)
+      tags: [Services]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, category, default_price]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                code:
+                  type: string
+                default_price:
+                  type: number
+                duration_minutes:
+                  type: integer
+      responses:
+        '201':
+          description: Service created
+
+  /services/categories:
+    get:
+      summary: List service categories
+      tags: [Services]
+      responses:
+        '200':
+          description: Unique categories
+
+  /services/{id}:
+    get:
+      summary: Get service details
+      tags: [Services]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Service details
+    put:
+      summary: Update service (admin only)
+      tags: [Services]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                default_price:
+                  type: number
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: Service updated
+    delete:
+      summary: Soft-delete service (admin only)
+      tags: [Services]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Service deactivated
+
+  /services/{id}/activate:
+    post:
+      summary: Reactivate service (admin only)
+      tags: [Services]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Service reactivated
+
+  /services/admin/stats:
+    get:
+      summary: Get catalog statistics (admin)
+      tags: [Services]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Catalog stats
+
+  /services/admin/refresh:
+    post:
+      summary: Refresh in-memory catalog (admin)
+      tags: [Services]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Catalog refreshed
+
+  # ── Medical Beds Endpoints ──────────────────────────────────
+  /medbeds:
+    get:
+      summary: List available medical beds
+      tags: [MedBeds]
+      responses:
+        '200':
+          description: List of medical beds
+
+  /medbeds/bookings:
+    get:
+      summary: Get user bed bookings
+      tags: [MedBeds]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User bed bookings
+    post:
+      summary: Book a medical bed
+      tags: [MedBeds]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Booking created
+
+  /medbeds/bookings/{id}/cancel:
+    post:
+      summary: Cancel bed booking
+      tags: [MedBeds]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking cancelled
+
+  # ── Database Webhook Endpoints ──────────────────────────────
+  /webhooks/supabase:
+    post:
+      summary: Generic Supabase database webhook
+      tags: [Database Webhooks]
+      description: Routes events by table (transactions, disputes, appointments, wallet_transactions)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+  /webhooks/supabase/transactions:
+    post:
+      summary: Transaction webhook
+      tags: [Database Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Processed
+
+  /webhooks/supabase/disputes:
+    post:
+      summary: Dispute webhook
+      tags: [Database Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Processed
+
+  /webhooks/supabase/appointments:
+    post:
+      summary: Appointment webhook
+      tags: [Database Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Processed
+
+  /webhooks/supabase/wallet-transactions:
+    post:
+      summary: Wallet transaction webhook
+      tags: [Database Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Processed
+
+  /webhooks/supabase/health:
+    get:
+      summary: Database webhook health check
+      tags: [Database Webhooks]
+      responses:
+        '200':
+          description: Webhook endpoint healthy
+
+  # ── Orchestration Endpoints ─────────────────────────────────
+  /orchestration/payments/process:
+    post:
+      summary: Process payment via orchestration engine
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment processed
+
+  /orchestration/payments/{paymentId}/state:
+    get:
+      summary: Get payment orchestration state
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment state
+
+  /orchestration/payments/{paymentId}/metrics:
+    get:
+      summary: Get payment metrics
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment metrics
+
+  /orchestration/notifications/send:
+    post:
+      summary: Send notification via channel router
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Notification sent
+
+  /orchestration/notifications/{notificationId}/status:
+    get:
+      summary: Get notification delivery status
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Delivery status
+
+  /orchestration/notifications/analytics:
+    get:
+      summary: Get notification analytics (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Notification analytics
+
+  /orchestration/cache/stats:
+    get:
+      summary: Get cache statistics (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cache stats
+
+  /orchestration/cache/invalidate:
+    post:
+      summary: Invalidate cache entries (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pattern:
+                  type: string
+                strategy:
+                  type: string
+      responses:
+        '200':
+          description: Cache invalidated
+
+  /orchestration/cache/warm:
+    post:
+      summary: Pre-warm cache entries (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keys:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Cache warmed
+
+  /orchestration/cache/{key}:
+    delete:
+      summary: Delete cache entry (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cache entry deleted
+
+  /orchestration/automations/execute:
+    post:
+      summary: Execute automation workflow
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workflowId]
+              properties:
+                workflowId:
+                  type: string
+      responses:
+        '200':
+          description: Workflow executed
+
+  /orchestration/automations/workflows:
+    get:
+      summary: List registered workflows (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Workflow definitions
+    post:
+      summary: Register new workflow (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, name, definition]
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                definition:
+                  type: object
+      responses:
+        '201':
+          description: Workflow registered
+
+  /orchestration/automations/workflows/{workflowId}/history:
+    get:
+      summary: Get workflow execution history
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Execution history
+
+  /orchestration/health:
+    get:
+      summary: Orchestration services health (admin)
+      tags: [Orchestration]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Service health status
+
   # ── GDPR Endpoints ────────────────────────────────────────
   /gdpr/export:
     get:
@@ -1528,28 +3693,9 @@ paths:
         '200':
           description: Upload successful with public URL
 
-  /upload/medical-document:
+  /upload/medical-record:
     post:
-      summary: Upload medical document
-      tags: [File Upload]
-      security:
-        - BearerAuth: []
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        '200':
-          description: Upload successful
-
-  /upload/insurance:
-    post:
-      summary: Upload insurance document
+      summary: Upload medical record
       tags: [File Upload]
       security:
         - BearerAuth: []
@@ -1604,9 +3750,9 @@ paths:
         '200':
           description: Upload successful
 
-  /upload/kyc:
+  /upload/document:
     post:
-      summary: Upload KYC verification document
+      summary: Upload provider documents
       tags: [File Upload]
       security:
         - BearerAuth: []
@@ -1616,9 +3762,32 @@ paths:
             schema:
               type: object
               properties:
-                file:
-                  type: string
-                  format: binary
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Upload successful
+
+  /upload/message-attachment:
+    post:
+      summary: Upload message attachments
+      tags: [File Upload]
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
         '200':
           description: Upload successful
@@ -1704,3 +3873,13 @@ tags:
     description: Secure file upload to Supabase Storage (avatars, medical docs, insurance, invoices, disputes, KYC)
   - name: Metrics
     description: Application metrics and observability (Prometheus + JSON)
+  - name: Services
+    description: Healthcare service catalog management
+  - name: MedBeds
+    description: Medical bed availability and booking
+  - name: Database Webhooks
+    description: Supabase database event handlers
+  - name: Orchestration
+    description: Payment orchestration, notification routing, caching, and workflow automation
+  - name: Notifications
+    description: User notification management
