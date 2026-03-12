@@ -2,6 +2,8 @@ import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { GuestRoute } from './components/GuestRoute';
+import { HomeRedirect } from './components/HomeRedirect';
 import { LoadingOverlay } from './components/Spinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './providers/AuthProvider';
@@ -62,7 +64,7 @@ const Notifications = lazy(() =>
 );
 const Convert = lazy(() => import('./pages/Convert').then((m) => ({ default: m.Convert })));
 
-// Missing redirect target pages
+// Auth callback, payment success, etc.
 const PaymentSuccess = lazy(() =>
   import('./pages/PaymentSuccess').then((m) => ({ default: m.PaymentSuccess }))
 );
@@ -108,7 +110,11 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route
               index
-              element={isHealthcareHostValue ? <HealthcareLanding /> : <LandingPage />}
+              element={
+                <HomeRedirect>
+                  {isHealthcareHostValue ? <HealthcareLanding /> : <LandingPage />}
+                </HomeRedirect>
+              }
             />
             <Route path="features" element={<Features />} />
             <Route path="policy" element={<Policy />} />
@@ -116,8 +122,23 @@ export default function App() {
             <Route path="wallet-tools" element={<CryptoWallet />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="contact" element={<Contact />} />
-            <Route path="login" element={<Login />} />
-            <Route path="signup" element={<Login />} />
+            <Route
+              path="login"
+              element={
+                <GuestRoute>
+                  <Login />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="signup"
+              element={
+                <GuestRoute>
+                  <Login />
+                </GuestRoute>
+              }
+            />
+            <Route path="register" element={<Navigate to="/signup" replace />} />
             <Route path="payment" element={<PaymentPage />} />
             <Route path="payment/success" element={<PaymentSuccess />} />
             <Route path="checkout" element={<CheckoutPage />} />
@@ -132,6 +153,9 @@ export default function App() {
               }
             />
             <Route path="payments" element={<Navigate to="/history" replace />} />
+            <Route path="app" element={<Navigate to="/dashboard" replace />} />
+            <Route path="account" element={<Navigate to="/profile" replace />} />
+            <Route path="settings" element={<Navigate to="/security" replace />} />
             <Route
               path="history"
               element={

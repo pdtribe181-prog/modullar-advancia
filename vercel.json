@@ -4,5 +4,12 @@
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
+  "redirects": [
+    { "source": "/register", "destination": "/signup", "permanent": true },
+    { "source": "/payments", "destination": "/history", "permanent": true },
+    { "source": "/app", "destination": "/dashboard", "permanent": true },
+    { "source": "/account", "destination": "/profile", "permanent": true },
+    { "source": "/settings", "destination": "/security", "permanent": true }
+  ],
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
