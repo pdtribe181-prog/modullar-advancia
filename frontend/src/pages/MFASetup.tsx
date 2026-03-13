@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { LoadingButton } from '../components/Spinner';
 import { useConfirm } from '../components/ConfirmDialog';
@@ -33,15 +33,20 @@ export function MFASetup() {
 
   const { enrollMFA, verifyMFA, listMFAFactors, unenrollMFA, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const confirmDialog = useConfirm();
+  const returnTo = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { state: { from: returnTo }, replace: true });
       return;
     }
     loadFactors();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, returnTo]);
 
   const loadFactors = async () => {
     setLoading(true);
@@ -126,9 +131,7 @@ export function MFASetup() {
     <div className="mfa-setup-page">
       <div className="mfa-setup-card">
         <h2>Two-Factor Authentication</h2>
-        <p className="subtitle">
-          Add an extra layer of security to your account with 2FA.
-        </p>
+        <p className="subtitle">Add an extra layer of security to your account with 2FA.</p>
 
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
@@ -143,9 +146,7 @@ export function MFASetup() {
                 {factors.map((factor) => (
                   <div key={factor.id} className="mfa-factor-item">
                     <div className="mfa-factor-info">
-                      <div className="mfa-factor-icon">
-                        {factor.type === 'totp' ? '🔐' : '📱'}
-                      </div>
+                      <div className="mfa-factor-icon">{factor.type === 'totp' ? '🔐' : '📱'}</div>
                       <div>
                         <strong>{factor.friendlyName || 'Authenticator App'}</strong>
                         <span className={`mfa-factor-status ${factor.status}`}>
@@ -170,7 +171,8 @@ export function MFASetup() {
             <div style={{ marginTop: '24px' }}>
               <h3>Add Authenticator App</h3>
               <p style={{ marginBottom: '16px', color: 'var(--secondary)' }}>
-                Use an app like Google Authenticator, Authy, or 1Password to generate verification codes.
+                Use an app like Google Authenticator, Authy, or 1Password to generate verification
+                codes.
               </p>
 
               <div className="form-group">
@@ -200,15 +202,10 @@ export function MFASetup() {
           /* QR Code & Verification */
           <div>
             <h3>Scan QR Code</h3>
-            <p style={{ marginBottom: '16px' }}>
-              Scan this QR code with your authenticator app:
-            </p>
+            <p style={{ marginBottom: '16px' }}>Scan this QR code with your authenticator app:</p>
 
             <div className="mfa-qr-container">
-              <img
-                src={enrollment.totp.qr_code}
-                alt="QR Code for authenticator app"
-              />
+              <img src={enrollment.totp.qr_code} alt="QR Code for authenticator app" />
               <p style={{ marginBottom: '8px', fontSize: '0.875rem' }}>
                 Can't scan? Enter this code manually:
               </p>
@@ -222,7 +219,9 @@ export function MFASetup() {
                   type="text"
                   id="verificationCode"
                   value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) =>
+                    setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                  }
                   placeholder="123456"
                   maxLength={6}
                   autoComplete="one-time-code"
@@ -234,11 +233,7 @@ export function MFASetup() {
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={cancelEnrollment}
-                >
+                <button type="button" className="btn btn-secondary" onClick={cancelEnrollment}>
                   Cancel
                 </button>
                 <LoadingButton
@@ -254,12 +249,10 @@ export function MFASetup() {
           </div>
         )}
 
-        <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-          <button
-            type="button"
-            className="btn-link"
-            onClick={() => navigate('/profile')}
-          >
+        <div
+          style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}
+        >
+          <button type="button" className="btn-link" onClick={() => navigate('/profile')}>
             ← Back to Profile
           </button>
         </div>

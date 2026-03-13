@@ -207,6 +207,34 @@ describe('Login Page', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Send Code' }));
       await waitFor(() => expect(mockSendPhoneOtp).toHaveBeenCalledWith('+12345678901'));
     });
+
+    it('navigates to the requested route after successful phone verification', async () => {
+      mockSendPhoneOtp.mockResolvedValue(undefined);
+      mockVerifyPhoneOtp.mockResolvedValue(undefined);
+
+      renderLogin({
+        pathname: '/login',
+        state: { from: '/wallet?tab=activity#recent' },
+      });
+
+      fireEvent.click(screen.getByText('Phone'));
+      fireEvent.change(screen.getByLabelText('Phone Number'), {
+        target: { value: '+12345678901' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Send Code' }));
+
+      await waitFor(() => expect(mockSendPhoneOtp).toHaveBeenCalledWith('+12345678901'));
+
+      fireEvent.change(screen.getByLabelText('Verification Code'), {
+        target: { value: '123456' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Verify Code' }));
+
+      await waitFor(() => {
+        expect(mockVerifyPhoneOtp).toHaveBeenCalledWith('+12345678901', '123456');
+      });
+      expect(mockNavigate).toHaveBeenCalledWith('/wallet?tab=activity#recent');
+    });
   });
 
   describe('Google sign-in', () => {

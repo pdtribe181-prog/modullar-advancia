@@ -1,26 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
+const mockUseAuth = vi.hoisted(() => vi.fn());
 const mockEnrollMFA = vi.hoisted(() => vi.fn());
 const mockVerifyMFA = vi.hoisted(() => vi.fn());
 const mockListMFAFactors = vi.hoisted(() => vi.fn());
 const mockUnenrollMFA = vi.hoisted(() => vi.fn());
 const mockConfirmDialog = vi.hoisted(() => vi.fn());
 
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
-}));
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 
 vi.mock('../providers/AuthProvider', () => ({
-  useAuth: () => ({
-    enrollMFA: mockEnrollMFA,
-    verifyMFA: mockVerifyMFA,
-    listMFAFactors: mockListMFAFactors,
-    unenrollMFA: mockUnenrollMFA,
-    isAuthenticated: true,
-  }),
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('../components/ConfirmDialog', () => ({
@@ -32,18 +29,20 @@ vi.mock('../components/Spinner', () => ({
   LoadingButton: ({
     children,
     loading,
+    loadingText,
     onClick,
     type,
     ...props
   }: {
     children: React.ReactNode;
     loading: boolean;
+    loadingText?: string;
     onClick?: () => void;
     type?: string;
     [k: string]: unknown;
   }) => (
     <button onClick={onClick} disabled={loading} type={type as 'submit' | 'button'} {...props}>
-      {loading ? 'Setting up...' : children}
+      {loading ? (loadingText ?? children) : children}
     </button>
   ),
 }));
@@ -54,13 +53,45 @@ describe('MFASetup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockListMFAFactors.mockResolvedValue([]);
+    mockUseAuth.mockReturnValue({
+      enrollMFA: mockEnrollMFA,
+      verifyMFA: mockVerifyMFA,
+      listMFAFactors: mockListMFAFactors,
+      unenrollMFA: mockUnenrollMFA,
+      isAuthenticated: true,
+    });
   });
 
   function renderComponent() {
-    return render(<MFASetup />);
+    return render(
+      <MemoryRouter>
+        <MFASetup />
+      </MemoryRouter>
+    );
   }
 
   describe('rendering', () => {
+    it('redirects unauthenticated users to login with the full MFA URL', () => {
+      mockUseAuth.mockReturnValue({
+        enrollMFA: mockEnrollMFA,
+        verifyMFA: mockVerifyMFA,
+        listMFAFactors: mockListMFAFactors,
+        unenrollMFA: mockUnenrollMFA,
+        isAuthenticated: false,
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/security/mfa?step=enroll#totp']}>
+          <MFASetup />
+        </MemoryRouter>
+      );
+
+      expect(mockNavigate).toHaveBeenCalledWith('/login', {
+        state: { from: '/security/mfa?step=enroll#totp' },
+        replace: true,
+      });
+    });
+
     it('shows the page title', async () => {
       renderComponent();
       expect(screen.getByText('Two-Factor Authentication')).toBeInTheDocument();
