@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingOverlay } from './components/Spinner';
@@ -94,8 +94,10 @@ const isHealthcareHostValue =
  */
 function RoleGuard({ children, allowedRoles }: { children: ReactNode; allowedRoles: string[] }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const returnTo = `${location.pathname}${location.search}${location.hash}`;
   if (loading) return <LoadingOverlay message="Checking permissions..." />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" state={{ from: returnTo }} replace />;
   if (!allowedRoles.includes(user.role)) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }

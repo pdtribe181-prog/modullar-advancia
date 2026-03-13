@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Login } from './Login';
 
-// Mock AuthProvider
+const mockUseAuth = vi.fn();
 const mockLogin = vi.fn();
 const mockSignup = vi.fn();
 const mockSendPhoneOtp = vi.fn();
@@ -11,25 +11,26 @@ const mockVerifyPhoneOtp = vi.fn();
 const mockSignInWithGoogle = vi.fn();
 
 vi.mock('../providers/AuthProvider', () => ({
-  useAuth: () => ({
-    login: mockLogin,
-    signup: mockSignup,
-    sendPhoneOtp: mockSendPhoneOtp,
-    verifyPhoneOtp: mockVerifyPhoneOtp,
-    signInWithGoogle: mockSignInWithGoogle,
-  }),
+  useAuth: () => mockUseAuth(),
 }));
 
 const mockNavigate = vi.fn();
+const mockNavigateComponent = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
+    Navigate: (props: { to: string; replace?: boolean }) => {
+      mockNavigateComponent(props);
+      return <div data-testid="navigate">Redirecting to {props.to}</div>;
+    },
   };
 });
 
-function renderLogin(route = '/login') {
+function renderLogin(
+  route: string | { pathname: string; search?: string; hash?: string; state?: unknown } = '/login'
+) {
   return render(
     <MemoryRouter initialEntries={[route]}>
       <Login />
@@ -40,6 +41,15 @@ function renderLogin(route = '/login') {
 describe('Login Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      login: mockLogin,
+      signup: mockSignup,
+      sendPhoneOtp: mockSendPhoneOtp,
+      verifyPhoneOtp: mockVerifyPhoneOtp,
+      signInWithGoogle: mockSignInWithGoogle,
+      isAuthenticated: false,
+      loading: false,
+    });
   });
 
   describe('rendering', () => {
@@ -122,6 +132,22 @@ describe('Login Page', () => {
       await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboard'));
     });
 
+    it('navigates to the requested protected route after successful login', async () => {
+      mockLogin.mockResolvedValue(undefined);
+      renderLogin({
+        pathname: '/login',
+        state: { from: '/appointments?tab=upcoming#today' },
+      });
+
+      fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
+      fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password1' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/appointments?tab=upcoming#today');
+      });
+    });
+
     it('shows error on failed login', async () => {
       mockLogin.mockRejectedValue(new Error('Invalid credentials'));
       renderLogin();
@@ -131,6 +157,28 @@ describe('Login Page', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('Invalid credentials');
+    });
+
+    it('redirects authenticated users away from the auth page', () => {
+      mockUseAuth.mockReturnValue({
+        login: mockLogin,
+        signup: mockSignup,
+        sendPhoneOtp: mockSendPhoneOtp,
+        verifyPhoneOtp: mockVerifyPhoneOtp,
+        signInWithGoogle: mockSignInWithGoogle,
+        isAuthenticated: true,
+        loading: false,
+      });
+
+      renderLogin({
+        pathname: '/login',
+        state: { from: '/history?filter=open#latest' },
+      });
+
+      expect(screen.getByTestId('navigate')).toBeInTheDocument();
+      expect(mockNavigateComponent).toHaveBeenCalledWith(
+        expect.objectContaining({ to: '/history?filter=open#latest', replace: true })
+      );
     });
   });
 
