@@ -3,6 +3,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import PaymentHistory from './PaymentHistory';
 
+const { mockUseAuth, mockNavigateElement } = vi.hoisted(() => ({
+  mockUseAuth: vi.fn(),
+  mockNavigateElement: vi.fn(),
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    Navigate: (props: { to: string; replace?: boolean; state?: unknown }) => {
+      mockNavigateElement(props);
+      return <div data-testid="navigate" data-to={props.to} />;
+    },
+  };
+});
+
 const mockGet = vi.hoisted(() => vi.fn());
 const mockShowToast = vi.hoisted(() => vi.fn());
 
@@ -17,7 +33,7 @@ vi.mock('../services/api', () => ({
 }));
 
 vi.mock('../providers/AuthProvider', () => ({
-  useAuth: () => ({}),
+  useAuth: mockUseAuth,
 }));
 
 vi.mock('../components/Toast', () => ({
@@ -56,7 +72,31 @@ function renderHistory() {
 describe('PaymentHistory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { email: 'alice@example.com' }, loading: false });
     mockGet.mockResolvedValue({ payments: mockPayments, has_more: false });
+  });
+
+  it('redirects unauthenticated users to login with the full history URL', () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: false });
+
+    render(
+      <MemoryRouter initialEntries={['/history?filter=open#latest']}>
+        <PaymentHistory />
+      </MemoryRouter>
+    );
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockNavigateElement).toHaveBeenCalledWith({
+      to: '/login',
+      state: { from: '/history?filter=open#latest' },
+      replace: true,
+    });
+  });
+
+  it('does not fetch history while auth is loading', () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: true });
+    renderHistory();
+    expect(mockGet).not.toHaveBeenCalled();
   });
 
   it('shows loading spinner initially', () => {

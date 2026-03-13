@@ -3,6 +3,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Profile from './Profile';
 
+const { mockUseAuth, mockNavigateElement } = vi.hoisted(() => ({
+  mockUseAuth: vi.fn(),
+  mockNavigateElement: vi.fn(),
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    Navigate: (props: { to: string; replace?: boolean; state?: unknown }) => {
+      mockNavigateElement(props);
+      return <div data-testid="navigate" data-to={props.to} />;
+    },
+  };
+});
+
 const mockGet = vi.hoisted(() => vi.fn());
 const mockPut = vi.hoisted(() => vi.fn());
 const mockShowToast = vi.hoisted(() => vi.fn());
@@ -18,7 +34,7 @@ vi.mock('../services/api', () => ({
 }));
 
 vi.mock('../providers/AuthProvider', () => ({
-  useAuth: () => ({}),
+  useAuth: mockUseAuth,
 }));
 
 vi.mock('../components/Toast', () => ({
@@ -46,7 +62,31 @@ function renderProfile() {
 describe('Profile', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { email: 'alice@example.com' }, loading: false });
     mockGet.mockResolvedValue(mockProfile);
+  });
+
+  it('redirects unauthenticated users to login with the full profile URL', () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: false });
+
+    render(
+      <MemoryRouter initialEntries={['/profile?tab=settings#account']}>
+        <Profile />
+      </MemoryRouter>
+    );
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockNavigateElement).toHaveBeenCalledWith({
+      to: '/login',
+      state: { from: '/profile?tab=settings#account' },
+      replace: true,
+    });
+  });
+
+  it('does not fetch profile while auth is loading', () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: true });
+    renderProfile();
+    expect(mockGet).not.toHaveBeenCalled();
   });
 
   it('shows loading spinner initially', () => {

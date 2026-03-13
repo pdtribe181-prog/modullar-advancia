@@ -1,4 +1,5 @@
-import React, { CSSProperties, useState, useEffect } from 'react';
+import React, { CSSProperties, useState, useEffect, useMemo } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { api, ApiError } from '../services/api';
 import { Spinner, LoadingButton } from '../components/Spinner';
@@ -15,8 +16,9 @@ interface UserProfile {
 }
 
 export default function Profile() {
-  useAuth(); // Ensures user is authenticated
+  const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,10 +27,16 @@ export default function Profile() {
     full_name: '',
     phone: '',
   });
+  const returnTo = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (!authLoading && user) {
+      fetchProfile();
+    }
+  }, [authLoading, user]);
 
   const fetchProfile = async () => {
     try {
@@ -71,6 +79,10 @@ export default function Profile() {
       [e.target.name]: e.target.value,
     });
   };
+
+  if (!authLoading && !user) {
+    return <Navigate to="/login" state={{ from: returnTo }} replace />;
+  }
 
   if (loading) {
     return (
