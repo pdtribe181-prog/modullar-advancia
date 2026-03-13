@@ -2,6 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
+const { mockNavigateElement } = vi.hoisted(() => ({
+  mockNavigateElement: vi.fn(),
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    Navigate: (props: { to: string; replace?: boolean; state?: unknown }) => {
+      mockNavigateElement(props);
+      return <div data-testid="navigate" data-to={props.to} />;
+    },
+  };
+});
+
 // Mock data
 const mockUser = { email: 'alice@example.com', role: 'patient' };
 const mockTransactions = [
@@ -184,6 +199,23 @@ describe('Dashboard', () => {
       mockUseAuth.mockReturnValue({ user: null, loading: true });
       renderDashboard();
       expect(mockGet).not.toHaveBeenCalled();
+    });
+
+    it('redirects unauthenticated users to login with the full dashboard URL', () => {
+      mockUseAuth.mockReturnValue({ user: null, loading: false });
+
+      render(
+        <MemoryRouter initialEntries={['/dashboard?view=wallets#top']}>
+          <Dashboard />
+        </MemoryRouter>
+      );
+
+      expect(mockGet).not.toHaveBeenCalled();
+      expect(mockNavigateElement).toHaveBeenCalledWith({
+        to: '/login',
+        state: { from: '/dashboard?view=wallets#top' },
+        replace: true,
+      });
     });
   });
 });
