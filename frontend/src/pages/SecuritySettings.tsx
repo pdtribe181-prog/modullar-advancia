@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { api, ApiError } from '../services/api';
 import { Spinner, LoadingButton } from '../components/Spinner';
@@ -48,6 +48,11 @@ export function SecuritySettings() {
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const confirmDialog = useConfirm();
+  const location = useLocation();
+  const returnTo = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,7 +68,9 @@ export function SecuritySettings() {
   const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
   const [recoveryPhone, setRecoveryPhone] = useState('');
   const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus>({ verified: false });
-  const [activeTab, setActiveTab] = useState<'preferences' | 'identities' | 'activity' | 'recovery'>('preferences');
+  const [activeTab, setActiveTab] = useState<
+    'preferences' | 'identities' | 'activity' | 'recovery'
+  >('preferences');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -75,8 +82,12 @@ export function SecuritySettings() {
     setLoading(true);
     try {
       const [prefsResponse, identitiesResponse, eventsResponse] = await Promise.all([
-        api.get<{ preferences: SecurityPreferences }>('/auth/security/preferences').catch(() => ({ preferences })),
-        api.get<{ identities: LinkedIdentity[] }>('/auth/identities').catch(() => ({ identities: [] })),
+        api
+          .get<{ preferences: SecurityPreferences }>('/auth/security/preferences')
+          .catch(() => ({ preferences })),
+        api
+          .get<{ identities: LinkedIdentity[] }>('/auth/identities')
+          .catch(() => ({ identities: [] })),
         api.get<SecurityEvent[]>('/auth/security/events').catch(() => []),
       ]);
 
@@ -104,7 +115,7 @@ export function SecuritySettings() {
   };
 
   const handleTogglePreference = (key: keyof SecurityPreferences) => {
-    setPreferences(prev => ({
+    setPreferences((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
@@ -133,7 +144,7 @@ export function SecuritySettings() {
     try {
       await api.delete(`/auth/identities/${identityId}`);
       showToast('Account unlinked', 'success');
-      setIdentities(prev => prev.filter(i => i.id !== identityId));
+      setIdentities((prev) => prev.filter((i) => i.id !== identityId));
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to unlink account';
       showToast(message, 'error');
@@ -200,9 +211,22 @@ export function SecuritySettings() {
     return icons[provider.toLowerCase()] || '🔗';
   };
 
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: returnTo }} replace />;
+  }
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', gap: '16px' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '400px',
+          gap: '16px',
+        }}
+      >
         <Spinner size={48} />
         <p>Loading security settings...</p>
       </div>
@@ -213,7 +237,9 @@ export function SecuritySettings() {
     <div style={{ maxWidth: '860px', margin: '0 auto', padding: '32px 24px' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#e2e8f0', margin: 0 }}>Security Settings</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#e2e8f0', margin: 0 }}>
+          Security Settings
+        </h1>
         <p style={{ marginTop: '8px', color: '#94a3b8' }}>
           Manage your account security, linked accounts, and notification preferences
         </p>
@@ -223,20 +249,50 @@ export function SecuritySettings() {
       <div style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
         <Link
           to="/security/mfa"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#6366f1', color: '#fff', borderRadius: '9px', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: '#6366f1',
+            color: '#fff',
+            borderRadius: '9px',
+            textDecoration: 'none',
+            fontSize: '14px',
+            fontWeight: '500',
+          }}
         >
           🔐 Manage 2FA
         </Link>
         <Link
           to="/profile"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '9px', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: 'rgba(255,255,255,0.06)',
+            color: '#e2e8f0',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '9px',
+            textDecoration: 'none',
+            fontSize: '14px',
+            fontWeight: '500',
+          }}
         >
           👤 Profile Settings
         </Link>
       </div>
 
       {/* Tabs */}
-      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '24px', display: 'flex', gap: '4px' }}>
+      <div
+        style={{
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          marginBottom: '24px',
+          display: 'flex',
+          gap: '4px',
+        }}
+      >
         {(['preferences', 'identities', 'activity', 'recovery'] as const).map((tab) => (
           <button
             key={tab}
@@ -263,50 +319,176 @@ export function SecuritySettings() {
       </div>
 
       {/* Tab Content */}
-      <div style={{ background: '#131625', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+      <div
+        style={{
+          background: '#131625',
+          borderRadius: '14px',
+          border: '1px solid rgba(255,255,255,0.08)',
+          overflow: 'hidden',
+        }}
+      >
         {/* Notification Preferences */}
         {activeTab === 'preferences' && (
           <div style={{ padding: '28px' }}>
-            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Security Notifications</h3>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: '600',
+                color: '#e2e8f0',
+                marginTop: 0,
+                marginBottom: '8px',
+              }}
+            >
+              Security Notifications
+            </h3>
             <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Choose how you want to be notified about security events
             </p>
 
             <div>
               {/* Notification Channels */}
-              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', marginBottom: '16px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0', marginBottom: '12px', marginTop: 0 }}>Notification Channels</h4>
-                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', cursor: 'pointer' }}>
+              <div
+                style={{
+                  borderBottom: '1px solid rgba(255,255,255,0.08)',
+                  paddingBottom: '16px',
+                  marginBottom: '16px',
+                }}
+              >
+                <h4
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#e2e8f0',
+                    marginBottom: '12px',
+                    marginTop: 0,
+                  }}
+                >
+                  Notification Channels
+                </h4>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 0',
+                    cursor: 'pointer',
+                  }}
+                >
                   <span style={{ color: '#e2e8f0', fontSize: '14px' }}>Email notifications</span>
-                  <input type="checkbox" checked={preferences.emailNotifications} onChange={() => handleTogglePreference('emailNotifications')} style={{ width: '18px', height: '18px', accentColor: '#818cf8', cursor: 'pointer' }} />
+                  <input
+                    type="checkbox"
+                    checked={preferences.emailNotifications}
+                    onChange={() => handleTogglePreference('emailNotifications')}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      accentColor: '#818cf8',
+                      cursor: 'pointer',
+                    }}
+                  />
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', cursor: 'pointer' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 0',
+                    cursor: 'pointer',
+                  }}
+                >
                   <span style={{ color: '#e2e8f0', fontSize: '14px' }}>SMS notifications</span>
-                  <input type="checkbox" checked={preferences.smsNotifications} onChange={() => handleTogglePreference('smsNotifications')} style={{ width: '18px', height: '18px', accentColor: '#818cf8', cursor: 'pointer' }} />
+                  <input
+                    type="checkbox"
+                    checked={preferences.smsNotifications}
+                    onChange={() => handleTogglePreference('smsNotifications')}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      accentColor: '#818cf8',
+                      cursor: 'pointer',
+                    }}
+                  />
                 </label>
               </div>
 
               {/* Event Types */}
               <div>
-                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0', marginBottom: '12px', marginTop: 0 }}>Notify me when...</h4>
+                <h4
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#e2e8f0',
+                    marginBottom: '12px',
+                    marginTop: 0,
+                  }}
+                >
+                  Notify me when...
+                </h4>
                 {[
-                  { key: 'notifyOnLogin' as const, label: 'New sign-in detected', sub: 'Get alerted when someone signs into your account' },
-                  { key: 'notifyOnPasswordChange' as const, label: 'Password changed', sub: 'Important security alert' },
-                  { key: 'notifyOnEmailChange' as const, label: 'Email address changed', sub: 'Verify email changes' },
-                  { key: 'notifyOnNewDevice' as const, label: 'New device detected', sub: 'Alert when signing in from an unrecognized device' },
+                  {
+                    key: 'notifyOnLogin' as const,
+                    label: 'New sign-in detected',
+                    sub: 'Get alerted when someone signs into your account',
+                  },
+                  {
+                    key: 'notifyOnPasswordChange' as const,
+                    label: 'Password changed',
+                    sub: 'Important security alert',
+                  },
+                  {
+                    key: 'notifyOnEmailChange' as const,
+                    label: 'Email address changed',
+                    sub: 'Verify email changes',
+                  },
+                  {
+                    key: 'notifyOnNewDevice' as const,
+                    label: 'New device detected',
+                    sub: 'Alert when signing in from an unrecognized device',
+                  },
                 ].map(({ key, label, sub }, i, arr) => (
-                  <label key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', cursor: 'pointer' }}>
+                  <label
+                    key={key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 0',
+                      borderBottom:
+                        i < arr.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
                     <div>
-                      <span style={{ display: 'block', color: '#e2e8f0', fontSize: '14px' }}>{label}</span>
+                      <span style={{ display: 'block', color: '#e2e8f0', fontSize: '14px' }}>
+                        {label}
+                      </span>
                       <span style={{ color: '#64748b', fontSize: '12px' }}>{sub}</span>
                     </div>
-                    <input type="checkbox" checked={preferences[key]} onChange={() => handleTogglePreference(key)} style={{ width: '18px', height: '18px', accentColor: '#818cf8', cursor: 'pointer', flexShrink: 0, marginLeft: '16px' }} />
+                    <input
+                      type="checkbox"
+                      checked={preferences[key]}
+                      onChange={() => handleTogglePreference(key)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        accentColor: '#818cf8',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        marginLeft: '16px',
+                      }}
+                    />
                   </label>
                 ))}
               </div>
             </div>
 
-            <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div
+              style={{
+                marginTop: '24px',
+                paddingTop: '20px',
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
               <LoadingButton
                 onClick={handleSavePreferences}
                 loading={saving}
@@ -321,27 +503,74 @@ export function SecuritySettings() {
         {/* Linked Identities */}
         {activeTab === 'identities' && (
           <div style={{ padding: '28px' }}>
-            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Linked Accounts</h3>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: '600',
+                color: '#e2e8f0',
+                marginTop: 0,
+                marginBottom: '8px',
+              }}
+            >
+              Linked Accounts
+            </h3>
             <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Connect social accounts for easier sign-in
             </p>
 
             {identities.length > 0 && (
-              <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div
+                style={{
+                  marginBottom: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+              >
                 {identities.map((identity) => (
-                  <div key={identity.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', background: '#181b2e' }}>
+                  <div
+                    key={identity.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '16px',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '10px',
+                      background: '#181b2e',
+                    }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{ fontSize: '24px' }}>{getProviderIcon(identity.provider)}</span>
                       <div>
-                        <div style={{ fontWeight: '600', color: '#e2e8f0', textTransform: 'capitalize' }}>{identity.provider}</div>
+                        <div
+                          style={{
+                            fontWeight: '600',
+                            color: '#e2e8f0',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {identity.provider}
+                        </div>
                         <div style={{ fontSize: '13px', color: '#94a3b8' }}>
-                          {identity.identity_data?.email || identity.identity_data?.name || 'Connected'}
+                          {identity.identity_data?.email ||
+                            identity.identity_data?.name ||
+                            'Connected'}
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={() => handleUnlinkIdentity(identity.id)}
-                      style={{ padding: '6px 14px', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '7px', background: 'transparent', color: '#f87171', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
+                      style={{
+                        padding: '6px 14px',
+                        border: '1px solid rgba(239,68,68,0.4)',
+                        borderRadius: '7px',
+                        background: 'transparent',
+                        color: '#f87171',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                      }}
                     >
                       Unlink
                     </button>
@@ -351,20 +580,46 @@ export function SecuritySettings() {
             )}
 
             <div>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0', marginBottom: '12px', marginTop: 0 }}>Add account</h4>
+              <h4
+                style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#e2e8f0',
+                  marginBottom: '12px',
+                  marginTop: 0,
+                }}
+              >
+                Add account
+              </h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 {['google', 'github', 'facebook', 'apple'].map((provider) => {
-                  const isLinked = identities.some(i => i.provider.toLowerCase() === provider);
+                  const isLinked = identities.some((i) => i.provider.toLowerCase() === provider);
                   return (
                     <button
                       key={provider}
                       onClick={() => !isLinked && handleLinkIdentity(provider)}
                       disabled={isLinked}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', background: isLinked ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)', color: isLinked ? '#475569' : '#e2e8f0', cursor: isLinked ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: '500' }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '14px',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '10px',
+                        background: isLinked ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)',
+                        color: isLinked ? '#475569' : '#e2e8f0',
+                        cursor: isLinked ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                      }}
                     >
                       <span style={{ fontSize: '20px' }}>{getProviderIcon(provider)}</span>
                       <span style={{ textTransform: 'capitalize' }}>{provider}</span>
-                      {isLinked && <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#34d399' }}>✓ Linked</span>}
+                      {isLinked && (
+                        <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#34d399' }}>
+                          ✓ Linked
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -376,7 +631,17 @@ export function SecuritySettings() {
         {/* Security Activity Log */}
         {activeTab === 'activity' && (
           <div style={{ padding: '28px' }}>
-            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Recent Security Activity</h3>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: '600',
+                color: '#e2e8f0',
+                marginTop: 0,
+                marginBottom: '8px',
+              }}
+            >
+              Recent Security Activity
+            </h3>
             <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Review recent security events on your account
             </p>
@@ -388,22 +653,49 @@ export function SecuritySettings() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {securityEvents.slice(0, 20).map((event) => (
-                  <div key={event.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '14px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', background: '#181b2e' }}>
-                    <span style={{ fontSize: '22px', flexShrink: 0 }}>{getEventIcon(event.event_type)}</span>
+                  <div
+                    key={event.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '14px',
+                      padding: '14px',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '10px',
+                      background: '#181b2e',
+                    }}
+                  >
+                    <span style={{ fontSize: '22px', flexShrink: 0 }}>
+                      {getEventIcon(event.event_type)}
+                    </span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '500', color: '#e2e8f0', fontSize: '14px' }}>{formatEventType(event.event_type)}</div>
+                      <div style={{ fontWeight: '500', color: '#e2e8f0', fontSize: '14px' }}>
+                        {formatEventType(event.event_type)}
+                      </div>
                       <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
                         {new Date(event.created_at).toLocaleString()}
                       </div>
                       {event.ip_address && (
                         <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
                           IP: {event.ip_address}
-                          {event.location?.city && ` • ${event.location.city}, ${event.location.country}`}
+                          {event.location?.city &&
+                            ` • ${event.location.city}, ${event.location.country}`}
                         </div>
                       )}
                     </div>
                     {event.event_type === 'failed_login' && (
-                      <span style={{ padding: '3px 10px', fontSize: '11px', background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '999px', flexShrink: 0, fontWeight: '600' }}>
+                      <span
+                        style={{
+                          padding: '3px 10px',
+                          fontSize: '11px',
+                          background: 'rgba(239,68,68,0.15)',
+                          color: '#f87171',
+                          border: '1px solid rgba(239,68,68,0.25)',
+                          borderRadius: '999px',
+                          flexShrink: 0,
+                          fontWeight: '600',
+                        }}
+                      >
                         Failed
                       </span>
                     )}
@@ -417,25 +709,59 @@ export function SecuritySettings() {
         {/* Recovery Phone */}
         {activeTab === 'recovery' && (
           <div style={{ padding: '28px' }}>
-            <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#e2e8f0', marginTop: 0, marginBottom: '8px' }}>Account Recovery</h3>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: '600',
+                color: '#e2e8f0',
+                marginTop: 0,
+                marginBottom: '8px',
+              }}
+            >
+              Account Recovery
+            </h3>
             <p style={{ color: '#94a3b8', marginBottom: '24px', marginTop: 0 }}>
               Set up a recovery phone number in case you lose access to your email
             </p>
 
             {recoveryStatus.phone && recoveryStatus.verified ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', marginBottom: '24px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  padding: '16px',
+                  background: 'rgba(16,185,129,0.1)',
+                  border: '1px solid rgba(16,185,129,0.25)',
+                  borderRadius: '10px',
+                  marginBottom: '24px',
+                }}
+              >
                 <span style={{ fontSize: '24px' }}>✅</span>
                 <div>
-                  <div style={{ fontWeight: '600', color: '#34d399', fontSize: '14px' }}>Recovery phone verified</div>
+                  <div style={{ fontWeight: '600', color: '#34d399', fontSize: '14px' }}>
+                    Recovery phone verified
+                  </div>
                   <div style={{ fontSize: '13px', color: '#6ee7b7', marginTop: '2px' }}>
                     {recoveryStatus.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}
                   </div>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSetRecoveryPhone} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
+              <form
+                onSubmit={handleSetRecoveryPhone}
+                style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}
+              >
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#e2e8f0', marginBottom: '6px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      color: '#e2e8f0',
+                      marginBottom: '6px',
+                    }}
+                  >
                     Recovery Phone Number
                   </label>
                   <input
@@ -443,26 +769,57 @@ export function SecuritySettings() {
                     value={recoveryPhone}
                     onChange={(e) => setRecoveryPhone(e.target.value)}
                     placeholder="+1 (555) 123-4567"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '9px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontSize: '14px', boxSizing: 'border-box' }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '9px',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#e2e8f0',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                    }}
                   />
                   <p style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
                     We'll send a verification code to this number
                   </p>
                 </div>
-                <LoadingButton
-                  type="submit"
-                  loading={saving}
-                  className="btn btn-primary"
-                >
+                <LoadingButton type="submit" loading={saving} className="btn btn-primary">
                   Set Recovery Phone
                 </LoadingButton>
               </form>
             )}
 
             {/* Security Tips */}
-            <div style={{ marginTop: '32px', padding: '16px 20px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }}>
-              <h4 style={{ fontWeight: '600', color: '#a5b4fc', fontSize: '14px', marginBottom: '10px', marginTop: 0 }}>💡 Security Tips</h4>
-              <ul style={{ fontSize: '13px', color: '#94a3b8', lineHeight: '1.8', paddingLeft: '16px', margin: 0 }}>
+            <div
+              style={{
+                marginTop: '32px',
+                padding: '16px 20px',
+                background: 'rgba(99,102,241,0.08)',
+                border: '1px solid rgba(99,102,241,0.2)',
+                borderRadius: '10px',
+              }}
+            >
+              <h4
+                style={{
+                  fontWeight: '600',
+                  color: '#a5b4fc',
+                  fontSize: '14px',
+                  marginBottom: '10px',
+                  marginTop: 0,
+                }}
+              >
+                💡 Security Tips
+              </h4>
+              <ul
+                style={{
+                  fontSize: '13px',
+                  color: '#94a3b8',
+                  lineHeight: '1.8',
+                  paddingLeft: '16px',
+                  margin: 0,
+                }}
+              >
                 <li>Enable two-factor authentication for extra security</li>
                 <li>Use a unique, strong password</li>
                 <li>Keep your recovery phone number up to date</li>

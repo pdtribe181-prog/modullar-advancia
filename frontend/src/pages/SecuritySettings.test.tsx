@@ -2,6 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
+const mockNavigate = vi.hoisted(() => vi.fn());
+const mockNavigateElement = vi.hoisted(() => vi.fn());
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    Navigate: (props: { to: string; replace?: boolean; state?: unknown }) => {
+      mockNavigateElement(props);
+      return <div data-testid="navigate" data-to={props.to} />;
+    },
+  };
+});
+
 const mockGet = vi.hoisted(() => vi.fn());
 const mockPut = vi.hoisted(() => vi.fn());
 const mockPost = vi.hoisted(() => vi.fn());
@@ -135,6 +150,24 @@ describe('SecuritySettings', () => {
   });
 
   describe('loading state', () => {
+    it('redirects unauthenticated users to login with the full security URL', () => {
+      mockUseAuth.mockReturnValue({ isAuthenticated: false });
+
+      render(
+        <MemoryRouter initialEntries={['/security?tab=activity#recent']}>
+          <SecuritySettings />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByText('Loading security settings...')).not.toBeInTheDocument();
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockNavigateElement).toHaveBeenCalledWith({
+        to: '/login',
+        state: { from: '/security?tab=activity#recent' },
+        replace: true,
+      });
+    });
+
     it('shows spinner while loading', () => {
       mockGet.mockReturnValue(new Promise(() => {}));
       renderSecuritySettings();
