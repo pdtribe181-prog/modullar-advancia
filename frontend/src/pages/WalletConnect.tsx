@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { api } from '../services/api';
 import { LoadingButton } from '../components/Spinner';
@@ -50,7 +50,12 @@ export function WalletConnect() {
 
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const confirmDialog = useConfirm();
+  const returnTo = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
 
   const loadWallets = useCallback(async () => {
     try {
@@ -65,21 +70,25 @@ export function WalletConnect() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { state: { from: returnTo }, replace: true });
       return;
     }
     loadWallets();
-  }, [isAuthenticated, navigate, loadWallets]);
+  }, [isAuthenticated, navigate, loadWallets, returnTo]);
 
   // Check if MetaMask or other wallet is available
-  const hasWeb3Wallet = typeof window !== 'undefined' &&
-    (window as unknown as { ethereum?: unknown }).ethereum;
+  const hasWeb3Wallet =
+    typeof window !== 'undefined' && (window as unknown as { ethereum?: unknown }).ethereum;
 
   const connectMetaMask = async () => {
-    const ethereum = (window as unknown as { ethereum?: {
-      request: (args: { method: string; params?: unknown[] }) => Promise<string[]>;
-      selectedAddress?: string;
-    }}).ethereum;
+    const ethereum = (
+      window as unknown as {
+        ethereum?: {
+          request: (args: { method: string; params?: unknown[] }) => Promise<string[]>;
+          selectedAddress?: string;
+        };
+      }
+    ).ethereum;
 
     if (!ethereum) {
       setError('MetaMask not detected. Please install MetaMask extension.');
@@ -96,9 +105,13 @@ export function WalletConnect() {
   };
 
   const signMessage = async (message: string): Promise<string | null> => {
-    const ethereum = (window as unknown as { ethereum?: {
-      request: (args: { method: string; params?: unknown[] }) => Promise<string>;
-    }}).ethereum;
+    const ethereum = (
+      window as unknown as {
+        ethereum?: {
+          request: (args: { method: string; params?: unknown[] }) => Promise<string>;
+        };
+      }
+    ).ethereum;
 
     if (!ethereum || !walletAddress) return null;
 
@@ -212,8 +225,7 @@ export function WalletConnect() {
     setError('');
   };
 
-  const shortenAddress = (address: string) =>
-    `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   if (loading) {
     return (
@@ -229,9 +241,7 @@ export function WalletConnect() {
     <div className="wallet-page">
       <div className="wallet-card">
         <h2>Crypto Wallets</h2>
-        <p className="subtitle">
-          Connect your wallet to receive payouts in cryptocurrency.
-        </p>
+        <p className="subtitle">Connect your wallet to receive payouts in cryptocurrency.</p>
 
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
@@ -331,7 +341,10 @@ export function WalletConnect() {
               onClick={handleStartConnect}
               loading={connecting}
               loadingText="Connecting..."
-              disabled={!hasWeb3Wallet && ['ethereum', 'polygon', 'base', 'arbitrum'].includes(selectedNetwork)}
+              disabled={
+                !hasWeb3Wallet &&
+                ['ethereum', 'polygon', 'base', 'arbitrum'].includes(selectedNetwork)
+              }
             >
               <span style={{ fontSize: '1.25rem' }}>🔗</span>
               Connect Wallet
@@ -346,8 +359,8 @@ export function WalletConnect() {
                   style={{ color: 'var(--primary)' }}
                 >
                   Install MetaMask
-                </a>
-                {' '}to connect Ethereum, Polygon, Base, or Arbitrum wallets.
+                </a>{' '}
+                to connect Ethereum, Polygon, Base, or Arbitrum wallets.
               </p>
             )}
           </div>
@@ -359,12 +372,14 @@ export function WalletConnect() {
               Sign the message with your wallet to prove ownership.
             </p>
 
-            <div style={{
-              background: 'var(--light)',
-              padding: '16px',
-              borderRadius: 'var(--radius)',
-              marginBottom: '16px'
-            }}>
+            <div
+              style={{
+                background: 'var(--light)',
+                padding: '16px',
+                borderRadius: 'var(--radius)',
+                marginBottom: '16px',
+              }}
+            >
               <strong>Wallet:</strong>
               <div className="wallet-address" style={{ marginTop: '4px' }}>
                 {walletAddress}
@@ -372,11 +387,7 @@ export function WalletConnect() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={cancelConnection}
-              >
+              <button type="button" className="btn btn-secondary" onClick={cancelConnection}>
                 Cancel
               </button>
               <LoadingButton
@@ -392,12 +403,10 @@ export function WalletConnect() {
           </div>
         )}
 
-        <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-          <button
-            type="button"
-            className="btn-link"
-            onClick={() => navigate('/provider')}
-          >
+        <div
+          style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}
+        >
+          <button type="button" className="btn-link" onClick={() => navigate('/provider')}>
             ← Back to Dashboard
           </button>
         </div>

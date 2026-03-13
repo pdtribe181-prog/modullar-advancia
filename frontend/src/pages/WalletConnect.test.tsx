@@ -347,8 +347,18 @@ describe('WalletConnect', () => {
 
     it('redirects to login if not authenticated', async () => {
       mockUseAuth.mockReturnValue({ isAuthenticated: false });
-      renderComponent();
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/login'));
+      render(
+        <MemoryRouter initialEntries={['/wallet/connect?network=base#verify']}>
+          <WalletConnect />
+        </MemoryRouter>
+      );
+      await waitFor(() =>
+        expect(mockNavigate).toHaveBeenCalledWith('/login', {
+          state: { from: '/wallet/connect?network=base#verify' },
+          replace: true,
+        })
+      );
+      expect(mockGet).not.toHaveBeenCalled();
     });
   });
 });
