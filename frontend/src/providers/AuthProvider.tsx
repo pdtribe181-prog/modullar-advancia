@@ -82,14 +82,14 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName?: string, role?: string) => Promise<void>;
   logout: () => void;
-  refreshSession: () => Promise<void>;
+  refreshSession: () => Promise<boolean>;
   /** Hydrate auth state from an OAuth access_token (e.g. after Supabase redirect). */
   setTokenFromOAuth: (accessToken: string, expiresIn?: number) => Promise<void>;
   // Phone auth
   sendPhoneOtp: (phone: string) => Promise<void>;
   verifyPhoneOtp: (phone: string, code: string) => Promise<void>;
   // OAuth
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (redirectPath?: string) => Promise<void>;
   // MFA
   enrollMFA: (friendlyName?: string) => Promise<MFAEnrollResponse['data']>;
   verifyMFA: (factorId: string, code: string) => Promise<void>;
@@ -104,6 +104,25 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const TOKEN_KEY = 'token';
 const TOKEN_EXPIRY_KEY = 'token_expiry';
 const USER_KEY = 'user_data';
+const OAUTH_RETURN_TO_KEY = 'oauth_return_to';
+
+function resolveOAuthRedirectTarget(candidate?: string): string {
+  if (!candidate || !candidate.startsWith('/')) {
+    return '/dashboard';
+  }
+
+  if (
+    candidate === '/login' ||
+    candidate === '/signup' ||
+    candidate.startsWith('/login?') ||
+    candidate.startsWith('/signup?') ||
+    candidate.startsWith('/auth/callback')
+  ) {
+    return '/dashboard';
+  }
+
+  return candidate;
+}
 
 // Check if token is expired (with 5 minute buffer)
 function isTokenExpired(expiryTime: number | null): boolean {
@@ -295,7 +314,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearAuth]);
 
   const refreshSession = useCallback(async () => {
-    await validateSession();
+    return validateSession();
   }, [validateSession]);
 
   /**
@@ -332,8 +351,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // OAuth methods
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (redirectPath?: string) => {
     // This redirects to Supabase OAuth flow
+    sessionStorage.setItem(OAUTH_RETURN_TO_KEY, resolveOAuthRedirectTarget(redirectPath));
     const googleAuthUrl = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/callback')}`;
     window.location.href = googleAuthUrl;
   };

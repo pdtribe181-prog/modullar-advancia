@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthCallback } from './AuthCallback';
 
+const OAUTH_RETURN_TO_KEY = 'oauth_return_to';
 const mockSetTokenFromOAuth = vi.fn();
 const mockRefreshSession = vi.fn();
 const mockNavigate = vi.fn();
@@ -34,6 +35,7 @@ function renderCallback(route = '/auth/callback') {
 describe('AuthCallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
     // Clear hash
     Object.defineProperty(window, 'location', {
       writable: true,
@@ -63,8 +65,10 @@ describe('AuthCallback', () => {
     });
 
     it('navigates to login on Back to Login click', () => {
+      sessionStorage.setItem(OAUTH_RETURN_TO_KEY, '/appointments');
       renderCallback('/auth/callback?error=access_denied');
       fireEvent.click(screen.getByRole('button', { name: 'Back to Login' }));
+      expect(sessionStorage.getItem(OAUTH_RETURN_TO_KEY)).toBeNull();
       expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
     });
   });
@@ -94,11 +98,41 @@ describe('AuthCallback', () => {
       });
     });
 
+    it('navigates to the stored return path after successful OAuth', async () => {
+      mockSetTokenFromOAuth.mockResolvedValueOnce(undefined);
+      sessionStorage.setItem(OAUTH_RETURN_TO_KEY, '/appointments?tab=upcoming#today');
+      Object.defineProperty(window, 'location', {
+        writable: true,
+        value: { ...window.location, hash: '#access_token=test-token&expires_in=3600' },
+      });
+
+      renderCallback();
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/appointments?tab=upcoming#today', {
+          replace: true,
+        });
+      });
+      expect(sessionStorage.getItem(OAUTH_RETURN_TO_KEY)).toBeNull();
+    });
+
     it('calls refreshSession when no access_token in hash', async () => {
-      mockRefreshSession.mockResolvedValueOnce(undefined);
+      mockRefreshSession.mockResolvedValueOnce(true);
       renderCallback();
       await waitFor(() => {
         expect(mockRefreshSession).toHaveBeenCalled();
+      });
+    });
+
+    it('navigates to login when session restore fails without an access token', async () => {
+      mockRefreshSession.mockResolvedValueOnce(false);
+
+      renderCallback();
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/login?error=callback_failed', {
+          replace: true,
+        });
       });
     });
 

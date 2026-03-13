@@ -212,9 +212,14 @@ describe('Login Page', () => {
   describe('Google sign-in', () => {
     it('calls signInWithGoogle on click', async () => {
       mockSignInWithGoogle.mockResolvedValue(undefined);
-      renderLogin();
+      renderLogin({
+        pathname: '/login',
+        state: { from: '/dashboard/claims?filter=open#today' },
+      });
       fireEvent.click(screen.getByText('Google'));
-      await waitFor(() => expect(mockSignInWithGoogle).toHaveBeenCalledOnce());
+      await waitFor(() =>
+        expect(mockSignInWithGoogle).toHaveBeenCalledWith('/dashboard/claims?filter=open#today')
+      );
     });
 
     it('shows error on Google sign-in failure', async () => {

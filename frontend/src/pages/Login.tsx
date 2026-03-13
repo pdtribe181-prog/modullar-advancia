@@ -133,7 +133,7 @@ export function Login() {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
     }
