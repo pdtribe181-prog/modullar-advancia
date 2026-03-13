@@ -15,7 +15,9 @@ Quick reference for all related GitHub repos and how they fit together.
 | **modular-saas-platform-nw** | muchaeljohn739337-art/modular-saas-platform-nw | 📦 Different stack | Microservices / Next.js / K8s / Terraform; “Advancia PayLedger” branding but separate codebase |
 | **advanciapayledger-new1** | muchaeljohn739337-art/advanciapayledger-new1 | 📦 Variant | backend-clean + frontend-clean + mobile; Docker/Hostinger; different structure |
 | **advanciapayledger-new** | muchaeljohn739337-art/advanciapayledger-new | 📦 Variant | Prisma, backend/frontend/contracts; many docs; older/demo variant |
+| **advancia-pay-ledger** | pbigstop/advancia-pay-ledger | 📦 Financial variant | Ledger-focused Express/Prisma/Redis + Next.js frontend; use as feature donor/reference only |
 | **modular-prop-1** | muchaeljohn739337-art/modular-prop-1 | 📦 Meta/props | Contains advanciapayledger-new as subfolder; deployment/pitch docs; not the running app |
+| **advancia-devuser-duplicate-reports** | advancia-devuser/advancia-devuser-duplicate-reports | 🛠 Utility | Separate Python CLI for duplicate file scanning; unrelated to the product stack |
 
 ---
 
@@ -30,7 +32,9 @@ Quick reference for all related GitHub repos and how they fit together.
 - **modular-saas-platform-nw** — Different architecture (microservices, Next.js, K8s). Either treat as a future/alternate platform or archive; don’t mix with modullar-advancia without a clear plan.
 - **advanciapayledger-new1** — Demo/variant (backend-clean, frontend-clean, mobile). Add a README line: “Canonical production repo: [pdtribe181-prog/modullar-advancia](https://github.com/pdtribe181-prog/modullar-advancia).”
 - **advanciapayledger-new** — Older/demo variant (Prisma, many guides). Same: point README to modullar-advancia as canonical.
+- **pbigstop/advancia-pay-ledger** — Ledger and withdrawal variant. Keep as a feature donor/reference repo only; do not run it in parallel on the live domains.
 - **modular-prop-1** — Pitches/deployment/scripts; contains a copy of advanciapayledger-new. Keep for reference; do not use as the main codebase.
+- **advancia-devuser-duplicate-reports** — Utility-only Python repo. Keep separate from the app portfolio and do not treat it as part of the product architecture.
 
 ### Avoid
 - Don’t spread production changes across multiple repos; use **modullar-advancia** only for production.
@@ -66,4 +70,6 @@ Quick reference for all related GitHub repos and how they fit together.
 - **Production (canonical):** [pdtribe181-prog/modullar-advancia](https://github.com/pdtribe181-prog/modullar-advancia) — PayLedger + Healthcare
 - **Mirror:** [pdtribe181-prog/advancia-get-together](https://github.com/pdtribe181-prog/advancia-get-together)
 - **Payroll (separate repo):** [advancia-devuser/advancia-healthcare1](https://github.com/advancia-devuser/advancia-healthcare1) — Next.js, Prisma, Alchemy; different codebase
+- **Ledger variant:** [pbigstop/advancia-pay-ledger](https://github.com/pbigstop/advancia-pay-ledger) — Express/Prisma/Redis financial engine
+- **Utility repo:** [advancia-devuser/advancia-devuser-duplicate-reports](https://github.com/advancia-devuser/advancia-devuser-duplicate-reports) — Python duplicate-report scanner
 - **Domain checklist:** [DOMAIN_AND_BRANDING_CHECKLIST.md](./DOMAIN_AND_BRANDING_CHECKLIST.md)

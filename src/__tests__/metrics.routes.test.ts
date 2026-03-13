@@ -4,6 +4,8 @@
  */
 import { jest } from '@jest/globals';
 
+const mockApiLimiter = jest.fn<any>((_req: any, _res: any, next: any) => next());
+
 const mockGetPrometheusMetrics = jest
   .fn<any>()
   .mockReturnValue('# HELP requests_total Total requests\nrequests_total 42\n');
@@ -20,10 +22,18 @@ jest.unstable_mockModule('../services/metrics.service.js', () => ({
   persistMetrics: mockPersistMetrics,
 }));
 
+jest.unstable_mockModule('../config/env.js', () => ({
+  getEnv: () => ({ METRICS_ALLOWED_IPS: '' }),
+}));
+
 // Mock auth middleware to pass through
 jest.unstable_mockModule('../middleware/auth.middleware.js', () => ({
   authenticate: (_req: any, _res: any, next: any) => next(),
   requireRole: () => (_req: any, _res: any, next: any) => next(),
+}));
+
+jest.unstable_mockModule('../middleware/rateLimit.middleware.js', () => ({
+  apiLimiter: mockApiLimiter,
 }));
 
 const { default: metricsRouter } = await import('../routes/metrics.routes.js');
@@ -54,6 +64,7 @@ describe('Metrics Routes', () => {
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toContain('text/plain');
       expect(res.text).toContain('requests_total');
+      expect(mockApiLimiter).toHaveBeenCalledTimes(1);
       expect(mockGetPrometheusMetrics).toHaveBeenCalled();
     });
   });
@@ -63,6 +74,7 @@ describe('Metrics Routes', () => {
       const res = await request(app).get('/metrics/json');
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ requests: 42, errors: 3, uptime: 12345 });
+      expect(mockApiLimiter).toHaveBeenCalledTimes(1);
       expect(mockGetMetricsSnapshot).toHaveBeenCalled();
     });
   });
@@ -72,6 +84,7 @@ describe('Metrics Routes', () => {
       const res = await request(app).post('/metrics/persist');
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ status: 'persisted' });
+      expect(mockApiLimiter).toHaveBeenCalledTimes(1);
       expect(mockPersistMetrics).toHaveBeenCalled();
     });
   });
