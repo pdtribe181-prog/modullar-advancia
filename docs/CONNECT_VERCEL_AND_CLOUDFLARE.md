@@ -1,22 +1,22 @@
-# Connect Frontend to Vercel and Cloudflare Pages
+# Connect Frontend to Vercel and Cloudflare
 
-Use this so the same repo deploys to **Vercel** (previews or production) and **Cloudflare Pages** (production). Both read from the **frontend** folder.
+Use this so the same repo deploys to **Vercel** for the live frontend and previews, while **Cloudflare** continues handling DNS and any API-side proxy/CDN duties you keep there. Both frontend deployment flows read from the **frontend** folder.
 
 ---
 
 ## Which option: VPS deploy all vs connect to Vercel/Cloudflare?
 
-**Recommendation: connect to Vercel or Cloudflare Pages (frontend) and keep the API on the VPS.**
+**Recommendation: keep the frontend on Vercel and keep the API on the VPS.**
 
 | | Connect to Vercel / Cloudflare | VPS deploy all (frontend + API on same server) |
 |---|--------------------------------|-----------------------------------------------|
-| **Frontend** | Vercel or Cloudflare Pages | Nginx on VPS serves built `frontend/dist` |
+| **Frontend** | Vercel | Nginx on VPS serves built `frontend/dist` |
 | **Backend** | Stays on VPS (current setup) | Same VPS |
 | **Pros** | Global CDN, preview deploys per PR, no frontend build on VPS, frontend traffic doesn’t hit API server | One server, one bill, single place to manage |
 | **Cons** | Two platforms, CORS config (already done) | No edge CDN unless Cloudflare in front; you maintain frontend build + deploy on VPS |
 | **Best for** | Production, growth, previews, better performance | Very small setup, one box, strict single-provider requirement |
 
-Use **Vercel or Cloudflare** for the frontend unless you have a strong reason to serve everything from the VPS (e.g. one server only, no third-party frontend host). Backend stays on the VPS either way.
+Use **Vercel** for the frontend unless you have a strong reason to serve everything from the VPS (e.g. one server only, no third-party frontend host). Backend stays on the VPS either way.
 
 ---
 
@@ -42,29 +42,10 @@ Use **Vercel or Cloudflare** for the frontend unless you have a strong reason to
 
 ---
 
-## 2. Connect to Cloudflare Pages
+## 2. Summary
 
-1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Select your repo and branch (e.g. **main**).
-3. **Build configuration:**
-   - **Project name:** e.g. `advancia-payledger` or `advancia-healthcare`
-   - **Production branch:** `main`
-   - **Root directory (advanced):** **`frontend`**
-   - **Framework preset:** None (or Vite if listed)
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-4. **Environment variables:** Add the same `VITE_*` vars as above (Production and Preview).
-5. **Save and Deploy.** Custom domains (e.g. advanciapayledger.com, advancia-healthcare.com) can be added under **Custom domains**.
+| Platform   | Root directory | Build command   | Output | Config in repo        |
+|------------|----------------|-----------------|--------|------------------------|
+| **Vercel** | `frontend`     | `npm run build` | `dist` | `frontend/vercel.json` |
 
-**Backend CORS:** Production domains (advanciapayledger.com, advancia-healthcare.com) are already allowed by the API. For Cloudflare Pages preview URLs (e.g. `xxx.pages.dev`), add them to `CORS_ORIGINS` if the preview app calls the API.
-
----
-
-## 3. Summary
-
-| Platform           | Root directory | Build command   | Output | Config in repo        |
-|--------------------|----------------|-----------------|--------|------------------------|
-| **Vercel**         | `frontend`    | `npm run build` | `dist` | `frontend/vercel.json` |
-| **Cloudflare Pages** | `frontend` | `npm run build` | `dist` | Set in dashboard       |
-
-Both use the same build; set **Root Directory** to **`frontend`** so `package.json` and `vite.config.ts` are used. Backend: add Vercel/Cloudflare preview origins to **CORS_ORIGINS** if those frontends call the API.
+Use **`frontend`** as the root directory so `package.json` and `vite.config.ts` are used. Backend: add Vercel preview origins to **CORS_ORIGINS** if those frontends call the API.

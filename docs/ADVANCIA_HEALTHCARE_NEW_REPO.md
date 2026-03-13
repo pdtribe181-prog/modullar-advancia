@@ -153,7 +153,7 @@ If build and tests pass, the clean workspace has everything.
 
 ### Step 4: Deploy (when ready)
 
-- **Frontend:** Connect the new repo to Cloudflare Pages (or Hostinger/Vercel). Use same env (e.g. `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SUPABASE_*`). Add custom domains: advanciapayledger.com, advancia-healthcare.com.
+- **Frontend:** Connect the new repo to Vercel. Use same env (e.g. `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SUPABASE_*`). Add custom domains: advanciapayledger.com, advancia-healthcare.com.
 - **API:** Keep using the same Hostinger VPS API (api.advanciapayledger.com) or point to a new API if you deploy the backend from this new repo.
 - **Docs:** WHATS_NEEDED.md, INFRASTRUCTURE_AND_DOMAINS.md, DOMAIN_AND_BRANDING_CHECKLIST.md stay valid; only the “canonical repo” URL changes if you make this new repo the main one.
 

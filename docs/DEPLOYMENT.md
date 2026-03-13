@@ -144,13 +144,13 @@ curl https://api.advanciapayledger.com/health
 
 ---
 
-## 2. Frontend (Cloudflare Pages)
+## 2. Frontend (Vercel)
 
-Go to: **Cloudflare Pages → your project → Settings → Environment variables**
+Go to: **Vercel → your frontend project → Settings → Environment Variables**
 
 Add the variables from `2-PAYLEDGER-FRONTEND.env`.
 
-### Environment Variables (Cloudflare Pages)
+### Environment Variables (Vercel)
 
 ```env
 VITE_API_URL=https://api.advanciapayledger.com/api/v1
@@ -220,11 +220,11 @@ npm run test:coverage
 
 ## 7. Custom Domain (Optional)
 
-### Frontend (Cloudflare Pages)
+### Frontend (Vercel)
 
-1. Cloudflare Dashboard → Pages → Your project → Custom domains
-2. Add `app.advanciapayledger.com`
-3. DNS: CNAME record is auto-configured by Cloudflare
+1. Vercel → Project → Settings → Domains
+2. Add `app.advanciapayledger.com` if you want that alias
+3. Keep DNS in Cloudflare pointed at the Vercel target that Vercel provides
 
 ### Backend (VPS)
 
@@ -238,10 +238,10 @@ npm run test:coverage
 
 - [x] Supabase connected
 - [x] 131 tests passing
-- [x] Frontend deployed to Cloudflare Pages
+- [x] Frontend deployed to Vercel
 - [x] Backend deployed to VPS (PM2 + Nginx)
 - [x] Stripe webhook configured
-- [x] VITE_API_URL set in Cloudflare Pages
+- [x] VITE_API_URL set in Vercel
 - [x] Google OAuth enabled
 - [x] SMTP configured (Resend)
 - [x] Sentry monitoring enabled
@@ -318,12 +318,12 @@ Go to **Settings → Secrets and variables → Actions** and add:
 Deployments are automatic on push to `main`:
 
 - **VPS** - Backend: SSH pull + build + PM2 reload (or use deploy script)
-- **Cloudflare Pages** - Frontend auto-deploys via GitHub integration
+- **Vercel** - Frontend deploys from the configured Vercel project/workflow
 
 ---
 
 ## Support
 
-- Cloudflare Pages Docs: <https://developers.cloudflare.com/pages/>
+- Vercel Docs: <https://vercel.com/docs>
 - Supabase Docs: <https://supabase.com/docs>
 - Stripe Docs: <https://stripe.com/docs>

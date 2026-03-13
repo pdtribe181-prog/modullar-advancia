@@ -8,33 +8,33 @@ Single place for **Vercel**, **paths**, **VPS (Hostinger)**, **Render**, **Supab
 
 | Layer | Production | Staging |
 |-------|------------|---------|
-| **Frontend (app)** | **Cloudflare Pages** (deploys from `main`) | Optional: separate Pages project or same project with branch; or not used. |
+| **Frontend (app)** | **Vercel** (live production for `advanciapayledger.com` and `advancia-healthcare.com`) | Vercel previews and/or optional alternate frontend host |
 | **API (backend)** | **VPS** (Hostinger) — `api.advanciapayledger.com` | **Render** — `api-staging.advanciapayledger.com` → `modullar-advancia.onrender.com` |
 | **Database + Auth** | **Supabase** (one production project) | **Supabase** (separate staging project; see [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md)) |
-| **Vercel** | Optional. `frontend/vercel.json` present; production frontend is Cloudflare Pages. | [VERCEL_AND_VPS_CONFIG.md](VERCEL_AND_VPS_CONFIG.md) |
+| **Vercel** | **Primary frontend host in production** | Preview deployments and optional alternate frontend workflows |
 
 ---
 
 ## 2. Three domains — where each is served
 
-**Hosting split:** **advanciapayroll.com** is on **Hostinger** (DNS + redirect only). **advanciapayledger.com** and **advancia-healthcare.com** are on **Cloudflare** (DNS + frontend on Pages). The production API runs on **Hostinger VPS** (api.advanciapayledger.com).
+**Hosting split:** **advanciapayledger.com** and **advancia-healthcare.com** use **Cloudflare-managed DNS** and currently serve their frontend from **Vercel**. **advanciapayroll.com** is on **Hostinger** (DNS + redirect only). The production API runs on **Hostinger VPS** at `api.advanciapayledger.com`. Render is retained for staging API only.
 
 **Repos vs domains:** This codebase (**modullar-advancia**) serves PayLedger and Healthcare only (advanciapayledger.com, advancia-healthcare.com). The **payroll** product has a **separate repo**: [advancia-devuser/advancia-healthcare1](https://github.com/advancia-devuser/advancia-healthcare1) (Next.js, Prisma, Alchemy). The domain advanciapayroll.com does **not** serve that repo in production — it 301-redirects to advanciapayledger.com. See [REPO_MAP.md](REPO_MAP.md).
 
 | Domain | Serves app? | Where hosted | Frontend / API | Notes |
 |--------|-------------|--------------|----------------|--------|
-| **advanciapayledger.com** | Yes | **Cloudflare** | Cloudflare Pages (same build) \| VPS: `api.advanciapayledger.com` | Primary. No redirect. |
-| **www.advanciapayledger.com** | Yes (alias) | Cloudflare | Same as above | 301 → apex (Nginx or Cloudflare). |
-| **app.advanciapayledger.com** | Optional | Cloudflare | Same build; add as custom domain in Pages | Optional subdomain. |
+| **advanciapayledger.com** | Yes | Cloudflare DNS + Vercel frontend | Vercel frontend \| VPS API at `api.advanciapayledger.com` | Primary domain. |
+| **www.advanciapayledger.com** | Yes (alias) | Cloudflare DNS + Vercel frontend | Same as above | Current Vercel redirect/alias behavior should be kept consistent. |
+| **app.advanciapayledger.com** | Optional | Cloudflare DNS + Vercel | Same build if added in Vercel | Optional subdomain. |
 | **api.advanciapayledger.com** | — | Cloudflare DNS → VPS | **VPS** (Nginx → PM2 :3000) | Production API only. |
-| **advancia-healthcare.com** | Yes | **Cloudflare** | Cloudflare Pages (same build; add as custom domain) \| Same API (VPS) | **Personal** (individuals/patients); Healthcare landing when host matches. |
-| **www.advancia-healthcare.com** | Optional | Cloudflare | Same | Add in Pages or 301 → apex. |
+| **advancia-healthcare.com** | Yes | Cloudflare DNS + Vercel frontend | Vercel frontend \| Same production API (VPS) unless split later | **Personal** (individuals/patients); Healthcare landing when host matches. |
+| **www.advancia-healthcare.com** | Yes/optional | Cloudflare DNS + Vercel frontend | Same | Current Vercel redirect/alias behavior should be kept consistent. |
 | **advanciapayroll.com** | No | **Hostinger** | — | **Leave as redirect only:** 301 → advanciapayledger.com (set in Hostinger). Do not serve payroll app. |
 | **www.advanciapayroll.com** | No | Hostinger | — | Same: 301 → advanciapayledger.com in Hostinger. |
 
 **Path summary**
 
-- **Frontend (all app domains):** One build; one Cloudflare Pages project. Custom domains: `advanciapayledger.com`, (optional) `www`, (optional) `app`, `advancia-healthcare.com`, (optional) `www`.
+- **Frontend (all app domains):** One build; production currently served from Vercel. Custom domains are attached there, while DNS for the main domains remains managed in Cloudflare.
 - **API:** One production host (`api.advanciapayledger.com` → VPS). One staging host (`api-staging.advanciapayledger.com` → Render).
 - **Auth callbacks:** `https://<domain>/auth/callback` for each domain that runs the app; add all in Supabase Redirect URLs (see [DOMAINS_AND_GOOGLE_OAUTH.md](DOMAINS_AND_GOOGLE_OAUTH.md)).
 
@@ -42,7 +42,7 @@ Single place for **Vercel**, **paths**, **VPS (Hostinger)**, **Render**, **Supab
 
 ## 3. Vercel
 
-**Production:** Frontend is on **Cloudflare Pages**. `frontend/vercel.json` is present for optional Vercel deployment (previews or alternate host). **Connect both:** see [CONNECT_VERCEL_AND_CLOUDFLARE.md](CONNECT_VERCEL_AND_CLOUDFLARE.md) for exact steps (root dir = `frontend`, build = `npm run build`, output = `dist`).
+**Production:** Frontend is currently live on **Vercel** for both `advanciapayledger.com` and `advancia-healthcare.com`. `frontend/vercel.json` remains the repo-side deployment config. Cloudflare remains relevant for DNS and any proxy/CDN choices around the API layer.
 
 **Preview deployments:** If you deploy the frontend to Vercel (e.g. `advancia-healthcare-xxx.pdtribe181-progs-projects.vercel.app`):
 
@@ -133,7 +133,7 @@ Do the steps below **in this order** so each step builds on the previous one and
 ## 9. Proceed — completion order (detailed)
 
 1. **Domains & DNS**
-   - Cloudflare Pages: add `advancia-healthcare.com` (and optional www) as custom domain.
+   - Vercel: add `advancia-healthcare.com` (and optional www) as custom domain.
    - Hostinger: 301 redirect `advanciapayroll.com` and www → `https://advanciapayledger.com` (Websites → Redirects).
    - Optional: add www CNAME for advanciapayledger.com if not already (or keep redirect-only).
 

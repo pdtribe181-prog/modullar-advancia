@@ -8,7 +8,7 @@ One-place checklist of **manual / infra** items. Code and CORS are done in the r
 
 | # | What | Where |
 |---|------|--------|
-| 1 | Add **advancia-healthcare.com** (and optional www) as custom domain | **Cloudflare Pages** → same project as PayLedger |
+| 1 | Add **advancia-healthcare.com** (and optional www) as custom domain | **Vercel** → same project as PayLedger |
 | 2 | 301 redirect **advanciapayroll.com** and www → advanciapayledger.com | **Hostinger** → Websites → Redirects |
 | 3 | Add all app callback URLs (payledger, www, healthcare, www, localhost) | **Supabase** → Authentication → URL Configuration → Redirect URLs |
 | 4 | Add all app origins (same list) | **Google Cloud Console** → OAuth client → Authorized JavaScript origins |
@@ -19,7 +19,7 @@ One-place checklist of **manual / infra** items. Code and CORS are done in the r
 
 ## After you add the CNAME
 
-1. **Host (Cloudflare Pages / Vercel):** Add the custom domain in the project (Custom domains / Domains). SSL is provisioned automatically.
+1. **Host (Vercel):** Add the custom domain in the project settings. SSL is provisioned automatically.
 2. **Backend CORS:** If the new domain calls the API, add it to `CORS_ORIGINS` on the VPS (or it may already be in code for payledger/healthcare).
 3. **Supabase:** Authentication → URL configuration → add Site URL and Redirect URLs for the new domain.
 4. **Google OAuth:** Add the domain to Authorized JavaScript origins and redirect URIs.

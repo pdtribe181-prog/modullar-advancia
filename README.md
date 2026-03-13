@@ -19,7 +19,7 @@
 
 This repository (`modullar-advancia`) is the canonical production codebase for **Advancia PayLedger** (app + API at `advanciapayledger.com` and `api.advanciapayledger.com`). A mirror is kept at [pdtribe181-prog/advancia-get-together](https://github.com/pdtribe181-prog/advancia-get-together); push to both with `npm run push:mirror` after committing.
 
-**Infrastructure & domains:** VPS, Render, Supabase, and the three domains are in [docs/INFRASTRUCTURE_AND_DOMAINS.md](docs/INFRASTRUCTURE_AND_DOMAINS.md). **Connect frontend to Vercel and Cloudflare Pages:** [docs/CONNECT_VERCEL_AND_CLOUDFLARE.md](docs/CONNECT_VERCEL_AND_CLOUDFLARE.md) (root dir = `frontend`, build = `npm run build`, output = `dist`). **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
+**Infrastructure & domains:** VPS, Render, Supabase, and the three domains are in [docs/INFRASTRUCTURE_AND_DOMAINS.md](docs/INFRASTRUCTURE_AND_DOMAINS.md). **Connect frontend to Vercel while keeping Cloudflare for DNS/edge where needed:** [docs/CONNECT_VERCEL_AND_CLOUDFLARE.md](docs/CONNECT_VERCEL_AND_CLOUDFLARE.md) (root dir = `frontend`, build = `npm run build`, output = `dist`). **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
 
 **All related repos:** See [docs/REPO_MAP.md](docs/REPO_MAP.md) for the full list and how each fits (canonical, mirror, variants).
 
@@ -29,7 +29,7 @@ This repository (`modullar-advancia`) is the canonical production codebase for *
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
 - **Payments**: Stripe (card payments)
 - **Frontend**: React + Vite + TypeScript
-- **Hosting**: Hostinger VPS (Frontend + API) with Cloudflare proxy/CDN
+- **Hosting**: Vercel (frontend), Hostinger VPS (API), Cloudflare/DNS where configured
 - **Monitoring**: Sentry
 - **Email**: Resend
 - **SMS**: Twilio

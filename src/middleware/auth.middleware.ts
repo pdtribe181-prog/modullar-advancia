@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase.js';
+import { isAccessTokenRevoked } from '../services/token-revocation.service.js';
 
 // Extend Express Request type
 export interface AuthenticatedRequest extends Request {
+  authToken?: string;
   user?: {
     id: string;
     email?: string;
@@ -19,6 +21,14 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
+function getBearerToken(authHeader?: string): string | null {
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  return authHeader.slice(7).trim();
+}
+
 /**
  * Authenticate user via Supabase JWT token
  * Requires: Authorization: Bearer <token>
@@ -28,15 +38,17 @@ export const authenticate = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
+  const token = getBearerToken(req.headers.authorization);
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(401).json({ error: 'Missing authorization header' });
   }
 
-  const token = authHeader.split(' ')[1];
-
   try {
+    if (await isAccessTokenRevoked(token)) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
     const {
       data: { user },
       error,
@@ -46,6 +58,7 @@ export const authenticate = async (
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
+    req.authToken = token;
     req.user = user;
     next();
   } catch (error) {
@@ -62,15 +75,17 @@ export const authenticateWithProfile = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
+  const token = getBearerToken(req.headers.authorization);
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(401).json({ error: 'Missing authorization header' });
   }
 
-  const token = authHeader.split(' ')[1];
-
   try {
+    if (await isAccessTokenRevoked(token)) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
     const {
       data: { user },
       error,
@@ -91,6 +106,7 @@ export const authenticateWithProfile = async (
       return res.status(401).json({ error: 'User profile not found' });
     }
 
+    req.authToken = token;
     req.user = user;
     req.userProfile = profile;
     next();
@@ -136,16 +152,19 @@ export const optionalAuth = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
+  const token = getBearerToken(req.headers.authorization);
 
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-
+  if (token) {
     try {
+      if (await isAccessTokenRevoked(token)) {
+        return next();
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser(token);
       if (user) {
+        req.authToken = token;
         req.user = user;
       }
     } catch {

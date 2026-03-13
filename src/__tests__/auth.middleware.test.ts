@@ -8,6 +8,7 @@ import { Request, Response, NextFunction } from 'express';
 // Create mock functions at top level
 const mockGetUser = jest.fn<any>();
 const mockFrom = jest.fn<any>();
+const mockIsAccessTokenRevoked = jest.fn<any>();
 
 // Use unstable_mockModule for ESM compatibility
 jest.unstable_mockModule('../lib/supabase', () => ({
@@ -19,11 +20,15 @@ jest.unstable_mockModule('../lib/supabase', () => ({
   },
 }));
 
+jest.unstable_mockModule('../services/token-revocation.service', () => ({
+  isAccessTokenRevoked: mockIsAccessTokenRevoked,
+}));
+
 // Dynamic import after mocks are set up
 const { authenticate, authenticateWithProfile, requireRole, optionalAuth } =
   await import('../middleware/auth.middleware');
 
-type AuthenticatedRequest = Request & { user?: any; userProfile?: any };
+type AuthenticatedRequest = Request & { authToken?: string; user?: any; userProfile?: any };
 
 describe('Auth Middleware', () => {
   let mockReq: Partial<AuthenticatedRequest>;
@@ -46,6 +51,7 @@ describe('Auth Middleware', () => {
     mockNext = jest.fn() as NextFunction;
 
     jest.clearAllMocks();
+    mockIsAccessTokenRevoked.mockResolvedValue(false);
   });
 
   describe('authenticate', () => {
@@ -79,6 +85,17 @@ describe('Auth Middleware', () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: 'Invalid or expired token' });
     });
 
+    it('should return 401 when token has been revoked', async () => {
+      mockReq.headers = { authorization: 'Bearer revoked-token' };
+      mockIsAccessTokenRevoked.mockResolvedValue(true);
+
+      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(jsonMock).toHaveBeenCalledWith({ error: 'Invalid or expired token' });
+      expect(mockGetUser).not.toHaveBeenCalled();
+    });
+
     it('should return 401 when user is not found', async () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
       mockGetUser.mockResolvedValue({
@@ -102,6 +119,7 @@ describe('Auth Middleware', () => {
 
       await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
+      expect(mockReq.authToken).toBe('valid-token');
       expect(mockReq.user).toEqual(mockUser);
       expect(mockNext).toHaveBeenCalled();
       expect(statusMock).not.toHaveBeenCalled();
@@ -152,6 +170,17 @@ describe('Auth Middleware', () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: 'Invalid or expired token' });
     });
 
+    it('should return 401 when token has been revoked', async () => {
+      mockReq.headers = { authorization: 'Bearer revoked-token' };
+      mockIsAccessTokenRevoked.mockResolvedValue(true);
+
+      await authenticateWithProfile(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(jsonMock).toHaveBeenCalledWith({ error: 'Invalid or expired token' });
+      expect(mockGetUser).not.toHaveBeenCalled();
+    });
+
     it('should return 401 when profile is not found', async () => {
       const mockUser = { id: 'user-123', email: 'test@example.com' };
       mockReq.headers = { authorization: 'Bearer valid-token' };
@@ -179,6 +208,7 @@ describe('Auth Middleware', () => {
 
       await authenticateWithProfile(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
+      expect(mockReq.authToken).toBe('valid-token');
       expect(mockReq.user).toEqual(mockUser);
       expect(mockReq.userProfile).toEqual(mockProfile);
       expect(mockNext).toHaveBeenCalled();
@@ -319,6 +349,17 @@ describe('Auth Middleware', () => {
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockReq.user).toBeUndefined();
+    });
+
+    it('should ignore revoked tokens', async () => {
+      mockReq.headers = { authorization: 'Bearer revoked-token' };
+      mockIsAccessTokenRevoked.mockResolvedValue(true);
+
+      await optionalAuth(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockReq.user).toBeUndefined();
+      expect(mockGetUser).not.toHaveBeenCalled();
     });
 
     it('should call next without user when getUser throws', async () => {

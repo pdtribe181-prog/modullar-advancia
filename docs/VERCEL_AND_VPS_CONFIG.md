@@ -2,12 +2,12 @@
 
 ## Vercel (frontend)
 
-**Production frontend is on Cloudflare Pages.** Vercel is optional (previews or alternate host).
+**Production frontend is on Vercel.** Cloudflare remains the DNS layer where configured; Hostinger VPS remains the API/server host.
 
 | Item | Status |
 |------|--------|
 | **vercel.json** | `frontend/vercel.json` — Vite build, output `dist`, SPA rewrites |
-| **Frontend host** | **Cloudflare Pages** (production); Vercel optional |
+| **Frontend host** | **Vercel** (production) |
 | **frontend/.gitignore** | Contains `.vercel` (local Vercel link ignored) |
 | **CORS** | Add Vercel preview URLs to backend `CORS_ORIGINS` if the app calls the API from Vercel |
 
@@ -24,7 +24,7 @@
 
 ## VPS config (Hostinger)
 
-Production backend and API are on a single Hostinger VPS. Frontend is built and served via **Cloudflare Pages** (or from the same VPS depending on setup); API is on the VPS.
+Production backend and API are on a single Hostinger VPS. Frontend is currently built and served via **Vercel**; API is on the VPS.
 
 ### Quick reference
 
@@ -75,5 +75,5 @@ Override from env (optional):
 
 ## Summary
 
-- **Vercel:** Not used; frontend is on Cloudflare Pages. No Vercel config files in repo.
+- **Vercel:** Used for the live frontend domains and preview deployments. `frontend/vercel.json` is the relevant repo config.
 - **VPS:** Hostinger `76.13.77.8`, app in `/var/www/advancia`, PM2 `advancia-api`, Nginx for API and SSL. Use `scripts/vps-deploy.ts` and `nginx/advancia.conf` as the source of truth for deploy and server config.

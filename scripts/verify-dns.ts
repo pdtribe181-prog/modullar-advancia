@@ -48,6 +48,9 @@ function getArg(name: string, fallback: string): string {
 }
 
 const DOMAIN = getArg('domain', 'advanciapayledger.com');
+const IS_PAYLEDGER = DOMAIN === 'advanciapayledger.com';
+const IS_HEALTHCARE = DOMAIN === 'advancia-healthcare.com';
+const IS_PAYROLL = DOMAIN === 'advanciapayroll.com';
 
 interface CheckResult {
   name: string;
@@ -56,6 +59,10 @@ interface CheckResult {
 }
 
 const results: CheckResult[] = [];
+
+function pushResult(name: string, status: 'PASS' | 'FAIL' | 'WARN', detail: string) {
+  results.push({ name, status, detail });
+}
 
 async function checkRecord(
   name: string,
@@ -95,14 +102,28 @@ async function main() {
   );
 
   // 2. API subdomain A record
-  await checkRecord(
-    `A record (api.${DOMAIN})`,
-    () => resolve4(`api.${DOMAIN}`),
-    (ips: string[]) => ({
-      pass: ips.length > 0,
-      detail: ips.length > 0 ? `Resolves to: ${ips.join(', ')}` : 'No A record for api subdomain',
-    })
-  );
+  if (IS_PAYLEDGER) {
+    await checkRecord(
+      `A record (api.${DOMAIN})`,
+      () => resolve4(`api.${DOMAIN}`),
+      (ips: string[]) => ({
+        pass: ips.length > 0,
+        detail: ips.length > 0 ? `Resolves to: ${ips.join(', ')}` : 'No A record for api subdomain',
+      })
+    );
+  } else if (IS_HEALTHCARE) {
+    pushResult(
+      `A record (api.${DOMAIN})`,
+      'WARN',
+      'Not required in the current live setup. Healthcare frontend is live, but no separate api.advancia-healthcare.com host is configured.'
+    );
+  } else if (IS_PAYROLL) {
+    pushResult(
+      `A record (api.${DOMAIN})`,
+      'WARN',
+      'Not required. Payroll is expected to remain a redirect-only domain, not an app or API host.'
+    );
+  }
 
   // 3. WWW CNAME
   await checkRecord(
@@ -129,22 +150,30 @@ async function main() {
   );
 
   // 5. DKIM record (Resend)
-  await checkRecord(
-    `TXT/DKIM (resend._domainkey.${DOMAIN})`,
-    () => resolveTxtR(`resend._domainkey.${DOMAIN}`),
-    (records: string[][]) => {
-      const flat = records.map((r: string[]) => r.join(''));
-      const dkim = flat.find(
-        (r: string) => r.includes('DKIM') || r.startsWith('v=DKIM1') || r.startsWith('p=')
-      );
-      return {
-        pass: !!dkim,
-        detail: dkim
-          ? `DKIM: ${dkim.slice(0, 60)}...`
-          : `Found: ${flat[0]?.slice(0, 60) || 'empty'}`,
-      };
-    }
-  );
+  if (IS_PAYROLL) {
+    pushResult(
+      `TXT/DKIM (resend._domainkey.${DOMAIN})`,
+      'WARN',
+      'Optional for payroll. Add DKIM only if advanciapayroll.com will send mail directly; otherwise redirect-only is sufficient.'
+    );
+  } else {
+    await checkRecord(
+      `TXT/DKIM (resend._domainkey.${DOMAIN})`,
+      () => resolveTxtR(`resend._domainkey.${DOMAIN}`),
+      (records: string[][]) => {
+        const flat = records.map((r: string[]) => r.join(''));
+        const dkim = flat.find(
+          (r: string) => r.includes('DKIM') || r.startsWith('v=DKIM1') || r.startsWith('p=')
+        );
+        return {
+          pass: !!dkim,
+          detail: dkim
+            ? `DKIM: ${dkim.slice(0, 60)}...`
+            : `Found: ${flat[0]?.slice(0, 60) || 'empty'}`,
+        };
+      }
+    );
+  }
 
   // 6. DMARC record
   await checkRecord(
@@ -176,32 +205,68 @@ async function main() {
   );
 
   // 8. Check SSL/TLS via HTTPS fetch
-  await checkRecord(
-    `HTTPS (https://${DOMAIN})`,
-    async () => {
-      const resp = await fetch(`https://${DOMAIN}`, { signal: AbortSignal.timeout(10000) });
-      return resp;
-    },
-    (resp: Response) => ({
-      pass: resp.status < 500,
-      detail: `Status: ${resp.status} ${resp.statusText}`,
-    })
-  );
+  if (IS_PAYROLL) {
+    await checkRecord(
+      `HTTPS redirect (https://${DOMAIN})`,
+      async () => {
+        const resp = await fetch(`https://${DOMAIN}`, {
+          signal: AbortSignal.timeout(10000),
+          redirect: 'manual',
+        });
+        return resp;
+      },
+      (resp: Response) => {
+        const location = resp.headers.get('location') || '';
+        const isRedirect = [301, 302, 307, 308].includes(resp.status);
+        const targetsPayLedger = location.startsWith('https://advanciapayledger.com');
+        return {
+          pass: isRedirect && targetsPayLedger,
+          detail: `Status: ${resp.status} ${resp.statusText}${location ? ` -> ${location}` : ''}`,
+        };
+      }
+    );
+  } else {
+    await checkRecord(
+      `HTTPS (https://${DOMAIN})`,
+      async () => {
+        const resp = await fetch(`https://${DOMAIN}`, { signal: AbortSignal.timeout(10000) });
+        return resp;
+      },
+      (resp: Response) => ({
+        pass: resp.status < 500,
+        detail: `Status: ${resp.status} ${resp.statusText}`,
+      })
+    );
+  }
 
   // 9. Check API health endpoint (server exposes GET /health at root, not under /api/v1)
-  await checkRecord(
-    `API Health (https://api.${DOMAIN}/health)`,
-    async () => {
-      const resp = await fetch(`https://api.${DOMAIN}/health`, {
-        signal: AbortSignal.timeout(10000),
-      });
-      return resp;
-    },
-    (resp: Response) => ({
-      pass: resp.status === 200,
-      detail: `Status: ${resp.status} ${resp.statusText}`,
-    })
-  );
+  if (IS_PAYLEDGER) {
+    await checkRecord(
+      `API Health (https://api.${DOMAIN}/health)`,
+      async () => {
+        const resp = await fetch(`https://api.${DOMAIN}/health`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        return resp;
+      },
+      (resp: Response) => ({
+        pass: resp.status === 200,
+        detail: `Status: ${resp.status} ${resp.statusText}`,
+      })
+    );
+  } else if (IS_HEALTHCARE) {
+    pushResult(
+      `API Health (https://api.${DOMAIN}/health)`,
+      'WARN',
+      'Not required in the current live setup unless you split healthcare onto its own API host.'
+    );
+  } else if (IS_PAYROLL) {
+    pushResult(
+      `API Health (https://api.${DOMAIN}/health)`,
+      'WARN',
+      'Not required. Payroll should remain redirect-only and should not expose an API host.'
+    );
+  }
 
   // ── Report ──
   console.log('  Results:');

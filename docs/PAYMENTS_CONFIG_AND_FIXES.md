@@ -58,7 +58,7 @@ Summary of Stripe/payment setup and the main corrections needed. No extra “plu
 ### 3) Production Stripe keys and publishable key (medium)
 
 - **Backend:** Must use live keys (`sk_live_*`, `whsec_*` for webhook) in production; already documented in `.env.example` and production checklists.
-- **Frontend:** In production build (e.g. Cloudflare Pages), **VITE_STRIPE_PUBLISHABLE_KEY** must be set to your **live** publishable key (`pk_live_*`). If it’s missing or still `pk_test_placeholder`, Stripe.js will be in test mode or fail. Add this to the deployment checklist and env docs.
+- **Frontend:** In the production frontend host, **VITE_STRIPE_PUBLISHABLE_KEY** must be set to your **live** publishable key (`pk_live_*`). If it’s missing or still `pk_test_placeholder`, Stripe.js will be in test mode or fail. Add this to the deployment checklist and env docs.
 
 ### 4) Stripe webhook secret per environment (low)
 
@@ -86,7 +86,7 @@ If you later add more payment methods (e.g. Link, SEPA, or other Stripe products
 | Stripe env (backend) | OK | Keep; ensure production uses live keys + webhook secret. |
 | Stripe webhook path (nginx) | Fixed | Already corrected to `/api/v1/stripe/webhook`. |
 | Stripe frontend (Elements, PaymentElement) | OK | No plugin needed; keep current stack. |
-| VITE_STRIPE_PUBLISHABLE_KEY in production | Risk | Set `pk_live_*` in Cloudflare Pages (and doc it). |
+| VITE_STRIPE_PUBLISHABLE_KEY in production | Risk | Set `pk_live_*` in Vercel (and doc it). |
 | Withdrawal via POST /transactions | Wrong | Add withdrawal endpoint(s); use `crypto_withdrawals` (and optionally bank table); point Withdraw.tsx at new API. |
 | POST /transactions validation | Missing | Add strict schema and use only for Stripe-related transaction creation. |
 | Webhook secret per env | Doc | Document separate secrets for staging vs prod. |

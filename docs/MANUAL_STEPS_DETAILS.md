@@ -4,18 +4,18 @@ Use this with [MANUAL_STEPS_CHECKLIST.md](MANUAL_STEPS_CHECKLIST.md). All values
 
 ---
 
-## 1. Cloudflare Pages — add advancia-healthcare.com
+## 1. Vercel — add advancia-healthcare.com
 
-**Where:** [Cloudflare Dashboard](https://dash.cloudflare.com) → **Pages** → select the project that serves **advanciapayledger.com**.
+**Where:** Vercel → select the project that serves **advanciapayledger.com**.
 
 **Steps:**
-1. Go to **Custom domains** (or **Settings** → **Custom domains**).
+1. Go to **Settings** → **Domains**.
 2. Click **Set up a custom domain**.
 3. Enter: `advancia-healthcare.com` → Add.
 4. (Optional) Add: `www.advancia-healthcare.com`.
-5. Follow prompts; Cloudflare will add DNS if the zone is on Cloudflare. Wait for SSL (1–2 minutes).
+5. Follow prompts; keep Cloudflare DNS pointed at the Vercel target Vercel provides. Wait for SSL.
 
-**If the domain is elsewhere:** In your DNS provider, add a **CNAME** for `advancia-healthcare.com` pointing to the Pages hostname Cloudflare shows (e.g. `your-project.pages.dev`).
+**If the domain is elsewhere:** In your DNS provider, add the DNS record Vercel provides for the domain.
 
 **Verify:** Open `https://advancia-healthcare.com` — you should see the Healthcare Wallet landing and `support@advancia-healthcare.com` in the footer.
 
@@ -46,7 +46,7 @@ Use this with [MANUAL_STEPS_CHECKLIST.md](MANUAL_STEPS_CHECKLIST.md). All values
 | `advanciapayroll.com` | `https://advanciapayledger.com` |
 | `www.advanciapayroll.com` | `https://advanciapayledger.com` |
 
-**Important:** Do **not** add advanciapayroll.com as a custom domain on Cloudflare Pages; only Hostinger should handle that domain (redirect only).
+**Important:** Do **not** add advanciapayroll.com as a custom domain on the Vercel frontend project; only Hostinger should handle that domain (redirect only).
 
 **Verify:** Open `https://advanciapayroll.com` and `https://www.advanciapayroll.com` — both must redirect to `https://advanciapayledger.com`.
 
