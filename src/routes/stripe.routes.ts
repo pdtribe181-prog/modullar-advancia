@@ -25,8 +25,26 @@ import { asyncHandler, AppError, getErrorMessage } from '../utils/errors.js';
 import { logger } from '../middleware/logging.middleware.js';
 import { isWebhookProcessed, markWebhookProcessed } from '../utils/webhook-idempotency.js';
 import { z } from 'zod';
+import {
+  getDefaultFrontendOrigin,
+  getValidatedAppOrigin,
+  getValidatedAppUrl,
+} from '../utils/app-origins.js';
 
 const router = Router();
+
+function resolveFrontendOrigin(req: Request): string {
+  return getValidatedAppOrigin(req.headers.origin) || getDefaultFrontendOrigin();
+}
+
+function resolveAppUrl(req: Request, fallbackPath: string, explicitUrl?: string): string {
+  const validatedExplicitUrl = getValidatedAppUrl(explicitUrl);
+  if (validatedExplicitUrl) {
+    return validatedExplicitUrl;
+  }
+
+  return `${resolveFrontendOrigin(req)}${fallbackPath}`;
+}
 
 // Param validation schemas
 const stripeIdParams = z.object({ id: z.string().min(1).max(255) });
@@ -309,11 +327,10 @@ router.post(
   validateParams(accountIdParams),
   asyncHandler(async (req: Request, res: Response) => {
     const { returnUrl, refreshUrl } = req.body;
-    const env = getEnv();
     const accountLink = await stripeServices.connect.createAccountLink(
       String(req.params.accountId),
-      refreshUrl || `${env.FRONTEND_URL}/provider/setup/refresh`,
-      returnUrl || `${env.FRONTEND_URL}/provider/setup/complete`
+      resolveAppUrl(req, '/provider/setup/refresh', refreshUrl),
+      resolveAppUrl(req, '/provider/setup/complete', returnUrl)
     );
     res.json({
       success: true,
@@ -567,8 +584,8 @@ router.post(
       customerId,
       amount: Math.round(amount),
       productName: productName || 'Healthcare Service',
-      successUrl: successUrl || `${process.env.FRONTEND_URL}/payment/success`,
-      cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancelled`,
+      successUrl: resolveAppUrl(req, '/payment/success', successUrl),
+      cancelUrl: resolveAppUrl(req, '/payment/cancelled', cancelUrl),
       metadata,
     });
     res.json({ success: true, data: { id: session.id, url: session.url } });

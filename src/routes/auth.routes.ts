@@ -12,9 +12,14 @@ import { logSecurityEvent, logAndNotify, extractIPAddress } from '../services/se
 import { revokeAccessToken } from '../services/token-revocation.service.js';
 import { generateCsrfToken } from '../middleware/csrf.middleware.js';
 import { z } from 'zod';
+import { getDefaultFrontendOrigin, getValidatedAppOrigin } from '../utils/app-origins.js';
 
 const router = Router();
 const supabase = createServiceClient();
+
+function resolveFrontendOrigin(req: Request): string {
+  return getValidatedAppOrigin(req.headers.origin) || getDefaultFrontendOrigin();
+}
 
 // Additional validation schemas for auth routes
 const profileUpdateSchema = z.object({
@@ -850,9 +855,10 @@ router.put(
  */
 const handleForgotPassword = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
+  const frontendOrigin = resolveFrontendOrigin(req);
 
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password`,
+    redirectTo: `${frontendOrigin}/reset-password`,
   });
 
   if (error) {
@@ -980,7 +986,7 @@ router.post(
   validateBody(linkIdentitySchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { provider } = req.body;
-    const redirectTo = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback`;
+    const redirectTo = `${resolveFrontendOrigin(req)}/auth/callback`;
 
     const { data, error } = await supabase.auth.linkIdentity({
       provider,

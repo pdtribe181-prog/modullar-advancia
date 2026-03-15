@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { stripeServices, stripe } from '../services/stripe.service.js';
 import {
@@ -10,8 +10,13 @@ import {
 import { supabase } from '../lib/supabase.js';
 import { onboardingLimiter, sensitiveLimiter } from '../middleware/rateLimit.middleware.js';
 import { asyncHandler, AppError } from '../utils/errors.js';
+import { getDefaultFrontendOrigin, getValidatedAppOrigin } from '../utils/app-origins.js';
 
 const router = Router();
+
+function resolveFrontendOrigin(req: Request): string {
+  return getValidatedAppOrigin(req.headers.origin) || getDefaultFrontendOrigin();
+}
 
 /**
  * Provider Onboarding Flow
@@ -107,6 +112,7 @@ router.post(
   requireRole('provider', 'admin'),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
+    const frontendOrigin = resolveFrontendOrigin(req);
 
     const { data: provider } = await supabase
       .from('providers')
@@ -122,8 +128,8 @@ router.post(
 
     const accountLink = await stripeServices.connect.createAccountLink(
       provider.stripe_account_id,
-      `${process.env.FRONTEND_URL}/provider/onboarding/refresh`,
-      `${process.env.FRONTEND_URL}/provider/onboarding/complete`
+      `${frontendOrigin}/provider/onboarding/refresh`,
+      `${frontendOrigin}/provider/onboarding/complete`
     );
 
     res.json({
@@ -150,6 +156,7 @@ router.post(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
     const userProfile = req.userProfile!;
+    const frontendOrigin = resolveFrontendOrigin(req);
 
     // Check if provider already has a Stripe account
     const { data: provider } = await supabase
@@ -185,8 +192,8 @@ router.post(
     // Create onboarding link
     const accountLink = await stripeServices.connect.createAccountLink(
       stripeAccountId,
-      `${process.env.FRONTEND_URL}/provider/onboarding/refresh`,
-      `${process.env.FRONTEND_URL}/provider/onboarding/complete`
+      `${frontendOrigin}/provider/onboarding/refresh`,
+      `${frontendOrigin}/provider/onboarding/complete`
     );
 
     res.json({
@@ -207,6 +214,7 @@ router.get(
   requireRole('provider', 'admin'),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
+    const frontendOrigin = resolveFrontendOrigin(req);
 
     const { data: provider } = await supabase
       .from('providers')
@@ -273,6 +281,7 @@ router.post(
   requireRole('provider', 'admin'),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.id;
+    const frontendOrigin = resolveFrontendOrigin(req);
 
     const { data: provider } = await supabase
       .from('providers')
@@ -286,8 +295,8 @@ router.post(
 
     const accountLink = await stripeServices.connect.createAccountLink(
       provider.stripe_account_id,
-      `${process.env.FRONTEND_URL}/provider/onboarding/refresh`,
-      `${process.env.FRONTEND_URL}/provider/onboarding/complete`
+      `${frontendOrigin}/provider/onboarding/refresh`,
+      `${frontendOrigin}/provider/onboarding/complete`
     );
 
     res.json({

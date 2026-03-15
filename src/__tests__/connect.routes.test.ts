@@ -209,6 +209,36 @@ describe('connect.routes', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.url).toContain('stripe.com');
       expect(res.body.data.accountId).toBe('acct_123');
+      expect(mockCreateAccountLink).toHaveBeenCalledWith(
+        'acct_123',
+        'http://localhost:5173/provider/onboarding/refresh',
+        'http://localhost:5173/provider/onboarding/complete'
+      );
+    });
+
+    it('uses allowed request origin for account-link redirects', async () => {
+      mockSupabaseChain({
+        data: { stripe_account_id: 'acct_123' },
+        error: null,
+      });
+
+      const futureTs = Math.floor(Date.now() / 1000) + 3600;
+      mockCreateAccountLink.mockResolvedValue({
+        url: 'https://connect.stripe.com/onboarding/acct_123',
+        expires_at: futureTs,
+      });
+
+      const res = await request(app)
+        .post('/connect/account-link')
+        .set('Authorization', 'Bearer test-token')
+        .set('Origin', 'https://www.advancia-healthcare.com');
+
+      expect(res.status).toBe(200);
+      expect(mockCreateAccountLink).toHaveBeenCalledWith(
+        'acct_123',
+        'https://www.advancia-healthcare.com/provider/onboarding/refresh',
+        'https://www.advancia-healthcare.com/provider/onboarding/complete'
+      );
     });
 
     it('returns 400 if no Stripe account exists', async () => {
@@ -231,7 +261,12 @@ describe('connect.routes', () => {
     it('creates account and returns onboarding link', async () => {
       // First call: provider select (no stripe account), second: update
       const selectChain = mockSupabaseChain({
-        data: { id: 'prov-1', stripe_account_id: null, stripe_onboarding_complete: false, business_name: 'Clinic' },
+        data: {
+          id: 'prov-1',
+          stripe_account_id: null,
+          stripe_onboarding_complete: false,
+          business_name: 'Clinic',
+        },
         error: null,
       });
 
@@ -248,11 +283,21 @@ describe('connect.routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.accountId).toBe('acct_onboard');
       expect(res.body.data.onboardingUrl).toContain('stripe.com');
+      expect(mockCreateAccountLink).toHaveBeenCalledWith(
+        'acct_onboard',
+        'http://localhost:5173/provider/onboarding/refresh',
+        'http://localhost:5173/provider/onboarding/complete'
+      );
     });
 
     it('uses existing account if present', async () => {
       mockSupabaseChain({
-        data: { id: 'prov-1', stripe_account_id: 'acct_existing', stripe_onboarding_complete: false, business_name: 'Clinic' },
+        data: {
+          id: 'prov-1',
+          stripe_account_id: 'acct_existing',
+          stripe_onboarding_complete: false,
+          business_name: 'Clinic',
+        },
         error: null,
       });
 
@@ -355,6 +400,27 @@ describe('connect.routes', () => {
       expect(res.body.data.onboardingUrl).toContain('stripe.com');
     });
 
+    it('uses allowed request origin for refresh redirects', async () => {
+      mockSupabaseChain({ data: { stripe_account_id: 'acct_1' }, error: null });
+
+      mockCreateAccountLink.mockResolvedValue({
+        url: 'https://connect.stripe.com/refresh',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+      });
+
+      const res = await request(app)
+        .post('/connect/refresh')
+        .set('Authorization', 'Bearer test-token')
+        .set('Origin', 'https://www.advancia-healthcare.com');
+
+      expect(res.status).toBe(200);
+      expect(mockCreateAccountLink).toHaveBeenCalledWith(
+        'acct_1',
+        'https://www.advancia-healthcare.com/provider/onboarding/refresh',
+        'https://www.advancia-healthcare.com/provider/onboarding/complete'
+      );
+    });
+
     it('returns 400 when no stripe account', async () => {
       mockSupabaseChain({ data: { stripe_account_id: null }, error: null });
 
@@ -451,14 +517,16 @@ describe('connect.routes', () => {
 
       const { stripe } = await import('../services/stripe.service.js');
       (stripe.payouts.list as jest.Mock<any>).mockResolvedValue({
-        data: [{
-          id: 'po_1',
-          amount: 25000,
-          currency: 'usd',
-          status: 'paid',
-          arrival_date: Math.floor(Date.now() / 1000),
-          created: Math.floor(Date.now() / 1000),
-        }],
+        data: [
+          {
+            id: 'po_1',
+            amount: 25000,
+            currency: 'usd',
+            status: 'paid',
+            arrival_date: Math.floor(Date.now() / 1000),
+            created: Math.floor(Date.now() / 1000),
+          },
+        ],
       });
 
       const res = await request(app)

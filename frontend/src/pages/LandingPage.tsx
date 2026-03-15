@@ -4,52 +4,54 @@ import { LiveChartBanner } from '../components/LiveChartBanner';
 import '../styles.css';
 
 const STATS = [
-  { value: '12,000+', label: 'Patients Served' },
-  { value: '650+', label: 'Healthcare Providers' },
-  { value: '99.9%', label: 'Uptime SLA' },
-  { value: '$2M+', label: 'Payments Processed' },
+  { value: 'MedBed-ready', label: 'Booking, billing, and follow-up in one flow' },
+  { value: 'Checkout-first', label: 'Cards, bank transfers, and wallet flows' },
+  { value: 'Role-based', label: 'Patient, provider, and admin experiences' },
+  { value: 'Audit-ready', label: 'Payment, access, and dispute visibility' },
+  { value: '24/7', label: 'Always-on account access, booking, and billing' },
 ];
 
 const FEATURES = [
   {
     icon: '🛏️',
-    title: 'MedBed Access',
+    title: 'MedBed booking',
     description:
-      'Book advanced quantum healing sessions at certified clinics worldwide. Priority scheduling included.',
+      'Run MedBed session discovery, scheduling, deposits, and post-session billing from the same product surface.',
     badge: 'New',
+  },
+  {
+    icon: '🧾',
+    title: 'Secure checkout',
+    description:
+      'Move patients from invoice or booking to secure checkout with card and crypto payment options built into the flow.',
+    badge: null,
   },
   {
     icon: '💳',
     title: 'Multi-Rail Payments',
     description:
-      'Accept fiat, crypto, and wallet payments in one unified dashboard with instant settlement.',
+      'Accept cards, bank rails, and wallet-based payments in one unified dashboard with clear settlement tracking.',
     badge: null,
   },
   {
     icon: '🔐',
-    title: 'HIPAA Compliance',
+    title: 'Access controls',
     description:
-      'End-to-end encrypted patient data with full audit trails and role-based access control.',
+      'Protect sensitive actions with role-based access, verification steps, and event-level visibility.',
     badge: null,
   },
   {
-    icon: '🪙',
-    title: 'Crypto Wallet',
+    icon: '👛',
+    title: 'Customer wallet',
     description:
-      'Send and receive SOL, ETH and stablecoins. Non-custodial wallet with hardware key support.',
-    badge: null,
-  },
-  {
-    icon: '📅',
-    title: 'Smart Scheduling',
-    description: 'AI-assisted appointment booking with automated reminders via SMS and email.',
+      'Give customers one place to manage balances, receipts, saved payment methods, booking history, and billing status.',
     badge: null,
   },
   {
     icon: '📊',
     title: 'Analytics & Reporting',
     description:
-      'Real-time revenue, compliance, and patient engagement dashboards for your whole organisation.',
+      'Monitor revenue flow, disputes, payment completion, and team performance from a single reporting layer.',
     badge: null,
   },
 ];
@@ -57,45 +59,45 @@ const FEATURES = [
 const STEPS = [
   {
     step: '01',
-    title: 'Create Your Account',
+    title: 'Create your workspace',
     description:
-      'Sign up in minutes. Choose a patient, provider, or admin role and get instantly verified.',
+      'Sign up in minutes, define your operating roles, and set the right access level for each team member.',
   },
   {
     step: '02',
-    title: 'Connect & Configure',
+    title: 'Connect payments and policies',
     description:
-      'Link your Stripe account or crypto wallet, set up your schedule and compliance preferences.',
+      'Set up your payment rails, MedBed booking rules, customer flows, notification rules, and internal approval checkpoints.',
   },
   {
     step: '03',
-    title: 'Start Transacting',
+    title: 'Run bookings and checkout',
     description:
-      'Book appointments, process payments and generate compliance reports — all in one place.',
+      'Launch bookings, move users through checkout, collect payments, and review the full operational trail in one place.',
   },
 ];
 
-const TESTIMONIALS = [
+const OUTCOMES = [
   {
-    name: 'Dr. Sarah Chen',
-    role: 'Chief Medical Officer, Quantum Health',
-    avatar: '👩‍⚕️',
+    name: 'Faster collections',
+    role: 'Operational outcome',
+    avatar: '⚡',
     quote:
-      'Advancia cut our billing cycle from two weeks to same-day. The HIPAA audit trails alone saved us thousands in compliance work.',
+      'Replace scattered booking and payment follow-up with a single workflow for balances, reminders, receipts, and session status.',
   },
   {
-    name: 'Marcus Williams',
-    role: 'Patient',
-    avatar: '🧑',
+    name: 'Cleaner handoffs',
+    role: 'Team outcome',
+    avatar: '🔁',
     quote:
-      'Paying for my MedBed sessions with crypto is seamless. No bank delays, no hidden fees — just instant confirmations.',
+      'Patients, providers, and finance teams see the same booking and checkout state instead of chasing updates across tools.',
   },
   {
-    name: 'Priya Nair',
-    role: 'Operations Director, FutureCare Inc.',
-    avatar: '👩‍💼',
+    name: 'Better visibility',
+    role: 'Leadership outcome',
+    avatar: '📈',
     quote:
-      'The provider dashboard gives us full visibility across 40 clinics. Advancia is the backbone of our payment infrastructure.',
+      'Give leadership a clear view of MedBed demand, checkout completion, disputes, approvals, and throughput without manual reporting.',
   },
 ];
 
@@ -105,7 +107,7 @@ const PLANS = [
     price: 'Free',
     period: '',
     color: 'plan-free',
-    features: ['Appointment booking', 'Payment history', 'Crypto wallet', 'MedBed scheduling'],
+    features: ['Account access', 'MedBed booking', 'Checkout history', 'Receipts and reminders'],
     cta: 'Sign Up Free',
     href: '/signup',
     highlight: false,
@@ -171,13 +173,13 @@ export const LandingPage: React.FC = () => {
         <div className="lp-hero-inner">
           <span className="lp-eyebrow">Healthcare Payments · Reimagined</span>
           <h1 className="lp-hero-title">
-            The Complete Platform for
+            The operating layer for
             <br />
-            <span className="lp-gradient-text">Modern Healthcare Finance</span>
+            <span className="lp-gradient-text">MedBeds, checkout, and payments</span>
           </h1>
           <p className="lp-hero-sub">
-            One secure platform for healthcare payments, crypto wallets, HIPAA compliance and
-            provider scheduling.
+            One secure platform for MedBed booking, secure checkout, payment collection, customer
+            wallets, approvals, and reporting across your organisation.
           </p>
           <div className="lp-hero-actions">
             <Link to="/signup" className="lp-btn lp-btn--primary lp-btn--lg">
@@ -196,7 +198,7 @@ export const LandingPage: React.FC = () => {
             <span className="lp-hero-card__label">Last transaction</span>
           </div>
           <div className="lp-hero-card__amount">+$1,240.00</div>
-          <div className="lp-hero-card__sub">MedBed Session — Dr. Chen · just now</div>
+          <div className="lp-hero-card__sub">MedBed checkout confirmed · just now</div>
           <div className="lp-hero-card__bar">
             <div className="lp-hero-card__bar-fill" />
           </div>
@@ -222,9 +224,10 @@ export const LandingPage: React.FC = () => {
       <section className="lp-section lp-features">
         <div className="lp-section__header">
           <span className="lp-tag">Features</span>
-          <h2>Everything your practice needs</h2>
+          <h2>Everything your practice needs to book and get paid</h2>
           <p>
-            A fully integrated suite built specifically for healthcare organisations at every scale.
+            A fully integrated suite for MedBed operations, secure checkout, and ongoing healthcare
+            billing.
           </p>
         </div>
         <div className="lp-features-grid">
@@ -249,7 +252,10 @@ export const LandingPage: React.FC = () => {
         <div className="lp-section__header">
           <span className="lp-tag">Process</span>
           <h2>Up and running in minutes</h2>
-          <p>Three simple steps to transform how your clinic handles payments and compliance.</p>
+          <p>
+            Three simple steps to transform how your clinic handles MedBed bookings, checkout, and
+            payment operations.
+          </p>
         </div>
         <div className="lp-steps">
           {STEPS.map((s, i) => (
@@ -263,17 +269,17 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
+      {/* ── OUTCOMES ── */}
       <section className="lp-section lp-testimonials">
         <div className="lp-section__header">
-          <span className="lp-tag">Testimonials</span>
-          <h2>Loved by patients &amp; providers</h2>
+          <span className="lp-tag">Outcomes</span>
+          <h2>What teams actually improve</h2>
         </div>
         <div className="lp-testimonials-grid">
-          {TESTIMONIALS.map((t) => (
+          {OUTCOMES.map((t) => (
             <div key={t.name} className="lp-testimonial">
               <div className="lp-testimonial__stars">★★★★★</div>
-              <p className="lp-testimonial__quote">"{t.quote}"</p>
+              <p className="lp-testimonial__quote">{t.quote}</p>
               <div className="lp-testimonial__author">
                 <span className="lp-testimonial__avatar">{t.avatar}</span>
                 <div>
@@ -291,7 +297,7 @@ export const LandingPage: React.FC = () => {
         <div className="lp-section__header">
           <span className="lp-tag">Pricing</span>
           <h2>Simple, transparent pricing</h2>
-          <p>Start free. Scale as you grow. No hidden fees, ever.</p>
+          <p>Start free. Scale MedBed operations, checkout, and billing as you grow.</p>
         </div>
         <div className="lp-plans-grid">
           {PLANS.map((p) => (
@@ -327,13 +333,16 @@ export const LandingPage: React.FC = () => {
         <div className="lp-section__header">
           <span className="lp-tag">Security &amp; Compliance</span>
           <h2>Built for regulated industries</h2>
-          <p>We take compliance seriously so you don't have to worry about it.</p>
+          <p>
+            Use strong controls, clear audit trails, and modern payment protections across the
+            platform.
+          </p>
         </div>
         <div className="lp-badges">
           <div className="lp-badge-card">
-            <span>🏥</span>
-            <strong>HIPAA Compliant</strong>
-            <p>Full audit trails &amp; BAA available</p>
+            <span>🔐</span>
+            <strong>Role-based access</strong>
+            <p>Limit sensitive actions by user type and workflow</p>
           </div>
           <div className="lp-badge-card">
             <span>🔒</span>
@@ -364,25 +373,28 @@ export const LandingPage: React.FC = () => {
         <h2>
           Ready to modernise your
           <br />
-          <span className="lp-gradient-text">healthcare payments?</span>
+          <span className="lp-gradient-text">MedBed and checkout operations?</span>
         </h2>
-        <p>Join thousands of providers and patients already on Advancia PayLedger.</p>
+        <p>
+          Bring MedBed booking, secure checkout, billing, wallets, approvals, and reporting into one
+          operating layer.
+        </p>
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
           <Link to="/signup" className="lp-btn lp-btn--primary lp-btn--lg">
             Create Free Account
           </Link>
-          <Link to="/faq" className="lp-btn lp-btn--ghost lp-btn--lg">
+          <Link to="/contact" className="lp-btn lp-btn--ghost lp-btn--lg">
             Talk to Sales
           </Link>
         </div>
         <div className="lp-partners">
           <span className="lp-partners__label">Trusted by</span>
           {[
-            'Quantum Health',
-            'MediTech Global',
-            'FutureCare Inc.',
-            'NovaClinics',
-            'Alethea Medical',
+            'Provider teams',
+            'Finance teams',
+            'Operations leads',
+            'Care coordinators',
+            'Billing admins',
           ].map((p) => (
             <span key={p} className="lp-partner-name">
               {p}
