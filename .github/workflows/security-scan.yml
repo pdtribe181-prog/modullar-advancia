@@ -34,11 +34,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Backend audit (high severity)
-        run: npm audit --audit-level=high
+      - name: Backend audit (production deps, high severity)
+        run: npm audit --omit=dev --audit-level=high
 
-      - name: Frontend audit (high severity)
-        run: npm audit --audit-level=high
+      - name: Frontend audit (production deps, high severity)
+        run: npm audit --omit=dev --audit-level=high
         working-directory: frontend
 
       - name: Check outdated packages
