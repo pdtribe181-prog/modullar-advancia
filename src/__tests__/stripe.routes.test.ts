@@ -22,6 +22,9 @@ const mockProductsList = jest.fn<any>();
 const mockConstructEvent = jest.fn<any>();
 const mockPaymentIntentsList = jest.fn<any>();
 const mockPaymentIntentsRetrieve = jest.fn<any>();
+const mockConnectCreateAccountLink = jest.fn<any>();
+const mockCheckoutCreatePaymentSession = jest.fn<any>();
+const mockCheckoutGet = jest.fn<any>();
 
 jest.unstable_mockModule('../services/stripe.service.js', () => ({
   stripeServices: {
@@ -49,7 +52,7 @@ jest.unstable_mockModule('../services/stripe.service.js', () => ({
     connect: {
       createExpressAccount: jest.fn<any>(),
       getAccount: jest.fn<any>(),
-      createAccountLink: jest.fn<any>(),
+      createAccountLink: mockConnectCreateAccountLink,
       createLoginLink: jest.fn<any>(),
       getBalance: jest.fn<any>(),
     },
@@ -67,7 +70,10 @@ jest.unstable_mockModule('../services/stripe.service.js', () => ({
       detach: jest.fn<any>(),
     },
     setupIntents: { create: jest.fn<any>() },
-    checkout: { createSession: jest.fn<any>(), getSession: jest.fn<any>() },
+    checkout: {
+      createPaymentSession: mockCheckoutCreatePaymentSession,
+      get: mockCheckoutGet,
+    },
     invoices: {
       create: jest.fn<any>(),
       finalize: jest.fn<any>(),
@@ -527,6 +533,98 @@ describe('stripe.routes', () => {
       expect(res.body.data.payments[0].id).toBe('pi_1');
       expect(res.body.data.payments[0].status).toBe('succeeded');
       expect(res.body.data.payments[0].amount).toBe(50); // 5000/100
+    });
+  });
+
+  describe('POST /stripe/connect/accounts/:accountId/onboarding-link', () => {
+    it('uses allowed request origin for default onboarding URLs', async () => {
+      mockConnectCreateAccountLink.mockResolvedValue({
+        url: 'https://connect.stripe.com/onboarding/acct_123',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+      });
+
+      const res = await request(app)
+        .post('/stripe/connect/accounts/acct_123/onboarding-link')
+        .set('Authorization', 'Bearer token')
+        .set('Origin', 'https://www.advancia-healthcare.com')
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(mockConnectCreateAccountLink).toHaveBeenCalledWith(
+        'acct_123',
+        'https://www.advancia-healthcare.com/provider/setup/refresh',
+        'https://www.advancia-healthcare.com/provider/setup/complete'
+      );
+    });
+
+    it('keeps explicit allowed onboarding URLs when provided', async () => {
+      mockConnectCreateAccountLink.mockResolvedValue({
+        url: 'https://connect.stripe.com/onboarding/acct_123',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+      });
+
+      const res = await request(app)
+        .post('/stripe/connect/accounts/acct_123/onboarding-link')
+        .set('Authorization', 'Bearer token')
+        .send({
+          refreshUrl: 'https://www.advanciapayledger.com/provider/setup/refresh',
+          returnUrl: 'https://www.advanciapayledger.com/provider/setup/complete',
+        });
+
+      expect(res.status).toBe(200);
+      expect(mockConnectCreateAccountLink).toHaveBeenCalledWith(
+        'acct_123',
+        'https://www.advanciapayledger.com/provider/setup/refresh',
+        'https://www.advanciapayledger.com/provider/setup/complete'
+      );
+    });
+  });
+
+  describe('POST /stripe/checkout/sessions', () => {
+    it('uses allowed request origin for default checkout URLs', async () => {
+      mockCheckoutCreatePaymentSession.mockResolvedValue({
+        id: 'cs_test',
+        url: 'https://checkout.stripe.com/c/pay/cs_test',
+      });
+
+      const res = await request(app)
+        .post('/stripe/checkout/sessions')
+        .set('Authorization', 'Bearer token')
+        .set('Origin', 'https://www.advancia-healthcare.com')
+        .send({ customerId: 'cus_123', amount: 5000, productName: 'Consultation' });
+
+      expect(res.status).toBe(200);
+      expect(mockCheckoutCreatePaymentSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          successUrl: 'https://www.advancia-healthcare.com/payment/success',
+          cancelUrl: 'https://www.advancia-healthcare.com/payment/cancelled',
+        })
+      );
+    });
+
+    it('keeps explicit allowed checkout URLs when provided', async () => {
+      mockCheckoutCreatePaymentSession.mockResolvedValue({
+        id: 'cs_test',
+        url: 'https://checkout.stripe.com/c/pay/cs_test',
+      });
+
+      const res = await request(app)
+        .post('/stripe/checkout/sessions')
+        .set('Authorization', 'Bearer token')
+        .send({
+          customerId: 'cus_123',
+          amount: 5000,
+          successUrl: 'https://www.advanciapayledger.com/payment/success',
+          cancelUrl: 'https://www.advanciapayledger.com/payment/cancelled',
+        });
+
+      expect(res.status).toBe(200);
+      expect(mockCheckoutCreatePaymentSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          successUrl: 'https://www.advanciapayledger.com/payment/success',
+          cancelUrl: 'https://www.advanciapayledger.com/payment/cancelled',
+        })
+      );
     });
   });
 });

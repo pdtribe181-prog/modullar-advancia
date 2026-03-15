@@ -2,6 +2,7 @@ import helmet from 'helmet';
 import { Express, Request, Response, NextFunction } from 'express';
 import { logger } from './logging.middleware.js';
 import crypto from 'crypto';
+import { APP_ORIGINS, getAllowedAppOrigins } from '../utils/app-origins.js';
 
 /**
  * Configure security headers using Helmet
@@ -56,42 +57,12 @@ export function configureSecurityHeaders(app: Express) {
   );
 }
 
-/** Allowed app origins for the three domains — always allowed so they never get CORS errors */
-const APP_ORIGINS = [
-  'https://advanciapayledger.com',
-  'https://www.advanciapayledger.com',
-  'https://app.advanciapayledger.com',
-  'https://advancia-healthcare.com',
-  'https://www.advancia-healthcare.com',
-] as const;
-
 /**
  * Configure CORS based on environment.
  * All three app domains (PayLedger, Healthcare, app subdomain) are always allowed.
  */
 export function getCorsConfig() {
-  const allowedOrigins: string[] = [...APP_ORIGINS];
-
-  const envOrigins = (process.env.CORS_ORIGINS || '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-
-  if (process.env.NODE_ENV === 'production') {
-    if (process.env.FRONTEND_URL) {
-      allowedOrigins.push(process.env.FRONTEND_URL);
-    }
-    allowedOrigins.push(...envOrigins);
-  } else {
-    allowedOrigins.push(
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:5174',
-      'http://127.0.0.1:5174'
-    );
-    allowedOrigins.push(...envOrigins);
-  }
+  const allowedOrigins = getAllowedAppOrigins();
 
   return {
     origin: (

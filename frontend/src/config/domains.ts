@@ -25,6 +25,3 @@ export function getSupportEmail(hostname: string): string {
     ? 'support@advancia-healthcare.com'
     : 'support@advanciapayledger.com';
 }
-
-/** Primary signup domain (one account system); Healthcare CTAs can link here */
-export const SIGNUP_ORIGIN = 'https://advanciapayledger.com';

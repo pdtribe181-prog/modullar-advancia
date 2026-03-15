@@ -182,6 +182,23 @@ describe('Auth Flow Integration', () => {
       );
     });
 
+    it('POST /auth/forgot-password uses allowed request origin for reset links', async () => {
+      mockResetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+
+      const res = await request(app)
+        .post('/auth/forgot-password')
+        .set('Origin', 'https://www.advancia-healthcare.com')
+        .send({ email: 'user@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
+        'user@example.com',
+        expect.objectContaining({
+          redirectTo: 'https://www.advancia-healthcare.com/reset-password',
+        })
+      );
+    });
+
     it('PUT /auth/password updates password for authenticated user', async () => {
       mockUpdateUser.mockResolvedValue({
         data: { user: mockUser },
@@ -443,6 +460,28 @@ describe('Auth Flow Integration', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.url).toContain('google');
       expect(res.body.data.provider).toBe('google');
+    });
+
+    it('POST /auth/identities/link uses allowed request origin for callback', async () => {
+      mockLinkIdentity.mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/...' },
+        error: null,
+      });
+
+      const res = await request(app)
+        .post('/auth/identities/link')
+        .set('Authorization', 'Bearer test-token')
+        .set('Origin', 'https://www.advancia-healthcare.com')
+        .send({ provider: 'google' });
+
+      expect(res.status).toBe(200);
+      expect(mockLinkIdentity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            redirectTo: 'https://www.advancia-healthcare.com/auth/callback',
+          }),
+        })
+      );
     });
   });
 
