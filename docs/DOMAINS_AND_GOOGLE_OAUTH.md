@@ -8,12 +8,12 @@ How the three domains fit together and what to configure for redirects and Googl
 
 | Domain | Role | Action |
 |--------|------|--------|
-| **advanciapayledger.com** | Primary: PayLedger marketing + app | Live. Frontend on Cloudflare Pages; API on VPS. No redirect. |
+| **advanciapayledger.com** | Primary: PayLedger marketing + app | Live. Frontend on Vercel; API on VPS. No redirect. |
 | **www.advanciapayledger.com** | Alias | 301 → advanciapayledger.com (Nginx or Cloudflare). |
-| **app.advanciapayledger.com** | Optional app subdomain | Same app as apex; add as custom domain in Cloudflare Pages if desired. |
+| **app.advanciapayledger.com** | Optional app subdomain | Same app as apex; add as custom domain in Vercel if desired. |
 | **api.advanciapayledger.com** | API | Served from VPS; no redirect. |
-| **advancia-healthcare.com** | **Personal** (individuals/patients, personal folder); Healthcare Wallet marketing | Same frontend build as PayLedger; add as custom domain in Cloudflare Pages. Shows Healthcare landing when host matches. **No redirect.** |
-| **www.advancia-healthcare.com** | Optional alias | Add in Pages if desired; or 301 → advancia-healthcare.com. |
+| **advancia-healthcare.com** | **Personal** (individuals/patients, personal folder); Healthcare Wallet marketing | Same frontend build as PayLedger; add as custom domain in Vercel. Shows Healthcare landing when host matches. **No redirect.** |
+| **www.advancia-healthcare.com** | Optional alias | Add in Vercel if desired; or keep the current apex-to-www behavior if that remains canonical. |
 | **advanciapayroll.com** | Legacy / unused | **301 redirect** to `https://advanciapayledger.com` (and same for www). Do not serve app here. |
 
 ### Redirect summary
@@ -98,7 +98,7 @@ So both domains can call the API. If a user on **advancia-healthcare.com** uses 
 ## 4. Checklist
 
 - [ ] **advanciapayroll.com** (and www) → 301 to `https://advanciapayledger.com`.
-- [ ] **advancia-healthcare.com** added as custom domain on Cloudflare Pages (same project as PayLedger).
+- [ ] **advancia-healthcare.com** added as custom domain on Vercel (same project as PayLedger).
 - [ ] **Supabase** → Redirect URLs include all app callback URLs (PayLedger, Healthcare, app subdomain, localhost).
 - [ ] **Google Cloud Console** → Authorized redirect URIs include Supabase callback; Authorized JavaScript origins include all app origins (PayLedger, Healthcare, app, localhost).
 - [ ] No callback URL for advanciapayroll.com (redirect-only domain).

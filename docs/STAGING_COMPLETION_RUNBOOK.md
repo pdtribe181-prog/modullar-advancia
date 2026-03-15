@@ -1,6 +1,6 @@
 # Staging completion runbook
 
-Step-by-step to finish the unchecked staging items in [PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md). Staging API: **api-staging.advanciapayledger.com** → Render service **modullar-advancia.onrender.com**.
+Step-by-step to finish the unchecked staging items in [PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md). Staging API: **api-staging.advanciapayledger.com** → planned VPS path `/var/www/advancia-staging` (PM2: `advancia-staging`, port 3001).
 
 ---
 
@@ -13,9 +13,9 @@ Step-by-step to finish the unchecked staging items in [PRODUCTION_CHECKLIST.md](
 
 ---
 
-## 2. Configure Render environment variables
+## 2. Configure VPS staging environment variables
 
-- [ ] Open [Render Dashboard](https://dashboard.render.com) → your **modullar-advancia** (or staging) service.
+- [ ] Provision `/var/www/advancia-staging` on the VPS and edit `/var/www/advancia-staging/.env`.
 - [ ] **Environment** → Add the following (use staging values only; never production keys here):
 
 | Variable | Where to get it | Example / note |
@@ -40,14 +40,14 @@ Step-by-step to finish the unchecked staging items in [PRODUCTION_CHECKLIST.md](
 
 ## 3. Staging webhook secrets (separate from production)
 
-- [ ] **Stripe**: In Stripe Dashboard → Webhooks, add endpoint **https://api-staging.advanciapayledger.com/api/v1/stripe/webhook** (or your Render staging URL + path). Use the **signing secret** for this endpoint as `STRIPE_WEBHOOK_SECRET` in Render (do not reuse production webhook secret).
-- [ ] **Supabase**: If your app uses Supabase database webhooks, create a dedicated secret in the staging project and set `SUPABASE_WEBHOOK_SECRET` in Render to that value.
+- [ ] **Stripe**: In Stripe Dashboard → Webhooks, add endpoint **https://api-staging.advanciapayledger.com/api/v1/stripe/webhook**. Use the **signing secret** for this endpoint as `STRIPE_WEBHOOK_SECRET` in the VPS staging `.env` (do not reuse production webhook secret).
+- [ ] **Supabase**: If your app uses Supabase database webhooks, create a dedicated secret in the staging project and set `SUPABASE_WEBHOOK_SECRET` in the VPS staging `.env` to that value.
 
 ---
 
 ## 4. Run migrations on staging
 
-- [ ] From your machine (with `.env` pointing at staging Supabase, or use Render shell):
+- [ ] From your machine (with `.env` pointing at staging Supabase, or SSH into VPS staging shell):
 
   - **Option A** — Supabase dashboard: SQL Editor → run migrations manually, or  
   - **Option B** — CLI: set `DATABASE_URL` or `SUPABASE_URL`/service role for staging and run your migration script, e.g.  
@@ -59,13 +59,13 @@ Step-by-step to finish the unchecked staging items in [PRODUCTION_CHECKLIST.md](
 
 ## 5. Verify staging
 
-- [ ] **Health**: `curl -s https://api-staging.advanciapayledger.com/health` (or your Render URL) returns 200.
+- [ ] **Health**: `curl -s https://api-staging.advanciapayledger.com/health` returns 200.
 - [ ] **Full staging functional tests**: Run auth flow and a payments-test flow against staging API and staging frontend (if deployed). Fix any env or CORS issues.
 
 ---
 
 ## Reference: .env.staging.example
 
-See repo root **.env.staging.example** for a full list of staging env vars. Copy the shape into Render; never commit real values.
+See repo root **.env.staging.example** for a full list of staging env vars. Place them in `/var/www/advancia-staging/.env` on the VPS after provisioning; never commit real values.
 
 After completing this runbook, tick the staging checkboxes in **PRODUCTION_CHECKLIST.md** (§ Staging Readiness).

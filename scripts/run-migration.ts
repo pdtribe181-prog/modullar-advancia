@@ -12,12 +12,19 @@ dotenv.config();
 
 const { Pool } = pg;
 
-// Supabase pooler connection (session mode)
-const connectionString = `postgresql://postgres.pikguczsvikzragmrojz:hrW2LjBFeUT6dLdD@aws-0-us-east-1.pooler.supabase.com:5432/postgres`;
+const connectionString =
+  process.env.SUPABASE_DB_POOLER_URL || process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
 
 async function runMigration() {
   const migrationFile = process.argv[2] || '015_stripe_integration.sql';
   const migrationPath = join(__dirname, '..', 'migrations', migrationFile);
+
+  if (!connectionString) {
+    console.error(
+      'Missing database connection string. Set SUPABASE_DB_POOLER_URL, DATABASE_URL, or SUPABASE_DATABASE_URL.'
+    );
+    process.exit(1);
+  }
   
   console.log(`Running migration: ${migrationFile}`);
   

@@ -49,6 +49,9 @@ const envSchema = z.object({
   // CORS_ORIGINS=https://advanciapayledger.com,https://www.advanciapayledger.com
   CORS_ORIGINS: z.string().optional(),
 
+  // Metrics scrape IP allowlist (optional, comma-separated)
+  METRICS_ALLOWED_IPS: z.string().optional(),
+
   // Rate Limiting (optional - sensible defaults)
   RATE_LIMIT_API_WINDOW_MS: z.coerce
     .number()

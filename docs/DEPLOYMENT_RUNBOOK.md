@@ -10,7 +10,7 @@
 | App Path     | `/var/www/advancia`                         |
 | PM2 Process  | `advancia-api`                              |
 | API URL      | `https://api.advanciapayledger.com/api/v1`  |
-| Frontend     | Cloudflare Pages (auto-deploys from `main`) |
+| Frontend     | Vercel (live frontend deploys)              |
 | Database     | Supabase (`pikguczsvikzragmrojz`)           |
 | Health Check | `https://api.advanciapayledger.com/health`  |
 | Swagger Docs | `https://api.advanciapayledger.com/docs/`   |
@@ -26,12 +26,12 @@
 ssh advancia-vps 'cd /var/www/advancia && git pull origin main && npm ci --production && npm run build && pm2 reload advancia-api'
 ```
 
-### Frontend (Cloudflare Pages)
+### Frontend (Vercel)
 
-Cloudflare Pages auto-deploys when `main` is pushed. No manual action needed.
+Vercel serves the live frontend. Deploy through the linked Vercel project or the repo's Vercel workflow/process.
 
 ```bash
-git push origin main  # triggers Cloudflare Pages build
+git push origin main  # triggers the configured frontend deploy flow
 ```
 
 ### Verify Deployment
@@ -223,11 +223,11 @@ ssh advancia-vps 'nano /var/www/advancia/.env'
 ssh advancia-vps 'pm2 reload advancia-api'
 ```
 
-### Updating Env Vars on Cloudflare Pages
+### Updating Env Vars on Vercel
 
-1. Cloudflare Dashboard → Pages → Your project → Settings → Environment variables
+1. Vercel → Your project → Settings → Environment Variables
 2. Add/update the variable
-3. Trigger a new deployment (push to `main` or manual redeploy)
+3. Trigger a new deployment or redeploy the current build
 
 ---
 

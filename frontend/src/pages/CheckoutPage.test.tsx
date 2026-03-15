@@ -3,16 +3,29 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
+const mockNavigateComponent = vi.fn();
 const mockShowToast = vi.fn();
 
-const { mockPost } = vi.hoisted(() => ({
+const { mockPost, mockUseAuth } = vi.hoisted(() => ({
   mockPost: vi.fn(),
+  mockUseAuth: vi.fn(),
 }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
-  return { ...actual, useNavigate: () => mockNavigate };
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    Navigate: (props: { to: string; state?: unknown; replace?: boolean }) => {
+      mockNavigateComponent(props);
+      return <div data-testid="navigate">Redirecting to {props.to}</div>;
+    },
+  };
 });
+
+vi.mock('../providers/AuthProvider', () => ({
+  useAuth: mockUseAuth,
+}));
 
 vi.mock('../services/api', () => ({
   api: { post: mockPost },
@@ -73,6 +86,32 @@ describe('CheckoutPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    mockUseAuth.mockReturnValue({ user: { email: 'test@example.com' }, loading: false });
+  });
+
+  describe('auth guard', () => {
+    it('redirects unauthenticated users to login with the full checkout URL', () => {
+      mockUseAuth.mockReturnValue({ user: null, loading: false });
+
+      render(
+        <MemoryRouter initialEntries={['/checkout?mode=card#confirm']}>
+          <CheckoutPage />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByTestId('navigate')).toBeInTheDocument();
+      expect(mockNavigateComponent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: '/login',
+          replace: true,
+          state: expect.objectContaining({
+            from: '/checkout?mode=card#confirm',
+            message: 'Please log in to complete checkout.',
+          }),
+        })
+      );
+      expect(mockPost).not.toHaveBeenCalled();
+    });
   });
 
   describe('redirect when no payment info', () => {
@@ -179,6 +218,22 @@ describe('CheckoutPage', () => {
       mockPost.mockResolvedValue({ success: false });
       renderCheckout();
       await waitFor(() => expect(screen.getByText('Payment Error')).toBeInTheDocument());
+    });
+
+    it('clears invalid stored payment data and returns to payment page', async () => {
+      sessionStorage.setItem('paymentInfo', 'not-valid-base64');
+
+      renderCheckout();
+
+      await waitFor(() => {
+        expect(mockShowToast).toHaveBeenCalledWith(
+          'Your payment session expired. Please start again.',
+          'error'
+        );
+      });
+      expect(mockNavigate).toHaveBeenCalledWith('/payment');
+      expect(sessionStorage.getItem('paymentInfo')).toBeNull();
+      expect(mockPost).not.toHaveBeenCalled();
     });
   });
 });

@@ -14,7 +14,7 @@ fail()    { echo -e "${RED}[FAIL]${NC}  $*"; }
 
 # ── Endpoints to check ────────────────────────────────────────────────────────
 PROD_BASE="https://api.advanciapayledger.com"
-STG_BASE="https://modullar-advancia-staging.onrender.com"
+STG_BASE="https://api-staging.advanciapayledger.com"
 FRONTEND_URL="https://app.advanciapayledger.com"
 
 TARGET="${1:-all}"

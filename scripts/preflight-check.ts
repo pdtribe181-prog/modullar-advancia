@@ -337,7 +337,7 @@ function checkConfigFiles() {
     ['config/Dockerfile', 'Docker containerization', false],
     ['config/docker-compose.yml', 'Docker Compose orchestration', false],
     ['config/nginx/advancia.conf', 'Nginx reverse proxy config', true],
-    ['config/render.yaml', 'Render deployment config', false],
+    // Legacy PaaS blueprint removed; deployment is now VPS-only via SSH
     ['config/Procfile', 'Process file for PaaS deployment', false],
   ];
 

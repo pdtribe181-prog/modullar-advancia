@@ -35,7 +35,7 @@ After you complete the manual steps below, confirm:
 - **Config / scripts**
   - **.env.example**: `FRONTEND_URL`, `CORS_ORIGINS` commented example including Healthcare.
   - **scripts/setup-vps.sh**: Generated `.env` includes `FRONTEND_URL` and `CORS_ORIGINS` with PayLedger + Healthcare origins.
-  - **nginx/advancia.conf**: www.advanciapayledger.com → 301 → apex; API on api.advanciapayledger.com.
+  - **config/nginx/advancia.conf**: www.advanciapayledger.com → 301 → apex; API on api.advanciapayledger.com.
 - **Docs**
   - **ARCHITECTURE.md**: Domains & products mapping + link to DOMAINS_AND_GOOGLE_OAUTH.md.
   - **DOMAINS_AND_GOOGLE_OAUTH.md**: Domain roles, redirects, Supabase/Google OAuth checklist.
@@ -43,7 +43,7 @@ After you complete the manual steps below, confirm:
   - **DOMAIN_AND_BRANDING_CHECKLIST.md**: This checklist (Healthcare, payroll redirect, support emails, OAuth link).
   - **EXTRA_EMAILS_SETUP.md**: enterprise@, privacy@, gdpr@, security@, hello@, legal@ — where used, how to configure.
   - **OPEN_PRS_TRIAGE.md**: Open PR list + merge order and `gh` commands.
-  - **STAGING_COMPLETION_RUNBOOK.md**: Staging Supabase, Render env, migrations, webhooks, verification.
+  - **STAGING_COMPLETION_RUNBOOK.md**: Staging Supabase, VPS staging `.env`, migrations, webhooks, verification.
   - **PRODUCTION_CHECKLIST.md**: Links to staging runbook; full pre-flight checklist.
   - **REPO_MAP.md**, **CANONICAL_REPO_BANNER.md**: Repo roles and canonical/mirror.
   - **README.md**: Canonical repo note, mirror, `push:mirror`, link to domain checklist and REPO_MAP.
@@ -54,18 +54,18 @@ After you complete the manual steps below, confirm:
 
 **Goal:** Same frontend build serves both PayLedger and Healthcare. **advancia-healthcare.com** is for the **personal** segment (individuals/patients, personal folder); the app shows the Healthcare Wallet landing when the host is `advancia-healthcare.com`.
 
-### In Cloudflare Pages
+### In Vercel
 
-1. Open the Cloudflare dashboard → **Pages** → the project that serves **advanciapayledger.com**.
-2. Go to **Custom domains** (or **Settings** → **Custom domains**).
+1. Open the Vercel project that serves **advanciapayledger.com**.
+2. Go to **Settings** → **Domains**.
 3. Click **Set up a custom domain**.
 4. Add:
    - `advancia-healthcare.com`
    - (Optional) `www.advancia-healthcare.com`
-5. Follow the prompts; Cloudflare will add the required DNS records if the zone is on Cloudflare.
-6. Wait for SSL to provision (usually 1–2 minutes).
+5. Follow the prompts; keep Cloudflare DNS pointed at the Vercel target Vercel provides.
+6. Wait for SSL to provision.
 
-**If the domain is on another registrar:** In your DNS provider, add a **CNAME** for `advancia-healthcare.com` (or `www`) pointing to the Cloudflare Pages hostname shown in the dashboard (e.g. `your-project.pages.dev` or the custom domain target they give you).
+**If the domain is on another registrar:** In your DNS provider, add the Vercel-recommended DNS record for the domain or `www` host.
 
 ### Verify
 
@@ -78,9 +78,9 @@ After you complete the manual steps below, confirm:
 
 **Goal:** All traffic to advanciapayroll.com goes permanently to advanciapayledger.com (no duplicate content, no wrong branding).
 
-**Hosting:** **advanciapayroll.com** is on **Hostinger**. **advanciapayledger.com** is on **Cloudflare** (Pages + API on VPS). Do **not** add payroll as a custom domain on Cloudflare Pages — redirect is configured on Hostinger only.
+**Hosting:** **advanciapayroll.com** is on **Hostinger**. **advanciapayledger.com** is on **Vercel** for frontend and Cloudflare for DNS/API edge where configured. Do **not** add payroll as a custom domain on the frontend app host — redirect is configured on Hostinger only.
 
-**If www.advanciapayroll.com (or apex) currently shows the app** (e.g. “Advancia Healthcare”): remove `advanciapayroll.com` and `www.advanciapayroll.com` from any other host (e.g. Cloudflare Pages → Custom domains) so only Hostinger handles payroll. Then set up the redirect in Hostinger below.
+**If www.advanciapayroll.com (or apex) currently shows the app**: remove `advanciapayroll.com` and `www.advanciapayroll.com` from any other frontend host so only Hostinger handles payroll. Then set up the redirect in Hostinger below.
 
 ### In Hostinger (payroll domain)
 
@@ -127,13 +127,13 @@ Reference: [Hostinger – Set up a redirect](https://www.hostinger.com/support/1
 
 | Domain | Purpose | Action |
 |--------|--------|--------|
-| advanciapayledger.com | PayLedger marketing + app | Already live; ensure Cloudflare Pages deploys from `main`. |
-| app.advanciapayledger.com | App (optional alias) | Add as custom domain to same Pages project if desired. |
+| advanciapayledger.com | PayLedger marketing + app | Already live on Vercel. |
+| app.advanciapayledger.com | App (optional alias) | Add as custom domain to the same Vercel project if desired. |
 | api.advanciapayledger.com | API | Already on VPS; no change. |
-| advancia-healthcare.com | **Personal** (personal folder); Healthcare Wallet marketing | Add as custom domain to same Pages project (see §1). |
+| advancia-healthcare.com | **Personal** (personal folder); Healthcare Wallet marketing | Add as custom domain to the same Vercel project (see §1). |
 | advanciapayroll.com | Legacy / redirect only | 301 → advanciapayledger.com (see §2). |
 
-**Important:** Do **not** add `advanciapayroll.com` or `www.advanciapayroll.com` as custom domains to Cloudflare Pages. If they are added, the app will be served there (e.g. Healthcare-style landing) instead of redirecting. Use **redirect rules only** so both apex and www → `https://advanciapayledger.com`.
+**Important:** Do **not** add `advanciapayroll.com` or `www.advanciapayroll.com` as custom domains to the Vercel frontend project. If they are added, the app will be served there instead of redirecting. Use redirect rules only so both apex and www → `https://advanciapayledger.com`.
 
 ---
 
@@ -163,7 +163,7 @@ Code and CORS for advancia-healthcare.com are already in the repo; no further co
 
 | Item | Where | Status |
 |------|--------|--------|
-| Add **advancia-healthcare.com** (and optional www) as custom domain | Cloudflare Pages → same project as PayLedger | [ ] |
+| Add **advancia-healthcare.com** (and optional www) as custom domain | Vercel → same project as PayLedger | [ ] |
 | 301 redirect **advanciapayroll.com** and www → advanciapayledger.com | Hostinger → Websites → Redirects | [ ] |
 | Add all app callback URLs | Supabase → Authentication → URL Configuration → Redirect URLs | [ ] |
 | Add all app origins | Google Cloud Console → OAuth client → Authorized JavaScript origins | [ ] |
@@ -183,6 +183,6 @@ The app and docs reference these; set up forwarding or mailboxes if you want the
 
 ### Optional / later
 
-- **Staging**: PRODUCTION_CHECKLIST has unchecked staging items (Supabase staging project, Render env, webhook secrets, etc.).
+- **Staging**: PRODUCTION_CHECKLIST has unchecked staging items (Supabase staging project, VPS staging `.env`, webhook secrets, etc.).
 - **Backend “Link Google” from Healthcare**: If a user on advancia-healthcare.com uses a backend-initiated link flow, they are sent to `FRONTEND_URL/auth/callback` (PayLedger). Normal sign-in from Healthcare uses the current origin, so callbacks stay on Healthcare. Only relevant if you add a “Link Google” flow that runs from the Healthcare site.
 - **Open PRs**: See `docs/OPEN_PRS_TRIAGE.md` for suggested merge order if you want to land doc/feature branches.

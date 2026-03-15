@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { api, ApiError } from '../services/api';
 import { Spinner, LoadingButton } from '../components/Spinner';
@@ -69,13 +70,18 @@ const getStatusStyle = (status: string): React.CSSProperties => {
 };
 
 export default function PaymentHistory() {
-  useAuth(); // Ensures user is authenticated
+  const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const returnTo = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
 
   const fetchPayments = async (startingAfter?: string) => {
     try {
@@ -103,8 +109,10 @@ export default function PaymentHistory() {
   };
 
   useEffect(() => {
-    fetchPayments();
-  }, []);
+    if (!authLoading && user) {
+      fetchPayments();
+    }
+  }, [authLoading, user]);
 
   const loadMore = () => {
     if (payments.length > 0 && hasMore) {
@@ -129,6 +137,10 @@ export default function PaymentHistory() {
       currency: currency,
     }).format(amount);
   };
+
+  if (!authLoading && !user) {
+    return <Navigate to="/login" state={{ from: returnTo }} replace />;
+  }
 
   if (loading) {
     return (

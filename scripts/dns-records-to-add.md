@@ -64,7 +64,7 @@ Resolve-DnsName -Name _dmarc.advanciapayledger.com -Type TXT
 
 - A: `api.advanciapayledger.com` → `76.13.77.8` (Proxied)
 - A: `advanciapayledger.com` → `76.13.77.8` (Proxied)
-- CNAME: `api-staging.advanciapayledger.com` → `modullar-advancia.onrender.com` (DNS only)
+- A: `api-staging.advanciapayledger.com` → `76.13.77.8` (VPS, port 3001 behind Nginx)
 - TXT: SPF record (`v=spf1 include:_spf.mx.cloudflare.net ~all`) ✓
 - TXT: DKIM record (`resend._domainkey`) ✓
 - MX: Email routing configured ✓

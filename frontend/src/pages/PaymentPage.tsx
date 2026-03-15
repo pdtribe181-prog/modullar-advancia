@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { LoadingButton } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { validatePaymentForm, getFieldError, type ValidationError } from '../utils/validation';
@@ -13,12 +13,23 @@ export function PaymentPage() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<ValidationError[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const returnTo = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
 
   // Redirect unauthenticated users to login — checkout requires a valid session
   if (!authLoading && !user) {
-    return <Navigate to="/login" state={{ from: '/payment', message: 'Please log in to make a payment.' }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: returnTo, message: 'Please log in to make a payment.' }}
+        replace
+      />
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,10 +122,18 @@ export function PaymentPage() {
                 aria-describedby={amountError ? 'amount-error' : undefined}
               />
             </div>
-            {amountError && <span id="amount-error" className="field-error">{amountError}</span>}
+            {amountError && (
+              <span id="amount-error" className="field-error">
+                {amountError}
+              </span>
+            )}
           </div>
 
-          {error && <div className="error-message" role="alert">{error}</div>}
+          {error && (
+            <div className="error-message" role="alert">
+              {error}
+            </div>
+          )}
 
           <LoadingButton
             type="submit"

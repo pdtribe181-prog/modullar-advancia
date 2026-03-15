@@ -8,7 +8,7 @@
 | ----------------------- | -------------------------------------------------------------------------------------------- | --------------------------------- |
 | Identify the bad deploy | `pm2 logs --lines 200`                                                                       | Immediately after detecting issue |
 | Rollback backend        | `git checkout <last-good-sha> && npm ci && npm run build && pm2 reload ecosystem.config.cjs` | < 5 min                           |
-| Rollback frontend       | Revert Cloudflare Pages deployment from dashboard                                            | < 2 min                           |
+| Rollback frontend       | Revert the Vercel deployment or redeploy the last good build                                 | < 2 min                           |
 | Rollback database       | Supabase PITR (point-in-time recovery)                                                       | 5–30 min                          |
 
 ---
@@ -106,11 +106,11 @@ npx tsx scripts/run-migration-rest.ts migrations/012_seed_data.sql
 
 ## 5. Frontend Rollback
 
-### Cloudflare Pages
+### Vercel
 
-1. Go to **Cloudflare Dashboard** → Pages → `advanciapayledger` project
-2. Click **Deployments**
-3. Find the last good deployment → click **⋯** → **Rollback to this deploy**
+1. Go to **Vercel** → the frontend project
+2. Open **Deployments**
+3. Find the last good deployment and promote/redeploy it
 
 ### Manual Build
 

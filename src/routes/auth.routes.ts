@@ -9,6 +9,7 @@ import { authLimiter, sensitiveLimiter } from '../middleware/rateLimit.middlewar
 import { validateBody, signinSchema, signupSchema } from '../middleware/validation.middleware.js';
 import { asyncHandler, AppError, getErrorMessage } from '../utils/errors.js';
 import { logSecurityEvent, logAndNotify, extractIPAddress } from '../services/security.service.js';
+import { revokeAccessToken } from '../services/token-revocation.service.js';
 import { generateCsrfToken } from '../middleware/csrf.middleware.js';
 import { z } from 'zod';
 
@@ -283,12 +284,14 @@ router.post(
   '/logout',
   authenticate,
   sensitiveLimiter,
-  asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      throw AppError.internal();
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.authToken) {
+      throw AppError.unauthorized('User not authenticated');
     }
+
+    await revokeAccessToken(req.authToken);
+
+    const { error } = await supabase.auth.signOut();
 
     res.json({ success: true, message: 'Logged out successfully' });
   })

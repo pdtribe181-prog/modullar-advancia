@@ -39,7 +39,7 @@ If `npm test` fails with “Cannot find module jest”, run **`npm install`** at
 
 ## Manual / external (you do these)
 
-- **Infrastructure & domains (Vercel, VPS, Render, Supabase, three domains):** [INFRASTRUCTURE_AND_DOMAINS.md](INFRASTRUCTURE_AND_DOMAINS.md) — single map and **proceed** order (§8).
+- **Infrastructure & domains (Vercel, VPS, Supabase, three domains):** [INFRASTRUCTURE_AND_DOMAINS.md](INFRASTRUCTURE_AND_DOMAINS.md) — single map and **proceed** order (§8).
 - **Domains & OAuth:** [DOMAIN_AND_BRANDING_CHECKLIST.md](DOMAIN_AND_BRANDING_CHECKLIST.md), [DOMAINS_AND_GOOGLE_OAUTH.md](DOMAINS_AND_GOOGLE_OAUTH.md).
 - **Support & extra emails:** [EXTRA_EMAILS_SETUP.md](EXTRA_EMAILS_SETUP.md).
 - **Staging:** [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md).
@@ -52,4 +52,5 @@ If `npm test` fails with “Cannot find module jest”, run **`npm install`** at
 
 - **Codebase:** Builds and typechecks; no known code gaps for “everything working” in-repo.
 - **Tests:** Pass once dependencies are installed (`npm install` at root and in frontend); E2E needs Playwright browsers and optional env for admin.
+- **Current focus order:** See [PRODUCTION_PRIORITIES_BY_AREA.md](PRODUCTION_PRIORITIES_BY_AREA.md) for the recommended sequence across frontend, backend, database, auth, payments, infrastructure, and AI.
 - **Complete the project:** Finish the manual steps above (domains, emails, staging, production checklist, PRs). The repo is ready for that.

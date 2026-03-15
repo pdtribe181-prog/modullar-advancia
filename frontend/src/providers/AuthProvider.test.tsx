@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthProvider, useAuth } from './AuthProvider';
 import * as apiService from '../services/api';
@@ -77,13 +77,17 @@ describe('AuthProvider', () => {
   });
 
   describe('Initial State', () => {
-    it('renders children', () => {
+    it('renders children', async () => {
       render(
         <AuthProvider>
           <div>Test content</div>
         </AuthProvider>
       );
       expect(screen.getByText('Test content')).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(apiService.api.setToken).toHaveBeenCalledWith(null);
+      });
     });
 
     it('starts with unauthenticated state', async () => {
@@ -422,6 +426,91 @@ describe('AuthProvider', () => {
 
       // Verify localStorage was cleared
       expect(localStorage.getItem('token')).toBeNull();
+    });
+
+    it('clears auth state and API token after auth:unauthorized event', async () => {
+      const mockToken = 'mock-jwt-token';
+      const mockUser = {
+        id: '123',
+        email: 'test@example.com',
+        role: 'patient',
+      };
+
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user_data', JSON.stringify(mockUser));
+
+      vi.spyOn(apiService.api, 'get').mockResolvedValueOnce({
+        success: true,
+        data: mockUser,
+      });
+
+      render(
+        <AuthProvider>
+          <AuthTestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/User: test@example.com/)).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        window.dispatchEvent(new Event('auth:unauthorized'));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+      });
+
+      expect(apiService.api.setToken).toHaveBeenLastCalledWith(null);
+      expect(localStorage.getItem('token')).toBeNull();
+      expect(localStorage.getItem('user_data')).toBeNull();
+    });
+
+    it('clears auth state and API token after logout in another tab', async () => {
+      const mockToken = 'mock-jwt-token';
+      const mockUser = {
+        id: '123',
+        email: 'test@example.com',
+        role: 'patient',
+      };
+
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user_data', JSON.stringify(mockUser));
+
+      vi.spyOn(apiService.api, 'get').mockResolvedValueOnce({
+        success: true,
+        data: mockUser,
+      });
+
+      render(
+        <AuthProvider>
+          <AuthTestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/User: test@example.com/)).toBeInTheDocument();
+      });
+
+      localStorage.removeItem('token');
+      await act(async () => {
+        window.dispatchEvent(
+          new StorageEvent('storage', {
+            key: 'token',
+            oldValue: mockToken,
+            newValue: null,
+          })
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+      });
+
+      expect(apiService.api.setToken).toHaveBeenLastCalledWith(null);
+      expect(localStorage.getItem('token')).toBeNull();
+      expect(localStorage.getItem('user_data')).toBeNull();
     });
   });
 

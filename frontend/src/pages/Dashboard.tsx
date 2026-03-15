@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { api } from '../services/api';
 import { Spinner } from '../components/Spinner';
@@ -25,11 +25,16 @@ interface LinkedWallet {
 
 export function Dashboard() {
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [wallets, setWallets] = useState<LinkedWallet[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const returnTo = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -95,6 +100,10 @@ export function Dashboard() {
     };
     return icons[type] || '💰';
   };
+
+  if (!authLoading && !user) {
+    return <Navigate to="/login" state={{ from: returnTo }} replace />;
+  }
 
   return (
     <div

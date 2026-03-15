@@ -26,7 +26,10 @@ type AuthApiData = {
 
 type ProfileResponse = ApiEnvelope<User>;
 
-function extractTokenAndExpiry(session: SupabaseSession | null): { token: string; expiresAt?: number } {
+function extractTokenAndExpiry(session: SupabaseSession | null): {
+  token: string;
+  expiresAt?: number;
+} {
   if (!session?.access_token) {
     throw new Error('Authentication succeeded but no session token was returned');
   }
@@ -79,14 +82,14 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName?: string, role?: string) => Promise<void>;
   logout: () => void;
-  refreshSession: () => Promise<void>;
+  refreshSession: () => Promise<boolean>;
   /** Hydrate auth state from an OAuth access_token (e.g. after Supabase redirect). */
   setTokenFromOAuth: (accessToken: string, expiresIn?: number) => Promise<void>;
   // Phone auth
   sendPhoneOtp: (phone: string) => Promise<void>;
   verifyPhoneOtp: (phone: string, code: string) => Promise<void>;
   // OAuth
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (redirectPath?: string) => Promise<void>;
   // MFA
   enrollMFA: (friendlyName?: string) => Promise<MFAEnrollResponse['data']>;
   verifyMFA: (factorId: string, code: string) => Promise<void>;
@@ -101,6 +104,25 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const TOKEN_KEY = 'token';
 const TOKEN_EXPIRY_KEY = 'token_expiry';
 const USER_KEY = 'user_data';
+const OAUTH_RETURN_TO_KEY = 'oauth_return_to';
+
+function resolveOAuthRedirectTarget(candidate?: string): string {
+  if (!candidate || !candidate.startsWith('/')) {
+    return '/dashboard';
+  }
+
+  if (
+    candidate === '/login' ||
+    candidate === '/signup' ||
+    candidate.startsWith('/login?') ||
+    candidate.startsWith('/signup?') ||
+    candidate.startsWith('/auth/callback')
+  ) {
+    return '/dashboard';
+  }
+
+  return candidate;
+}
 
 // Check if token is expired (with 5 minute buffer)
 function isTokenExpired(expiryTime: number | null): boolean {
@@ -228,10 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === TOKEN_KEY) {
         if (e.newValue === null) {
-          // Logged out in another tab
-          setToken(null);
-          setUser(null);
-          setTokenExpiry(null);
+          clearAuth();
         } else if (e.newValue !== token) {
           // Token changed in another tab
           validateSession();
@@ -241,7 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [token, validateSession]);
+  }, [clearAuth, token, validateSession]);
 
   // API error handler for 401 responses
   useEffect(() => {
@@ -272,7 +291,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // The backend may intentionally return no session until admin approval.
     if (!registerRes.data.session?.access_token) {
-      throw new Error(registerRes.message || 'Registration successful. Your account is pending approval.');
+      throw new Error(
+        registerRes.message || 'Registration successful. Your account is pending approval.'
+      );
     }
 
     const { token: newToken, expiresAt } = extractTokenAndExpiry(registerRes.data.session);
@@ -293,19 +314,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearAuth]);
 
   const refreshSession = useCallback(async () => {
-    await validateSession();
+    return validateSession();
   }, [validateSession]);
 
   /**
    * Set auth state from an OAuth redirect access_token.
    * Called by AuthCallback after Supabase redirects back with the token in the URL hash.
    */
-  const setTokenFromOAuth = useCallback(async (accessToken: string, expiresIn = 3600) => {
-    const expiresAt = Date.now() + expiresIn * 1000;
-    api.setToken(accessToken);
-    const profileRes = await api.get<ProfileResponse>('/profile');
-    setAuth(accessToken, profileRes.data, expiresAt);
-  }, [setAuth]);
+  const setTokenFromOAuth = useCallback(
+    async (accessToken: string, expiresIn = 3600) => {
+      const expiresAt = Date.now() + expiresIn * 1000;
+      api.setToken(accessToken);
+      const profileRes = await api.get<ProfileResponse>('/profile');
+      setAuth(accessToken, profileRes.data, expiresAt);
+    },
+    [setAuth]
+  );
 
   // Phone auth methods
   const sendPhoneOtp = async (phone: string) => {
@@ -313,7 +337,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const verifyPhoneOtp = async (phone: string, code: string) => {
-    const authRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/phone/verify', { phone, token: code });
+    const authRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/phone/verify', {
+      phone,
+      token: code,
+    });
     const { token: newToken, expiresAt } = extractTokenAndExpiry(authRes.data.session);
 
     api.setToken(newToken);
@@ -324,14 +351,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // OAuth methods
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (redirectPath?: string) => {
     // This redirects to Supabase OAuth flow
+    sessionStorage.setItem(OAUTH_RETURN_TO_KEY, resolveOAuthRedirectTarget(redirectPath));
     const googleAuthUrl = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/callback')}`;
     window.location.href = googleAuthUrl;
   };
 
   // MFA methods
-  const enrollMFA = async (friendlyName = 'Authenticator App'): Promise<MFAEnrollResponse['data']> => {
+  const enrollMFA = async (
+    friendlyName = 'Authenticator App'
+  ): Promise<MFAEnrollResponse['data']> => {
     const response = await api.post<MFAEnrollResponse>('/auth/mfa/enroll', { friendlyName });
     return response.data;
   };
@@ -341,7 +371,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const challengeMFA = async (factorId: string, code: string) => {
-    const authRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/mfa/challenge', { factorId, code });
+    const authRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/mfa/challenge', {
+      factorId,
+      code,
+    });
     const { token: newToken, expiresAt } = extractTokenAndExpiry(authRes.data.session);
 
     api.setToken(newToken);
@@ -363,30 +396,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!token && !!user && !isTokenExpired(tokenExpiry);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      token,
-      loading,
-      isAuthenticated,
-      mfaRequired,
-      mfaFactorId,
-      login,
-      signup,
-      logout,
-      refreshSession,
-      setTokenFromOAuth,
-      // Phone auth
-      sendPhoneOtp,
-      verifyPhoneOtp,
-      // OAuth
-      signInWithGoogle,
-      // MFA
-      enrollMFA,
-      verifyMFA,
-      challengeMFA,
-      listMFAFactors,
-      unenrollMFA,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        isAuthenticated,
+        mfaRequired,
+        mfaFactorId,
+        login,
+        signup,
+        logout,
+        refreshSession,
+        setTokenFromOAuth,
+        // Phone auth
+        sendPhoneOtp,
+        verifyPhoneOtp,
+        // OAuth
+        signInWithGoogle,
+        // MFA
+        enrollMFA,
+        verifyMFA,
+        challengeMFA,
+        listMFAFactors,
+        unenrollMFA,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

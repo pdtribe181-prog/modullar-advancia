@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# deploy.sh — Deploy Advancia PayLedger to a target environment
+# deploy.sh — Deploy Advancia PayLedger to Hostinger VPS via SSH
 # Usage: ./scripts/deploy.sh [staging|production] [commit-sha]
 #
-# Requires: curl, Environment variables set (see .env or GitHub secrets)
+# Requires: ssh, VPS_SSH_HOST, VPS_SSH_USER, VPS_SSH_KEY_PATH (or ~/.ssh/id_rsa)
 
 set -euo pipefail
 
@@ -24,24 +24,38 @@ fi
 
 # ── Config per environment ────────────────────────────────────────────────────
 if [[ "$ENVIRONMENT" == "production" ]]; then
-  DEPLOY_HOOK_URL="${RENDER_DEPLOY_HOOK_URL:-}"
+  VPS_PATH="/var/www/advancia"
+  VPS_PM2="advancia-api"
+  VPS_PORT="3000"
+  GIT_BRANCH="main"
   APP_URL="https://api.advanciapayledger.com"
-  HEALTH_URL="${APP_URL}/health"
   MAX_RETRIES=15
-  WAIT_SECONDS=90
+  WAIT_SECONDS=30
 else
-  DEPLOY_HOOK_URL="${RENDER_STAGING_DEPLOY_HOOK_URL:-}"
-  APP_URL="https://modullar-advancia-staging.onrender.com"
-  HEALTH_URL="${APP_URL}/health"
+  VPS_PATH="/var/www/advancia-staging"
+  VPS_PM2="advancia-staging"
+  VPS_PORT="3001"
+  GIT_BRANCH="develop"
+  APP_URL="https://api-staging.advanciapayledger.com"
   MAX_RETRIES=10
-  WAIT_SECONDS=60
+  WAIT_SECONDS=20
 fi
+HEALTH_URL="${APP_URL}/health"
+
+VPS_HOST="${VPS_SSH_HOST:-}"
+VPS_USER="${VPS_SSH_USER:-root}"
+VPS_KEY="${VPS_SSH_KEY_PATH:-${HOME}/.ssh/id_rsa}"
 
 # ── Pre-flight checks ─────────────────────────────────────────────────────────
 info "Starting deploy → ${ENVIRONMENT} (commit: ${COMMIT_SHA})"
 
-if [[ -z "$DEPLOY_HOOK_URL" ]]; then
-  error "Deploy hook URL not set. Export RENDER_DEPLOY_HOOK_URL or RENDER_STAGING_DEPLOY_HOOK_URL."
+if [[ -z "$VPS_HOST" ]]; then
+  error "VPS host not set. Export VPS_SSH_HOST."
+fi
+
+if [[ "$ENVIRONMENT" == "staging" ]]; then
+  warning "Staging is not provisioned on the live VPS yet. Expected path: ${VPS_PATH}"
+  error "Provision /var/www/advancia-staging and PM2 app advancia-staging before using staging deploys."
 fi
 
 if [[ "$ENVIRONMENT" == "production" ]]; then
@@ -49,28 +63,32 @@ if [[ "$ENVIRONMENT" == "production" ]]; then
   sleep 10
 fi
 
-# ── Trigger deploy ────────────────────────────────────────────────────────────
-info "Triggering Render deploy..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$DEPLOY_HOOK_URL")
-
-if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
-  error "Deploy hook returned HTTP $HTTP_STATUS"
-fi
-success "Deploy hook accepted (HTTP $HTTP_STATUS)"
+# ── Deploy via SSH ────────────────────────────────────────────────────────────
+info "Deploying to VPS ${VPS_HOST}${VPS_PATH} via SSH..."
+ssh -i "$VPS_KEY" -o StrictHostKeyChecking=no "${VPS_USER}@${VPS_HOST}" bash <<REMOTE
+  set -e
+  cd ${VPS_PATH}
+  git fetch origin ${GIT_BRANCH}
+  git reset --hard origin/${GIT_BRANCH}
+  npm ci --omit=dev
+  npm run build
+  pm2 restart ${VPS_PM2} || pm2 start dist/server.js --name ${VPS_PM2} -- --port ${VPS_PORT}
+REMOTE
+success "SSH deployment completed"
 
 # ── Wait for service to come up ───────────────────────────────────────────────
-info "Waiting ${WAIT_SECONDS}s for Render to start deployment..."
+info "Waiting ${WAIT_SECONDS}s for service to start..."
 sleep "$WAIT_SECONDS"
 
-info "Running health checks (max $MAX_RETRIES attempts, 20s apart)..."
+info "Running health checks (max $MAX_RETRIES attempts, 15s apart)..."
 ATTEMPT=0
 until curl -sf "$HEALTH_URL" >/dev/null 2>&1; do
   ATTEMPT=$((ATTEMPT + 1))
   if [[ $ATTEMPT -ge $MAX_RETRIES ]]; then
-    error "Health check failed after $MAX_RETRIES attempts. Check Render logs: ${APP_URL}"
+    error "Health check failed after $MAX_RETRIES attempts. Check VPS logs: ${VPS_HOST}${VPS_PATH}"
   fi
-  info "Attempt $ATTEMPT/$MAX_RETRIES — not ready yet, waiting 20s..."
-  sleep 20
+  info "Attempt $ATTEMPT/$MAX_RETRIES — not ready yet, waiting 15s..."
+  sleep 15
 done
 
 # ── Post-deploy verification ──────────────────────────────────────────────────

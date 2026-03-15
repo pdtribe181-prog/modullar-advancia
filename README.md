@@ -19,7 +19,7 @@
 
 This repository (`modullar-advancia`) is the canonical production codebase for **Advancia PayLedger** (app + API at `advanciapayledger.com` and `api.advanciapayledger.com`). A mirror is kept at [pdtribe181-prog/advancia-get-together](https://github.com/pdtribe181-prog/advancia-get-together); push to both with `npm run push:mirror` after committing.
 
-**Infrastructure & domains:** VPS, Render, Supabase, and the three domains are in [docs/INFRASTRUCTURE_AND_DOMAINS.md](docs/INFRASTRUCTURE_AND_DOMAINS.md). **Connect frontend to Vercel and Cloudflare Pages:** [docs/CONNECT_VERCEL_AND_CLOUDFLARE.md](docs/CONNECT_VERCEL_AND_CLOUDFLARE.md) (root dir = `frontend`, build = `npm run build`, output = `dist`). **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
+**Infrastructure & domains:** VPS, Vercel, Supabase, and the three domains are in [docs/INFRASTRUCTURE_AND_DOMAINS.md](docs/INFRASTRUCTURE_AND_DOMAINS.md). **Connect frontend to Vercel while keeping Cloudflare for DNS/edge where needed:** [docs/CONNECT_VERCEL_AND_CLOUDFLARE.md](docs/CONNECT_VERCEL_AND_CLOUDFLARE.md) (root dir = `frontend`, build = `npm run build`, output = `dist`). **Domain & branding:** For adding advancia-healthcare.com, redirecting advanciapayroll.com, and support email setup, see [docs/DOMAIN_AND_BRANDING_CHECKLIST.md](docs/DOMAIN_AND_BRANDING_CHECKLIST.md).
 
 **All related repos:** See [docs/REPO_MAP.md](docs/REPO_MAP.md) for the full list and how each fits (canonical, mirror, variants).
 
@@ -29,7 +29,7 @@ This repository (`modullar-advancia`) is the canonical production codebase for *
 - **Database**: Supabase (PostgreSQL + Auth + RLS)
 - **Payments**: Stripe (card payments)
 - **Frontend**: React + Vite + TypeScript
-- **Hosting**: Hostinger VPS (Frontend + API) with Cloudflare proxy/CDN
+- **Hosting**: Vercel (frontend), Hostinger VPS (API), Cloudflare/DNS where configured
 - **Monitoring**: Sentry
 - **Email**: Resend
 - **SMS**: Twilio
@@ -79,17 +79,18 @@ TWILIO_ACCOUNT_SID=AC...        # SMS notifications
 SENTRY_DSN=https://...          # Error monitoring
 ```
 
-### Staging (Render + Supabase)
+### Staging (VPS + Supabase)
 
-This project supports a staging API on Render and should use a dedicated Supabase staging project.
+Staging runs on the same Hostinger VPS as production, on a separate PM2 process at port 3001.
 
 - Staging API hostname: `api-staging.advanciapayledger.com`
-- Render origin: `modullar-advancia.onrender.com`
+- Planned staging path: `/var/www/advancia-staging` (PM2: `advancia-staging`)
+- Current status: staging VPS app directory is not provisioned yet
 - Keep staging and production Supabase projects fully separate.
 
-Use [env/.env.staging.example](env/.env.staging.example) as the source of truth for staging variables.
+Use [.env.staging.example](.env.staging.example) as the source of truth for staging variables.
 
-Minimum required staging variables in Render:
+Minimum required staging variables on VPS:  
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
@@ -100,16 +101,15 @@ Minimum required staging variables in Render:
 - `CORS_ORIGINS`
 - `SENTRY_DSN` and `SENTRY_ENVIRONMENT=staging`
 
-#### Render ↔ Supabase (Staging) Env Mapping
+#### VPS Staging Env Mapping
 
-| Render Environment Variable       | Staging Value Source               | Notes                                   |
+| Environment Variable              | Staging Value Source               | Notes                                   |
 | --------------------------------- | ---------------------------------- | --------------------------------------- |
 | `SUPABASE_URL`                    | Supabase staging project URL       | Must not point to production            |
 | `SUPABASE_ANON_KEY`               | Supabase staging API keys          | Safe for client-facing use              |
 | `SUPABASE_SERVICE_ROLE_KEY`       | Supabase staging API keys          | Server only, never expose in frontend   |
 | `SUPABASE_WEBHOOK_SECRET`         | Staging secret value               | Must match sender integration           |
 | `DATABASE_URL` (if used)          | Supabase staging connection string | Keep separate from prod DB              |
-| `SUPABASE_ACCESS_TOKEN` (if used) | Supabase personal token            | Use least privilege token               |
 | `SENTRY_ENVIRONMENT`              | `staging`                          | Keeps events separated from prod        |
 | `STRIPE_SECRET_KEY`               | Stripe test key (`sk_test_...`)    | Never use live key in staging           |
 | `STRIPE_WEBHOOK_SECRET`           | Staging webhook endpoint secret    | Separate from production webhook secret |
@@ -140,7 +140,6 @@ modullar-advancia/
 ├── coverage/                  # Test coverage reports
 ├── archive/                   # Archived/obsolete files and logs
 ├── supabase/                  # Supabase CLI and config
-├── render.yaml                # Render deployment config
 └── openapi.yaml               # API documentation
 ```
 
@@ -226,12 +225,19 @@ Admin routes and E2E coverage (including optional admin token/creds): [docs/ADMI
 
 ```bash
 npm run preflight     # 45-point pre-launch validation
-npm run test:email    # Render all 11 email templates (add --send addr for live)
-npm run test:sms      # Render all 13 SMS templates (add --send +1... for live)
+npm run verify:no-render-hosting  # Ensure active docs/workflows/scripts stay free of legacy hosting refs
+npm run test:email    # Preview all 11 email templates (add --send addr for live)
+npm run test:sms      # Preview all 13 SMS templates (add --send +1... for live)
 npm run load-test     # Load test: 100 users, P95 <200ms
 npm run uptime        # Health check poller (add --watch for continuous)
 npx tsx scripts/verify-dns.ts  # DNS record verification
 ```
+
+### Deployment Guardrails
+
+- Run `npm run verify:no-render-hosting` before opening or merging infrastructure/doc changes.
+- CI workflows (`ci.yml`, `ci-cd.yml`, `automated-testing.yml`) enforce this check automatically.
+- If the check fails, remove stale hosting references from active files (`README.md`, `docs/`, `.github/`, `scripts/`, `config/`, `.env*.example`).
 
 ## Deployment
 
@@ -240,15 +246,15 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full deployment guide.
 ### Quick Deploy
 
 ```bash
-# Full stack on VPS (Nginx serves frontend, proxies API)
+# Backend deploy on VPS (frontend is served from Vercel)
 ssh advancia-vps 'cd /var/www/advancia && git pull && npm ci && npm run build && pm2 reload advancia-api'
 ```
 
-### Staging API (Render)
+### Staging API (VPS)
 
-- Render blueprint file: [render.yaml](render.yaml)
-- Service target: `modullar-advancia.onrender.com`
-- Recommended DNS: `api-staging.advanciapayledger.com` CNAME to Render target (proxied via Cloudflare)
+- Planned path on VPS: `/var/www/advancia-staging` (PM2: `advancia-staging`, port 3001)
+- Custom hostname: `api-staging.advanciapayledger.com` → VPS `76.13.77.8`
+- Current status: DNS is reserved, but the staging app directory and PM2 process are not provisioned yet
 - Operational guide: [STAGING_RUNBOOK.md](STAGING_RUNBOOK.md)
 
 ## DNS Configuration (Cloudflare)
@@ -259,7 +265,7 @@ Current production DNS is managed in Cloudflare with Hostinger VPS as origin.
 | ----- | ----------------------------- | ------------------------------------------ | -------- |
 | A     | `advanciapayledger.com`       | `76.13.77.8`                               | Proxied  |
 | A     | `api`                         | `76.13.77.8`                               | Proxied  |
-| CNAME | `api-staging`                 | `modullar-advancia.onrender.com`           | Proxied  |
+| A     | `api-staging`                 | `76.13.77.8`                               | Proxied  |
 | MX    | `advanciapayledger.com`       | `route1/2/3.mx.cloudflare.net`             | DNS only |
 | MX    | `send`                        | `feedback-smtp.eu-west-1.amazonses.com`    | DNS only |
 | TXT   | `advanciapayledger.com`       | SPF configured (`_spf.mx.cloudflare.net`)  | DNS only |
@@ -271,7 +277,7 @@ Current production DNS is managed in Cloudflare with Hostinger VPS as origin.
 Notes:
 
 - API and apex are proxied through Cloudflare (orange cloud).
-- Origin server for both frontend and API is Hostinger VPS (`76.13.77.8`).
+- API origin is Hostinger VPS (`76.13.77.8`); frontend is served from Vercel with domain routing managed via Cloudflare/Vercel.
 - Email deliverability/authentication records (SPF/DKIM/DMARC) are configured in DNS.
 
 ## Security Features

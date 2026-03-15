@@ -22,8 +22,8 @@
 
 | Service  | URL                                        | Status       |
 | -------- | ------------------------------------------ | ------------ |
-| App      | <https://advanciapayledger.com>            | ⏳ Pending   |
-| API      | <https://api.advanciapayledger.com/api/v1> | ⏳ Pending   |
+| App      | <https://advanciapayledger.com>            | ✅ Live      |
+| API      | <https://api.advanciapayledger.com/api/v1> | ✅ Live      |
 | Database | <https://pikguczsvikzragmrojz.supabase.co> | ✅ Connected |
 
 ---
@@ -129,7 +129,7 @@ curl https://api.advanciapayledger.com/health
 
    ```bash
    # From local machine
-   scp nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
+   scp config/nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
    ```
 
 2. Enable site:
@@ -144,13 +144,13 @@ curl https://api.advanciapayledger.com/health
 
 ---
 
-## 2. Frontend (Cloudflare Pages)
+## 2. Frontend (Vercel)
 
-Go to: **Cloudflare Pages → your project → Settings → Environment variables**
+Go to: **Vercel → your frontend project → Settings → Environment Variables**
 
 Add the variables from `2-PAYLEDGER-FRONTEND.env`.
 
-### Environment Variables (Cloudflare Pages)
+### Environment Variables (Vercel)
 
 ```env
 VITE_API_URL=https://api.advanciapayledger.com/api/v1
@@ -220,17 +220,17 @@ npm run test:coverage
 
 ## 7. Custom Domain (Optional)
 
-### Frontend (Cloudflare Pages)
+### Frontend (Vercel)
 
-1. Cloudflare Dashboard → Pages → Your project → Custom domains
-2. Add `app.advanciapayledger.com`
-3. DNS: CNAME record is auto-configured by Cloudflare
+1. Vercel → Project → Settings → Domains
+2. Add `app.advanciapayledger.com` if you want that alias
+3. Keep DNS in Cloudflare pointed at the Vercel target that Vercel provides
 
 ### Backend (VPS)
 
-1. Render Dashboard → Settings → Custom Domains
-2. Add `api.advanciapayledger.com`
-3. DNS: Follow Render's instructions
+1. Point `api.advanciapayledger.com` to the Hostinger VPS IP in Cloudflare DNS
+2. Copy `config/nginx/advancia.conf` to `/etc/nginx/sites-available/advancia`
+3. Reload Nginx and verify `https://api.advanciapayledger.com/health`
 
 ---
 
@@ -238,10 +238,10 @@ npm run test:coverage
 
 - [x] Supabase connected
 - [x] 131 tests passing
-- [x] Frontend deployed to Cloudflare Pages
+- [x] Frontend deployed to Vercel
 - [x] Backend deployed to VPS (PM2 + Nginx)
 - [x] Stripe webhook configured
-- [x] VITE_API_URL set in Cloudflare Pages
+- [x] VITE_API_URL set in Vercel
 - [x] Google OAuth enabled
 - [x] SMTP configured (Resend)
 - [x] Sentry monitoring enabled
@@ -261,14 +261,14 @@ npm run test:coverage
 
 ## 10. Landing Page Integration
 
-The marketing site at `advanciapayledger.com` (built with Rocket.new) needs updated links:
+Marketing CTAs should point to live app routes on the primary domain (or optional app alias if you use it):
 
 | Current Link          | Should Point To                                       |
 | --------------------- | ----------------------------------------------------- |
-| `/signup`             | `https://app.advanciapayledger.com/login?mode=signup` |
-| `/login`              | `https://app.advanciapayledger.com/login`             |
-| "Get Started" button  | `https://app.advanciapayledger.com`                   |
-| "Create Free Account" | `https://app.advanciapayledger.com/login?mode=signup` |
+| `/signup`             | `https://advanciapayledger.com/signup`                |
+| `/login`              | `https://advanciapayledger.com/login`                 |
+| "Get Started" button  | `https://advanciapayledger.com`                       |
+| "Create Free Account" | `https://advanciapayledger.com/signup`                |
 
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
 
@@ -285,7 +285,7 @@ The repository includes a comprehensive CI/CD pipeline (`.github/workflows/ci.ym
 
 | Job                | Description                   |
 | ------------------ | ----------------------------- |
-| **Lint**           | TypeScript check + ESLint     |
+| **Lint**           | Hosting guardrail check + ESLint |
 | **Backend Tests**  | Jest tests with mock env vars |
 | **Frontend Tests** | Vitest tests                  |
 | **Security Scan**  | npm audit + secrets detection |
@@ -313,17 +313,19 @@ Go to **Settings → Secrets and variables → Actions** and add:
    - Select: `Lint`, `Backend Tests`, `Frontend Tests`
    - ✅ Require branches to be up to date before merging
 
-### Auto-Deploy
+### Deployment Trigger Model
 
-Deployments are automatic on push to `main`:
+Deployments are not fully automatic on push to `main`.
 
-- **VPS** - Backend: SSH pull + build + PM2 reload (or use deploy script)
-- **Cloudflare Pages** - Frontend auto-deploys via GitHub integration
+- **CI (`ci.yml`)** runs automatically on push/PR for lint, tests, security, and build checks.
+- **CI/CD (`ci-cd.yml`)** is manual (`workflow_dispatch`) and currently deploys staging only.
+- **Production VPS deploy** is currently operator-triggered (SSH/deploy script/manual runbook).
+- **Vercel** - Frontend deploys from the configured Vercel project/workflow
 
 ---
 
 ## Support
 
-- Cloudflare Pages Docs: <https://developers.cloudflare.com/pages/>
+- Vercel Docs: <https://vercel.com/docs>
 - Supabase Docs: <https://supabase.com/docs>
 - Stripe Docs: <https://stripe.com/docs>

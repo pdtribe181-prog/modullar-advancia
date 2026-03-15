@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
+const mockNavigateComponent = vi.fn();
 const mockShowToast = vi.fn();
 
 const { mockUseAuth } = vi.hoisted(() => ({
@@ -11,7 +12,14 @@ const { mockUseAuth } = vi.hoisted(() => ({
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
-  return { ...actual, useNavigate: () => mockNavigate };
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    Navigate: (props: { to: string; state?: unknown; replace?: boolean }) => {
+      mockNavigateComponent(props);
+      return <div data-testid="navigate">Redirecting to {props.to}</div>;
+    },
+  };
 });
 
 vi.mock('../providers/AuthProvider', () => ({
@@ -56,9 +64,23 @@ describe('PaymentPage', () => {
   describe('auth guard', () => {
     it('redirects to /login when user is not authenticated', () => {
       mockUseAuth.mockReturnValue({ user: null, loading: false });
-      renderPayment();
-      // Navigate component renders nothing visible; check we don't see the form
-      expect(screen.queryByText('Make a Payment')).not.toBeInTheDocument();
+      render(
+        <MemoryRouter initialEntries={['/payment?invoice=INV-001#checkout']}>
+          <PaymentPage />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByTestId('navigate')).toBeInTheDocument();
+      expect(mockNavigateComponent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: '/login',
+          replace: true,
+          state: expect.objectContaining({
+            from: '/payment?invoice=INV-001#checkout',
+            message: 'Please log in to make a payment.',
+          }),
+        })
+      );
     });
 
     it('renders payment form for authenticated user', () => {

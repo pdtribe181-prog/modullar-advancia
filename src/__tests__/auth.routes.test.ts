@@ -28,6 +28,7 @@ const mockMfaListFactors = jest.fn<any>();
 const mockMfaUnenroll = jest.fn<any>();
 const mockMfaGetAssurance = jest.fn<any>();
 const mockFrom = jest.fn<any>();
+const mockRevokeAccessToken = jest.fn<any>();
 
 jest.unstable_mockModule('../lib/supabase.js', () => ({
   supabase: {
@@ -71,6 +72,11 @@ jest.unstable_mockModule('../middleware/logging.middleware.js', () => ({
   },
 }));
 
+jest.unstable_mockModule('../services/token-revocation.service.js', () => ({
+  revokeAccessToken: mockRevokeAccessToken,
+  isAccessTokenRevoked: jest.fn<any>().mockResolvedValue(false),
+}));
+
 jest.unstable_mockModule('../middleware/rateLimit.middleware.js', () => ({
   authLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
   apiLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
@@ -103,10 +109,16 @@ const mockUser = {
 jest.unstable_mockModule('../middleware/auth.middleware.js', () => ({
   authenticate: (req: any, _res: Response, next: NextFunction) => {
     req.user = mockUser;
+    req.authToken = String(req.headers.authorization || '')
+      .replace(/^Bearer\s+/i, '')
+      .trim();
     next();
   },
   authenticateWithProfile: (req: any, _res: Response, next: NextFunction) => {
     req.user = mockUser;
+    req.authToken = String(req.headers.authorization || '')
+      .replace(/^Bearer\s+/i, '')
+      .trim();
     req.profile = { id: mockUser.id, role: 'patient' };
     next();
   },
@@ -151,6 +163,7 @@ describe('auth.routes', () => {
     mockExtractIPAddress.mockReturnValue('127.0.0.1');
     mockLogSecurityEvent.mockResolvedValue('evt_1');
     mockLogAndNotify.mockResolvedValue(undefined);
+    mockRevokeAccessToken.mockResolvedValue(undefined);
   });
 
   // Helper for chained Supabase queries
@@ -448,15 +461,27 @@ describe('auth.routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(mockRevokeAccessToken).toHaveBeenCalledWith('test-token');
     });
 
-    it('returns 500 when signOut fails', async () => {
+    it('still succeeds when signOut fails after revoking the token', async () => {
       mockSignOut.mockResolvedValue({ error: { message: 'session error' } });
+
+      const res = await request(app).post('/auth/logout').set('Authorization', 'Bearer test-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(mockRevokeAccessToken).toHaveBeenCalledWith('test-token');
+    });
+
+    it('returns 500 when token revocation fails', async () => {
+      mockRevokeAccessToken.mockRejectedValue(new Error('redis down'));
 
       const res = await request(app).post('/auth/logout').set('Authorization', 'Bearer test-token');
 
       expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
+      expect(mockSignOut).not.toHaveBeenCalled();
     });
   });
 

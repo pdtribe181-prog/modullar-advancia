@@ -22,7 +22,7 @@ This checklist ensures all systems are production-ready before go-live. Complete
 - [ ] GitHub Actions repository secrets set (CI/E2E): `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SENTRY_DSN`
 - [ ] VPS/PM2 `.env` matches production values: Supabase URLs/keys, Stripe keys+webhook, Resend, Twilio, Redis/Upstash, Sentry, `FRONTEND_URL`, CORS origins
 - [ ] Frontend build env (Vite) set: `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SENTRY_DSN`
-- [ ] Cloudflare Pages/Workers (if used) carry the same Stripe/Supabase/Sentry secrets
+- [ ] Frontend host env carries the same Stripe/Supabase/Sentry values where required (currently Vercel for frontend)
 - [ ] Secrets stored in password manager/backup vault and rotated from dev values
 
 **GitHub CLI helper (replace placeholders):**
@@ -42,23 +42,22 @@ gh secret set UPSTASH_REDIS_REST_TOKEN --body "..."
 gh secret set SENTRY_DSN --body "https://..."
 ```
 
-### Staging Readiness (Render + Supabase)
+### Staging Readiness (VPS + Supabase)
 
 - [x] Staging API hostname defined (`api-staging.advanciapayledger.com`)
-- [x] Staging Render service configured (`modullar-advancia.onrender.com`)
-- [x] Staging custom domain added to Render service
-- [x] Cloudflare DNS configured (DNS-only mode, bypasses WAF)
+- [ ] Staging VPS path provisioned (`/var/www/advancia-staging`, PM2: `advancia-staging`, port 3001)
+- [x] Staging A-record added in Cloudflare (`api-staging` → `76.13.77.8`)
 - [x] `.env.staging.example` documented in repository
 - [x] Staging smoke tests pass (DNS, HTTPS, `/health` endpoint validated)
 - [ ] Dedicated Supabase staging project confirmed
-- [ ] Staging `SUPABASE_URL` configured in Render
-- [ ] Staging `SUPABASE_ANON_KEY` configured in Render
-- [ ] Staging `SUPABASE_SERVICE_ROLE_KEY` configured in Render
+- [ ] Staging `SUPABASE_URL` configured in VPS staging `.env`
+- [ ] Staging `SUPABASE_ANON_KEY` configured in VPS staging `.env`
+- [ ] Staging `SUPABASE_SERVICE_ROLE_KEY` configured in VPS staging `.env`
 - [ ] Staging migrations applied and verified
 - [ ] Staging webhook secrets separated from production
 - [ ] Full staging functional tests pass (auth, payments-test flow)
 
-**To complete the unchecked items above:** follow [docs/STAGING_COMPLETION_RUNBOOK.md](docs/STAGING_COMPLETION_RUNBOOK.md) (Supabase staging project, Render env vars, migrations, webhooks, verification).
+**To complete the unchecked items above:** follow [docs/STAGING_COMPLETION_RUNBOOK.md](docs/STAGING_COMPLETION_RUNBOOK.md) (Supabase staging project, VPS staging env vars, migrations, webhooks, verification).
 
 ### Backend Environment Variables
 
@@ -334,16 +333,15 @@ gh secret set SENTRY_DSN --body "https://..."
 - [ ] Brotli compression: Enabled
 - [ ] Rocket Loader: Disabled (may interfere with React)
 
-### Frontend (Hostinger VPS + Cloudflare)
+### Frontend (Vercel + Cloudflare DNS)
 
-- [x] Frontend built and deployed on VPS
-- [x] Nginx serves frontend at `advanciapayledger.com`
-- [x] Cloudflare proxy active for apex domain
-- [x] Custom domain added: `advanciapayledger.com`
+- [x] Frontend deployed on Vercel
+- [x] `advanciapayledger.com` custom domain attached to Vercel
+- [x] Cloudflare DNS/proxy active for apex domain
 - [x] DNS configured for custom domain
 - [x] SSL certificate active
 - [x] Production frontend accessible over HTTPS
-- [x] `www` alias configured — nginx/advancia.conf has 301 redirect `www → apex`; add CNAME in Cloudflare
+- [x] `www` alias configured (CNAME/redirect to apex)
 
 ---
 
@@ -358,7 +356,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Monitoring service connected
 - [x] Redis connection verified (Upstash)
 
-**Core API (11/15 endpoints validated via `scripts/test-production-api.ps1`)**
+**Core API validation (via `scripts/test-production-api.ps1`)**
 
 - [x] Authentication endpoints secured (register/login require data, logout requires auth)
 - [x] Admin endpoints properly protected (401 without authentication)
@@ -367,7 +365,7 @@ gh secret set SENTRY_DSN --body "https://..."
 - [x] Security headers active (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
 - [x] JSON content-type headers configured
 
-**Endpoints Not Yet Implemented (expected at launch):**
+**Recently Implemented Endpoint Coverage:**
 
 - [x] `POST /api/v1/auth/forgot-password` — Implemented (alias for `/auth/password/reset`)
 - [x] `POST /api/v1/connect/account` — Implemented (creates Stripe Connect account)
