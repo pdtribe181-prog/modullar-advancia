@@ -96,7 +96,7 @@ Comprehensive project analysis and high-priority cleanup tasks completed for the
 **Files Modified**:
 1. [Dockerfile](Dockerfile) - All 3 stages (builder, deps, production)
 2. [package.json](package.json) - `engines.node` field
-3. [render.yaml](render.yaml) - `NODE_VERSION` environment variable
+3. Deployment/runtime environment docs - aligned to Node 20 target runtime
 
 **Rationale**:
 - Node 20 is current LTS (Long-Term Support)
@@ -238,7 +238,7 @@ Comprehensive project analysis and high-priority cleanup tasks completed for the
 1. `COMPILATION_COMPARISON.md` - Fixed 37 markdown linting errors
 2. `Dockerfile` - Updated to Node 20 LTS (3 instances)
 3. `package.json` - Updated engine requirement to 20.x
-4. `render.yaml` - Updated NODE_VERSION to 20
+4. Deployment documentation - Updated Node 20 runtime notes
 5. `README.md` - Updated migration counts
 
 ### Files Created
@@ -270,7 +270,7 @@ All changes are non-breaking and improve project quality:
 
 1. **VPS Deployment**: Update Node.js version on Hostinger VPS if needed
 2. **Docker**: Rebuild images with `docker build` to use Node 20 Alpine
-3. **Render**: `NODE_VERSION=20` already updated in `render.yaml`
+3. **Platform Scope**: Legacy third-party hosting is excluded; use Hostinger VPS + Vercel deployment path
 4. **No Breaking Changes**: All updates are backward compatible
 
 ---

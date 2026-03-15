@@ -11,7 +11,7 @@
 2. **Remove Unused Python Virtual Environment** - `.venv` directory removed
 3. **Migration Documentation** - `MIGRATIONS_README.md` created
 4. **README Accuracy** - Updated migration counts (56 files)
-5. **Node.js Version Update** - Upgraded from Node 22 to Node 20 LTS in Dockerfile, package.json, and render.yaml
+5. **Node.js Version Update** - Upgraded from Node 22 to Node 20 LTS in Dockerfile, package.json, and the legacy PaaS blueprint before VPS-only deployment was standardized
 6. **Environment Validation Enhancement** - Refactored production.config.ts and stripe.routes.ts to use validated `getEnv()` instead of direct `process.env` access
 
 ---

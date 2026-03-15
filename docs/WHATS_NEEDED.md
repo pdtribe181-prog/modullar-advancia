@@ -35,7 +35,7 @@ One-place checklist of **manual / infra** items. Code and CORS are done in the r
 
 ## Optional / later
 
-- **Staging:** Supabase staging project, Render env, webhooks (see STAGING_COMPLETION_RUNBOOK.md)
+- **Staging:** Supabase staging project, VPS staging `.env`, webhooks (see STAGING_COMPLETION_RUNBOOK.md)
 - **Extra emails:** enterprise@, privacy@, security@, etc. (see EXTRA_EMAILS_SETUP.md)
 - **Payments:** Withdrawal endpoint and validation (see PAYMENTS_CONFIG_AND_FIXES.md)
 

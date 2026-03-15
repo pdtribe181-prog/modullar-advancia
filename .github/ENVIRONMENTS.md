@@ -8,8 +8,8 @@ This guide describes the two deployment environments used by Advancia PayLedger 
 
 | Environment  | Branch    | URL                                              | Protection                      |
 | ------------ | --------- | ------------------------------------------------ | ------------------------------- |
-| `staging`    | `develop` | <https://modullar-advancia-staging.onrender.com> | None                            |
-| `production` | `main`    | <https://modullar-advancia.onrender.com>         | Required reviewers + wait timer |
+| `staging`    | `develop` | <https://api-staging.advanciapayledger.com>      | None                            |
+| `production` | `main`    | <https://api.advanciapayledger.com>              | Required reviewers + wait timer |
 
 ---
 
@@ -46,7 +46,9 @@ Each environment can hold its own set of secrets, overriding repository-level se
 | `SUPABASE_ANON_KEY`              | Staging Supabase anon key            |
 | `SUPABASE_SERVICE_ROLE_KEY`      | Staging Supabase service role key    |
 | `STRIPE_SECRET_KEY`              | `sk_test_...` — Stripe test mode key |
-| `RENDER_STAGING_DEPLOY_HOOK_URL` | Render deploy hook for staging       |
+| `VPS_SSH_HOST`              | Hostinger VPS IP (`76.13.77.8`)      |
+| `VPS_SSH_USER`              | SSH user (e.g. `root`)               |
+| `VPS_SSH_KEY`               | Private SSH key (no passphrase)      |
 
 ### Production secrets
 
@@ -56,23 +58,26 @@ Each environment can hold its own set of secrets, overriding repository-level se
 | `SUPABASE_ANON_KEY`         | Production Supabase anon key         |
 | `SUPABASE_SERVICE_ROLE_KEY` | Production Supabase service role key |
 | `STRIPE_SECRET_KEY`         | `sk_live_...` — Stripe live mode key |
-| `RENDER_DEPLOY_HOOK_URL`    | Render deploy hook for production    |
+| `VPS_SSH_HOST`              | Hostinger VPS IP (`76.13.77.8`)      |
+| `VPS_SSH_USER`              | SSH user (e.g. `root`)               |
+| `VPS_SSH_KEY`               | Private SSH key (no passphrase)      |
 
 ---
 
-## Getting a Render Deploy Hook
+## Setting up VPS SSH Access
 
-1. Go to **Render Dashboard → Your service → Settings → Deploy Hooks**
-2. Click **Add Deploy Hook**
-3. Name it `GitHub Actions` and copy the URL
-4. Add it as a GitHub secret (`RENDER_DEPLOY_HOOK_URL` for production, `RENDER_STAGING_DEPLOY_HOOK_URL` for staging)
+1. Generate a deploy key: `ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/advancia_deploy -N ""`
+2. Copy public key to VPS: `ssh-copy-id -i ~/.ssh/advancia_deploy.pub root@76.13.77.8`
+3. Add the **private key** as `VPS_SSH_KEY` GitHub secret
+4. Ensure `/var/www/advancia` exists on the VPS and is cloned from the repo
+5. Provision `/var/www/advancia-staging` separately before enabling staging deploys
 
 ---
 
 ## Workflow Trigger Summary
 
 ```text
-git push origin develop  →  deploy-staging   (automatic)
-git push origin main     →  deploy-production (with approval gate)
-workflow_dispatch        →  choose environment manually
+workflow_dispatch        →  run full pipeline manually
+workflow_dispatch        →  deploy-staging job runs after build and only targets the staging environment
+production environment   →  documented for future/manual production deployment controls; no current ci-cd production job
 ```

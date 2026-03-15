@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-# rollback.sh — Roll back to the previous stable deployment on Render
+# rollback.sh — Roll back to the previous stable deployment on VPS (Hostinger)
 # Usage: ./scripts/rollback.sh [staging|production]
 #
-# Strategy: Render doesn't have a direct rollback API, so we:
-#   1. Find the last successful GitHub Actions run on the target branch
-#   2. Re-trigger deploy using the Render deploy hook (Render redeploys last
-#      successful build if no new code is pushed, or we can retag + push)
+# Strategy:
+#   1. Find the previous stable git tag on the current branch
+#   2. SSH into VPS and hard-reset to that tag/commit
+#   3. Rebuild and restart the PM2 process
 #
-# For a proper rollback, use the Render dashboard:
-#   Dashboard → Service → Events → click a previous deploy → "Redeploy"
+# Requires: VPS_SSH_HOST, VPS_SSH_USER, VPS_SSH_KEY_PATH
 
 set -euo pipefail
 
@@ -45,19 +44,31 @@ fi
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 if [[ "$ENVIRONMENT" == "production" ]]; then
-  DEPLOY_HOOK_URL="${RENDER_DEPLOY_HOOK_URL:-}"
+  VPS_PATH="/var/www/advancia"
+  VPS_PM2="advancia-api"
+  VPS_PORT="3000"
   APP_URL="https://api.advanciapayledger.com"
-  HEALTH_URL="${APP_URL}/health"
   TARGET_BRANCH="main"
 else
-  DEPLOY_HOOK_URL="${RENDER_STAGING_DEPLOY_HOOK_URL:-}"
-  APP_URL="https://modullar-advancia-staging.onrender.com"
-  HEALTH_URL="${APP_URL}/health"
+  VPS_PATH="/var/www/advancia-staging"
+  VPS_PM2="advancia-staging"
+  VPS_PORT="3001"
+  APP_URL="https://api-staging.advanciapayledger.com"
   TARGET_BRANCH="develop"
 fi
+HEALTH_URL="${APP_URL}/health"
 
-if [[ -z "$DEPLOY_HOOK_URL" ]]; then
-  error "Deploy hook not configured. Set RENDER_DEPLOY_HOOK_URL or RENDER_STAGING_DEPLOY_HOOK_URL."
+VPS_HOST="${VPS_SSH_HOST:-}"
+VPS_USER="${VPS_SSH_USER:-root}"
+VPS_KEY="${VPS_SSH_KEY_PATH:-${HOME}/.ssh/id_rsa}"
+
+if [[ -z "$VPS_HOST" ]]; then
+  error "VPS host not configured. Set VPS_SSH_HOST."
+fi
+
+if [[ "$ENVIRONMENT" == "staging" ]]; then
+  warning "Staging is not provisioned on the live VPS yet. Expected path: ${VPS_PATH}"
+  error "Provision /var/www/advancia-staging and PM2 app advancia-staging before using staging rollback."
 fi
 
 # ── Find previous stable tag/commit ──────────────────────────────────────────
@@ -88,14 +99,18 @@ git merge --ff-only "$ROLLBACK_BRANCH" 2>/dev/null || {
 }
 git branch -D "$ROLLBACK_BRANCH" 2>/dev/null || true
 
-# ── Trigger deploy ────────────────────────────────────────────────────────────
-info "Triggering Render rollback deploy..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$DEPLOY_HOOK_URL")
-
-if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
-  error "Render deploy hook returned HTTP $HTTP_STATUS"
-fi
-success "Deploy hook accepted (HTTP $HTTP_STATUS)"
+# ── Rollback via SSH ─────────────────────────────────────────────────────────
+info "Rolling back ${VPS_PATH} to ${PREVIOUS_TAG} on ${VPS_HOST} ..."
+ssh -i "$VPS_KEY" -o StrictHostKeyChecking=no "${VPS_USER}@${VPS_HOST}" bash <<REMOTE
+  set -e
+  cd ${VPS_PATH}
+  git fetch --tags
+  git reset --hard ${ROLLBACK_SHA}
+  npm ci --omit=dev
+  npm run build
+  pm2 restart ${VPS_PM2} || pm2 start dist/server.js --name ${VPS_PM2} -- --port ${VPS_PORT}
+REMOTE
+success "SSH rollback commands executed"
 
 # ── Wait and health check ─────────────────────────────────────────────────────
 info "Waiting 90s for rollback deployment..."
@@ -106,7 +121,7 @@ MAX_RETRIES=12
 until curl -sf "$HEALTH_URL" >/dev/null 2>&1; do
   ATTEMPT=$((ATTEMPT + 1))
   if [[ $ATTEMPT -ge $MAX_RETRIES ]]; then
-    error "Rollback health check failed. Check Render dashboard immediately: ${APP_URL}"
+    error "Rollback health check failed. SSH into VPS and check PM2 logs: pm2 logs ${VPS_PM2}"
   fi
   info "Health check attempt $ATTEMPT/$MAX_RETRIES — waiting 15s..."
   sleep 15
