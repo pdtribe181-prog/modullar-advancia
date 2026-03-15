@@ -22,8 +22,8 @@
 
 | Service  | URL                                        | Status       |
 | -------- | ------------------------------------------ | ------------ |
-| App      | <https://advanciapayledger.com>            | ⏳ Pending   |
-| API      | <https://api.advanciapayledger.com/api/v1> | ⏳ Pending   |
+| App      | <https://advanciapayledger.com>            | ✅ Live      |
+| API      | <https://api.advanciapayledger.com/api/v1> | ✅ Live      |
 | Database | <https://pikguczsvikzragmrojz.supabase.co> | ✅ Connected |
 
 ---
@@ -129,7 +129,7 @@ curl https://api.advanciapayledger.com/health
 
    ```bash
    # From local machine
-   scp nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
+   scp config/nginx/advancia.conf root@76.13.77.8:/etc/nginx/sites-available/advancia
    ```
 
 2. Enable site:
@@ -228,9 +228,9 @@ npm run test:coverage
 
 ### Backend (VPS)
 
-1. Render Dashboard → Settings → Custom Domains
-2. Add `api.advanciapayledger.com`
-3. DNS: Follow Render's instructions
+1. Point `api.advanciapayledger.com` to the Hostinger VPS IP in Cloudflare DNS
+2. Copy `config/nginx/advancia.conf` to `/etc/nginx/sites-available/advancia`
+3. Reload Nginx and verify `https://api.advanciapayledger.com/health`
 
 ---
 
@@ -261,14 +261,14 @@ npm run test:coverage
 
 ## 10. Landing Page Integration
 
-The marketing site at `advanciapayledger.com` (built with Rocket.new) needs updated links:
+Marketing CTAs should point to live app routes on the primary domain (or optional app alias if you use it):
 
 | Current Link          | Should Point To                                       |
 | --------------------- | ----------------------------------------------------- |
-| `/signup`             | `https://app.advanciapayledger.com/login?mode=signup` |
-| `/login`              | `https://app.advanciapayledger.com/login`             |
-| "Get Started" button  | `https://app.advanciapayledger.com`                   |
-| "Create Free Account" | `https://app.advanciapayledger.com/login?mode=signup` |
+| `/signup`             | `https://advanciapayledger.com/signup`                |
+| `/login`              | `https://advanciapayledger.com/login`                 |
+| "Get Started" button  | `https://advanciapayledger.com`                       |
+| "Create Free Account" | `https://advanciapayledger.com/signup`                |
 
 **Note**: The landing page promotes crypto payments (BTC, ETH) but the app uses Stripe (card payments). Consider:
 
@@ -285,7 +285,7 @@ The repository includes a comprehensive CI/CD pipeline (`.github/workflows/ci.ym
 
 | Job                | Description                   |
 | ------------------ | ----------------------------- |
-| **Lint**           | TypeScript check + ESLint     |
+| **Lint**           | Hosting guardrail check + ESLint |
 | **Backend Tests**  | Jest tests with mock env vars |
 | **Frontend Tests** | Vitest tests                  |
 | **Security Scan**  | npm audit + secrets detection |
@@ -313,11 +313,13 @@ Go to **Settings → Secrets and variables → Actions** and add:
    - Select: `Lint`, `Backend Tests`, `Frontend Tests`
    - ✅ Require branches to be up to date before merging
 
-### Auto-Deploy
+### Deployment Trigger Model
 
-Deployments are automatic on push to `main`:
+Deployments are not fully automatic on push to `main`.
 
-- **VPS** - Backend: SSH pull + build + PM2 reload (or use deploy script)
+- **CI (`ci.yml`)** runs automatically on push/PR for lint, tests, security, and build checks.
+- **CI/CD (`ci-cd.yml`)** is manual (`workflow_dispatch`) and currently deploys staging only.
+- **Production VPS deploy** is currently operator-triggered (SSH/deploy script/manual runbook).
 - **Vercel** - Frontend deploys from the configured Vercel project/workflow
 
 ---

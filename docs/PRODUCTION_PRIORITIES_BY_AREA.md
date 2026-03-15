@@ -10,7 +10,7 @@ Use this as the short, execution-focused guide for what to work on next.
 - Database: PostgreSQL on Supabase
 - Auth: Supabase Auth
 - Payments: Stripe
-- Hosting: Vercel frontend + VPS/Render backend + Supabase
+- Hosting: Vercel frontend + Hostinger VPS backend + Supabase
 - Monitoring: Sentry
 
 Do not treat this repo as a Next.js, Fastify, or Prisma project unless you explicitly decide to do a costly migration. That is not the recommended path for current production work.

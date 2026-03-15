@@ -64,7 +64,7 @@ npm run build
 
 # ── 9. Setup Nginx ────────────────────────────────────────────────────────
 echo "🌐 Configuring Nginx..."
-cp nginx/advancia.conf /etc/nginx/sites-available/advancia
+cp config/nginx/advancia.conf /etc/nginx/sites-available/advancia
 ln -sf /etc/nginx/sites-available/advancia /etc/nginx/sites-enabled/advancia
 rm -f /etc/nginx/sites-enabled/default
 

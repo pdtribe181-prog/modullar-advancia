@@ -144,7 +144,7 @@ async function main() {
 ╔══════════════════════════════════════════════════╗
 ║      Advancia PayLedger - SMS Template Test       ║
 ╠══════════════════════════════════════════════════╣
-║  Mode:       ${(DRY_RUN ? 'Dry Run (render only)' : `Send to ${SEND_TO}`).padEnd(35)}║
+║  Mode:       ${(DRY_RUN ? 'Dry Run (preview only)' : `Send to ${SEND_TO}`).padEnd(35)}║
 ║  Templates:  ${String(templateNames.length).padEnd(35)}║
 ╚══════════════════════════════════════════════════╝
   `);

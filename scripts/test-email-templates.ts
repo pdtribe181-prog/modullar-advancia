@@ -5,7 +5,7 @@
  * Renders every email template with sample data and optionally sends to a real address.
  *
  * Usage:
- *   npx tsx scripts/test-email-templates.ts                     # render-only (dry run)
+ *   npx tsx scripts/test-email-templates.ts                     # preview-only (dry run)
  *   npx tsx scripts/test-email-templates.ts --send test@example.com  # actually send via Resend
  *   npx tsx scripts/test-email-templates.ts --template payment_succeeded  # single template
  *
@@ -400,7 +400,7 @@ async function main() {
 ╔══════════════════════════════════════════════════╗
 ║     Advancia PayLedger - Email Template Test      ║
 ╠══════════════════════════════════════════════════╣
-║  Mode:       ${(DRY_RUN ? 'Dry Run (render only)' : `Send to ${SEND_TO}`).padEnd(35)}║
+║  Mode:       ${(DRY_RUN ? 'Dry Run (preview only)' : `Send to ${SEND_TO}`).padEnd(35)}║
 ║  Templates:  ${String(templateNames.length).padEnd(35)}║
 ╚══════════════════════════════════════════════════╝
   `);

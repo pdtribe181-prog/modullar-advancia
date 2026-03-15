@@ -118,7 +118,7 @@ Single app: one landing, wallet connect, booking & sessions, features, FAQ, poli
 ## Where is the backend / VPS
 
 - **Production API (shared):** Hostinger VPS at api.advanciapayledger.com (Nginx to Node on port 3000). Same API can serve PayLedger and Healthcare; ensure CORS allows https://advancia-healthcare.com.
-- **This repo:** Full backend in src/. Run locally on 3001 or deploy to Hostinger/Render and point the healthcare frontend at that URL.
+- **This repo:** Full backend in src/. Run locally on 3001 or deploy to Hostinger VPS and point the healthcare frontend at that URL.
 
 ## Stack
 
@@ -154,7 +154,7 @@ Landing, features, FAQ, contact, policy, subscriptions, login/signup, dashboard,
 ## Deploy
 
 - **Frontend:** Cloudflare Pages or Vercel; set VITE_API_URL to your API. On Vercel set Root Directory to frontend so only the frontend is built.
-- **Backend:** Hostinger VPS or Render; set PORT, FRONTEND_URL (e.g. https://advancia-healthcare.com), CORS, Supabase, Stripe.
+- **Backend:** Hostinger VPS; set PORT, FRONTEND_URL (e.g. https://advancia-healthcare.com), CORS, Supabase, Stripe.
 - **Domain:** advancia-healthcare.com in Supabase Redirect URLs and Google OAuth origins.
 "@
 [System.IO.File]::WriteAllText((Join-Path $dest "README.md"), $readme, [System.Text.UTF8Encoding]::new($false))

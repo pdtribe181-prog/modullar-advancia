@@ -35,7 +35,7 @@ After you complete the manual steps below, confirm:
 - **Config / scripts**
   - **.env.example**: `FRONTEND_URL`, `CORS_ORIGINS` commented example including Healthcare.
   - **scripts/setup-vps.sh**: Generated `.env` includes `FRONTEND_URL` and `CORS_ORIGINS` with PayLedger + Healthcare origins.
-  - **nginx/advancia.conf**: www.advanciapayledger.com → 301 → apex; API on api.advanciapayledger.com.
+  - **config/nginx/advancia.conf**: www.advanciapayledger.com → 301 → apex; API on api.advanciapayledger.com.
 - **Docs**
   - **ARCHITECTURE.md**: Domains & products mapping + link to DOMAINS_AND_GOOGLE_OAUTH.md.
   - **DOMAINS_AND_GOOGLE_OAUTH.md**: Domain roles, redirects, Supabase/Google OAuth checklist.
@@ -43,7 +43,7 @@ After you complete the manual steps below, confirm:
   - **DOMAIN_AND_BRANDING_CHECKLIST.md**: This checklist (Healthcare, payroll redirect, support emails, OAuth link).
   - **EXTRA_EMAILS_SETUP.md**: enterprise@, privacy@, gdpr@, security@, hello@, legal@ — where used, how to configure.
   - **OPEN_PRS_TRIAGE.md**: Open PR list + merge order and `gh` commands.
-  - **STAGING_COMPLETION_RUNBOOK.md**: Staging Supabase, Render env, migrations, webhooks, verification.
+  - **STAGING_COMPLETION_RUNBOOK.md**: Staging Supabase, VPS staging `.env`, migrations, webhooks, verification.
   - **PRODUCTION_CHECKLIST.md**: Links to staging runbook; full pre-flight checklist.
   - **REPO_MAP.md**, **CANONICAL_REPO_BANNER.md**: Repo roles and canonical/mirror.
   - **README.md**: Canonical repo note, mirror, `push:mirror`, link to domain checklist and REPO_MAP.
@@ -183,6 +183,6 @@ The app and docs reference these; set up forwarding or mailboxes if you want the
 
 ### Optional / later
 
-- **Staging**: PRODUCTION_CHECKLIST has unchecked staging items (Supabase staging project, Render env, webhook secrets, etc.).
+- **Staging**: PRODUCTION_CHECKLIST has unchecked staging items (Supabase staging project, VPS staging `.env`, webhook secrets, etc.).
 - **Backend “Link Google” from Healthcare**: If a user on advancia-healthcare.com uses a backend-initiated link flow, they are sent to `FRONTEND_URL/auth/callback` (PayLedger). Normal sign-in from Healthcare uses the current origin, so callbacks stay on Healthcare. Only relevant if you add a “Link Google” flow that runs from the Healthcare site.
 - **Open PRs**: See `docs/OPEN_PRS_TRIAGE.md` for suggested merge order if you want to land doc/feature branches.

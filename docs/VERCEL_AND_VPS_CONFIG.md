@@ -43,7 +43,7 @@ Production backend and API are on a single Hostinger VPS. Frontend is currently 
 |------|--------|
 | **scripts/vps-deploy.ts** | Local script: push to origin, SSH to VPS, pull, `npm ci`, build, `pm2 reload`. Env: `VPS_HOST`, `VPS_USER`, `VPS_APP_DIR`. |
 | **config/ecosystem.config.cjs** | PM2: cluster mode, `dist/server.js`, `cwd: /var/www/advancia`, PORT 3000, `max_memory_restart: 1G`. |
-| **nginx/advancia.conf** | Nginx: HTTPS for `api.advanciapayledger.com`, www→apex redirect, rate limits (api/auth/webhooks), proxy to `127.0.0.1:3000`. |
+| **config/nginx/advancia.conf** | Live VPS site config: frontend on apex/www, API on `api.advanciapayledger.com`, TLS via Let's Encrypt, proxy to local Node services. |
 | **scripts/5-VPS-DEPLOY.sh** | One-time/setup: run on VPS to install Node, PM2, Nginx, certbot. |
 | **scripts/setup-vps.sh** | Initial VPS setup (Ubuntu 22.04+). |
 
@@ -76,4 +76,4 @@ Override from env (optional):
 ## Summary
 
 - **Vercel:** Used for the live frontend domains and preview deployments. `frontend/vercel.json` is the relevant repo config.
-- **VPS:** Hostinger `76.13.77.8`, app in `/var/www/advancia`, PM2 `advancia-api`, Nginx for API and SSL. Use `scripts/vps-deploy.ts` and `nginx/advancia.conf` as the source of truth for deploy and server config.
+- **VPS:** Hostinger `76.13.77.8`, live app in `/var/www/advancia`, PM2 `advancia-api`, Nginx for API and SSL. Staging at `/var/www/advancia-staging` is planned but not provisioned yet. Use `scripts/vps-deploy.ts` and `config/nginx/advancia.conf` as the source of truth for deploy and server config.

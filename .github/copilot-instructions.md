@@ -4,6 +4,15 @@
 
 Healthcare payment and compliance management platform. Node.js/Express REST API (TypeScript) backed by Supabase (PostgreSQL), with a React/Vite frontend. Includes Stripe payments, Twilio SMS, Resend email, Redis rate-limiting, Sentry monitoring, and HIPAA-oriented Row Level Security.
 
+## Operational Guardrails
+
+- Treat this repo as the canonical production source for Advancia PayLedger and Advancia Healthcare.
+- Deployment source of truth is Vercel for the frontend, Hostinger VPS for the API, Supabase for database/auth/storage, and Cloudflare for DNS and edge controls.
+- Do not reintroduce Render, `render.yaml`, `onrender.com`, or `RENDER_*` secrets into active docs, scripts, workflows, env templates, or deployment guidance unless the user explicitly decides to restore that platform.
+- When editing docs, workflows, env examples, or deploy scripts, search for stale hosting references in related source-of-truth files and fix them in the same change.
+- Treat changelogs and archived reports as historical records unless the user asks to rewrite history; prioritize active docs, templates, workflows, and scripts.
+- After infra or workflow edits, validate with a targeted workspace error check and confirm the canonical repo remains free of Problems.
+
 ## Tech Stack
 
 - **Runtime**: Node.js 22.x (ESM, `"type": "module"`)

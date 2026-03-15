@@ -18,10 +18,9 @@ Two nginx configs exist:
 
 | File | Use |
 |------|-----|
-| **config/nginx/advancia.conf** | Single-server config: frontend root + proxy `/api/v1/` to backend; Stripe webhook at `/api/v1/stripe/webhook` → backend `/api/v1/stripe/webhook`. |
-| **nginx/advancia.conf** | API-only (api.advanciapayledger.com): HTTPS, rate limits, proxy to upstream `advancia_api` (127.0.0.1:3000). Full request URI passed (no path rewrite). |
+| **config/nginx/advancia.conf** | Live VPS site config: apex/www frontend on `127.0.0.1:3001` and API on `api.advanciapayledger.com` proxied to backend on `127.0.0.1:3000`. |
 
-**Stripe webhook:** Backend expects path `/api/v1/stripe/webhook`. Nginx must proxy to that same path (fixed in `config/nginx/advancia.conf`; `nginx/advancia.conf` already passes full URI).
+**Stripe webhook:** Backend expects path `/api/v1/stripe/webhook`. Nginx must proxy to that same path, which is handled in `config/nginx/advancia.conf`.
 
 **Headers forwarded:** `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto` so the app sees the original client and scheme.
 
@@ -91,7 +90,7 @@ Upstash is REST-based (no TCP from server to Redis), so it works well behind str
 | Item | Status / location |
 |------|-------------------|
 | **Trust proxy** | ✅ `app.set('trust proxy', 1)` in server; `TRUST_PROXY` in compose. |
-| **Nginx proxy** | ✅ `config/nginx/advancia.conf`, `nginx/advancia.conf`; Stripe webhook path fixed to `/api/v1/stripe/webhook`. |
+| **Nginx proxy** | ✅ `config/nginx/advancia.conf`; Stripe webhook path fixed to `/api/v1/stripe/webhook`. |
 | **Vite proxy** | ✅ Dev only: `/api` → `http://localhost:3000`. |
 | **Upstash** | ✅ Optional Redis via `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`; rate limit + cache; fallback to ioredis or in-memory. |
 | **Neon** | ❌ Not used; DB is Supabase (Postgres). |

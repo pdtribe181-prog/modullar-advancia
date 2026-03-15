@@ -39,7 +39,7 @@ If `npm test` fails with “Cannot find module jest”, run **`npm install`** at
 
 ## Manual / external (you do these)
 
-- **Infrastructure & domains (Vercel, VPS, Render, Supabase, three domains):** [INFRASTRUCTURE_AND_DOMAINS.md](INFRASTRUCTURE_AND_DOMAINS.md) — single map and **proceed** order (§8).
+- **Infrastructure & domains (Vercel, VPS, Supabase, three domains):** [INFRASTRUCTURE_AND_DOMAINS.md](INFRASTRUCTURE_AND_DOMAINS.md) — single map and **proceed** order (§8).
 - **Domains & OAuth:** [DOMAIN_AND_BRANDING_CHECKLIST.md](DOMAIN_AND_BRANDING_CHECKLIST.md), [DOMAINS_AND_GOOGLE_OAUTH.md](DOMAINS_AND_GOOGLE_OAUTH.md).
 - **Support & extra emails:** [EXTRA_EMAILS_SETUP.md](EXTRA_EMAILS_SETUP.md).
 - **Staging:** [STAGING_COMPLETION_RUNBOOK.md](STAGING_COMPLETION_RUNBOOK.md).

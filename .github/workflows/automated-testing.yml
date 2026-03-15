@@ -46,6 +46,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify deployment docs are free of legacy hosting references
+        run: npm run verify:no-render-hosting
+
       - name: Run unit tests
         run: npm test -- --forceExit
         env:

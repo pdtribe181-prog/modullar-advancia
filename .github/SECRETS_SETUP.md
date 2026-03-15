@@ -20,15 +20,17 @@ Go to **Settings → Environments → staging → Add secret**:
 
 | Secret                           | Description                     | Example format                      |
 | -------------------------------- | ------------------------------- | ----------------------------------- |
-| `SUPABASE_URL`                   | Supabase project URL            | `https://xxxx.supabase.co`          |
-| `SUPABASE_ANON_KEY`              | Public anon key                 | `eyJhbGci...`                       |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Service role key, keep private! | `eyJhbGci...`                       |
-| `STRIPE_SECRET_KEY`              | Stripe **test** secret key      | `sk_test_51...`                     |
-| `STRIPE_PUBLISHABLE_KEY`         | Stripe **test** publishable key | `pk_test_51...`                     |
-| `STRIPE_WEBHOOK_SECRET`          | Stripe webhook signing secret   | `whsec_...`                         |
-| `RENDER_STAGING_DEPLOY_HOOK_URL` | Render deploy hook URL          | `https://api.render.com/deploy/...` |
-| `JWT_SECRET`                     | Min 32-char random string       | `openssl rand -hex 32`              |
-| `RESEND_API_KEY`                 | Resend email API key            | `re_...`                            |
+| `SUPABASE_URL`              | Supabase project URL            | `https://xxxx.supabase.co`          |
+| `SUPABASE_ANON_KEY`         | Public anon key                 | `eyJhbGci...`                       |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key, keep private! | `eyJhbGci...`                       |
+| `STRIPE_SECRET_KEY`         | Stripe **test** secret key      | `sk_test_51...`                     |
+| `STRIPE_PUBLISHABLE_KEY`    | Stripe **test** publishable key | `pk_test_51...`                     |
+| `STRIPE_WEBHOOK_SECRET`     | Stripe webhook signing secret   | `whsec_...`                         |
+| `VPS_SSH_HOST`              | Hostinger VPS IP/hostname       | `76.13.77.8`                        |
+| `VPS_SSH_USER`              | SSH login user on VPS           | `root`                              |
+| `VPS_SSH_KEY`               | Private SSH key (no passphrase) | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `JWT_SECRET`                | Min 32-char random string       | `openssl rand -hex 32`              |
+| `RESEND_API_KEY`            | Resend email API key            | `re_...`                            |
 
 ---
 
@@ -44,13 +46,15 @@ Go to **Settings → Environments → production → Add secret**:
 | `STRIPE_SECRET_KEY`         | Stripe **live** secret key                          | `sk_live_51...`                            |
 | `STRIPE_PUBLISHABLE_KEY`    | Stripe **live** publishable key                     | `pk_live_51...`                            |
 | `STRIPE_WEBHOOK_SECRET`     | Stripe webhook signing secret                       | `whsec_...`                                |
-| `RENDER_DEPLOY_HOOK_URL`    | Render deploy hook URL                              | `https://api.render.com/deploy/...`        |
+| `VPS_SSH_HOST`              | Hostinger VPS IP/hostname                           | `76.13.77.8`                               |
+| `VPS_SSH_USER`              | SSH login user on VPS                               | `root`                                     |
+| `VPS_SSH_KEY`               | Private SSH key (no passphrase)                     | `-----BEGIN OPENSSH PRIVATE KEY-----...`   |
 | `JWT_SECRET`                | Min 32-char random string (different from staging!) | `openssl rand -hex 32`                     |
 | `RESEND_API_KEY`            | Resend email API key                                | `re_...`                                   |
 | `SENTRY_DSN`                | Sentry error tracking DSN                           | `https://xxx@yyy.ingest.sentry.io/zzz`     |
 | `TWILIO_ACCOUNT_SID`        | Twilio SMS account SID                              | `ACxxxx`                                   |
 | `TWILIO_AUTH_TOKEN`         | Twilio auth token                                   | `...`                                      |
-| `TWILIO_FROM_NUMBER`        | Twilio phone number                                 | `+1234567890`                              |
+| `TWILIO_PHONE_NUMBER`       | Twilio phone number                                 | `+1234567890`                              |
 
 ---
 
@@ -72,10 +76,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 # Set a repository secret
 gh secret set CODECOV_TOKEN --body "your-token-here"
 
-# Set an environment secret
-gh secret set RENDER_DEPLOY_HOOK_URL \
-  --env production \
-  --body "https://api.render.com/deploy/srv-xxx?key=yyy"
+# Set VPS SSH secrets
+gh secret set VPS_SSH_HOST --env production --body "76.13.77.8"
+gh secret set VPS_SSH_USER --env production --body "root"
+gh secret set VPS_SSH_KEY  --env production --body "$(cat ~/.ssh/id_rsa)"
 
 # List all secrets (names only, values are masked)
 gh secret list

@@ -48,8 +48,8 @@
 | # | Item | Owner | Notes |
 |---|------|-------|-------|
 | 6 | ~~DMARC DNS record~~ | DevOps | ✅ Already configured (`v=DMARC1; p=none`). Upgrade to `p=quarantine` after launch. |
-| 7 | ~~Email template testing~~ | QA | ✅ `npm run test:email` — 11/11 templates render. Use `--send addr` for live send. |
-| 8 | ~~SMS template testing~~ | QA | ✅ `npm run test:sms` — 13/13 templates render (all <160 chars). Use `--send +1...` for live. |
+| 7 | ~~Email template testing~~ | QA | ✅ `npm run test:email` — 11/11 templates preview correctly. Use `--send addr` for live send. |
+| 8 | ~~SMS template testing~~ | QA | ✅ `npm run test:sms` — 13/13 templates preview correctly (all <160 chars). Use `--send +1...` for live. |
 | 9 | ~~Cloudflare SSL Full (Strict)~~ | DevOps | ✅ Guide + checker: `npm run cloudflare:check -- --verify`. Includes full SSL/TLS, bots, WAF, caching config. |
 | 10 | ~~Cloudflare Bot Fight Mode~~ | DevOps | ✅ Covered by `npm run cloudflare:check` guide (step 3: Security → Bots → ON) |
 | 11 | ~~Sentry alert rules~~ | DevOps | ✅ Guide at `docs/SENTRY_ALERTS.md` |
@@ -63,7 +63,7 @@
 | 14 | ~~Lighthouse audit~~ | Frontend | ✅ Automated: `npm run lighthouse` (targets >90 all axes). Also: <https://pagespeed.web.dev/> |
 | 15 | ~~Cloudflare performance~~ | DevOps | ✅ Covered by `npm run cloudflare:check` guide (steps 5-6: Brotli, caching, TTL) |
 | 16 | ~~Log aggregation~~ | DevOps | ✅ Setup guide + PM2 rotation: `npm run logs:setup`. Supports Logtail, Papertrail, Datadog. |
-| 17 | ~~www subdomain~~ | DevOps | ✅ Nginx 301 redirect added (`nginx/advancia.conf`); add CNAME `www → advanciapayledger.com` in Cloudflare |
+| 17 | ~~www subdomain~~ | DevOps | ✅ Nginx 301 redirect added (`config/nginx/advancia.conf`); add CNAME `www → advanciapayledger.com` in Cloudflare |
 | 18 | **HIPAA BAA** | Legal | Sign with Supabase (requires Pro plan) |
 | 19 | **ToS / Privacy Policy** | Legal | Legal counsel review |
 | 20 | ~~Load testing (peak)~~ | QA | ✅ `npm run load-test` — 100 concurrent users, P95 <200ms validation |

@@ -1,8 +1,8 @@
 # Production Readiness Status
 
 **Platform**: Advancia PayLedger - Healthcare Payment Platform  
-**Last Updated**: February 26, 2026  
-**Status**: 🟢 **~85% Production Ready**
+**Last Updated**: March 15, 2026  
+**Status**: 🟢 **~88% Production Ready**
 
 ---
 
@@ -17,14 +17,15 @@
 - ✅ Fail2ban active (SSH brute force protection)
 - ✅ Auto security updates enabled
 - ✅ Certbot SSL auto-renewal configured
+- ✅ Deployment trigger model documented: CI checks run automatically; CI/CD deploy workflow is manual and staging-focused
 
-### DNS & Cloudflare (85%)
+### DNS & Cloudflare (88%)
 
 - ✅ DNS configured for production domains
 - ✅ Cloudflare proxy active for API and frontend
 - ✅ SSL/TLS with HSTS enabled (max-age=31536000; includeSubDomains; preload)
 - ✅ SPF and DKIM email records configured
-- ⚠️ DMARC record missing (low priority - add when ready)
+- ✅ DMARC record configured (policy tuning can be tightened post-launch)
 - ⚠️ SSL/TLS mode needs upgrade to "Full (Strict)" in Cloudflare dashboard
 
 ### Security (90%)
@@ -75,16 +76,15 @@
 - ✅ Domain verified (advanciapayledger.com)
 - ✅ SPF record configured
 - ✅ DKIM record configured
-- ⚠️ DMARC record missing (add when convenient)
+- ✅ DMARC record configured
 - ⚠️ Email templates need live testing
 
-### Staging Environment (100%)
+### Staging Environment (70%)
 
-- ✅ Staging API deployed: https://api-staging.advanciapayledger.com
-- ✅ Render service configured
-- ✅ Custom domain configured
-- ✅ DNS bypass mode (no Cloudflare WAF blocking)
-- ✅ Health endpoint validated (5/5 checks passing)
+- ⚠️ Staging VPS app directory not fully provisioned yet (planned path: `/var/www/advancia-staging`)
+- ✅ Staging custom domain reserved: https://api-staging.advanciapayledger.com
+- ✅ Staging configuration/runbook documented
+- ⚠️ Full staging smoke validation remains pending until provisioning is complete
 
 ---
 
@@ -106,12 +106,12 @@
    - Turn On: Bot Fight Mode
    - Why: Reduces automated bot traffic
 
-3. **Add DMARC DNS Record**
+3. **Tighten DMARC Policy**
    - Location: DNS → Records
    - Type: TXT, Name: `_dmarc`
-   - Content: `v=DMARC1; p=quarantine; rua=mailto:dmarc@advanciapayledger.com; pct=100; adkim=s; aspf=s`
+   - Content target: `v=DMARC1; p=quarantine; rua=mailto:dmarc@advanciapayledger.com; pct=100; adkim=s; aspf=s`
 
-**Verification**: Run `.\scripts\verify-production-security.ps1` (should show 13/13 passing)
+**Verification**: Run `.\scripts\verify-production-security.ps1` (all checks should pass)
 
 ---
 
@@ -131,25 +131,21 @@
 
 ---
 
-#### 3. Implement Missing API Endpoints (2-4 hours dev work)
+#### 3. Functional Testing of Implemented Flows (1-2 hours)
 
-**Priority: MEDIUM** | **Effort: MEDIUM**
+**Priority: HIGH** | **Effort: LOW**
 
-**Required for launch:**
+Core endpoints are implemented; validate end-to-end behavior in production:
 
-- [ ] `POST /api/v1/auth/forgot-password` - Password reset flow
-- [ ] `POST /api/v1/connect/account` - Stripe Connect account creation
-- [ ] `POST /api/v1/connect/account-link` - Generate Stripe Connect onboarding links
+- [ ] `POST /api/v1/auth/forgot-password` tested with real email flow
+- [ ] `POST /api/v1/connect/account` tested with provider onboarding
+- [ ] `POST /api/v1/connect/account-link` tested for account-link generation
+- [ ] `GET /api/v1/provider` tested with authenticated access
 
-**Can defer post-launch:**
-
-- [ ] `GET /api/v1/provider` - Provider list endpoint (if needed for search)
-
-**Test After Implementation**:
+**Verification**:
 
 ```powershell
 .\scripts\test-production-api.ps1
-# Should show 15/15 passing
 ```
 
 ---
@@ -162,7 +158,7 @@
 
 1. User registration → email verification
 2. Login → JWT token generation
-3. Password reset flow (once implemented)
+3. Password reset flow
 4. Create test payment (Stripe test mode first, then production)
 5. Verify Stripe webhook delivery
 6. Test admin dashboard access
@@ -226,7 +222,7 @@ Configure in Cloudflare (requires Pro plan or use Free plan firewall rules):
 | Infrastructure | ✅ Complete        | 100%    |
 | Security       | ✅ Verified        | 90%     |
 | Database       | ✅ Complete        | 100%    |
-| API Endpoints  | ⚠️ Mostly Complete | 73%     |
+| API Endpoints  | ✅ Implemented      | 100%    |
 | Email/SMS      | ✅ Configured      | 95%     |
 | Monitoring     | ✅ Active          | 100%    |
 | Testing        | ⚠️ Partial         | 60%     |
@@ -265,8 +261,8 @@ curl -I https://advanciapayledger.com
 
 **GO** if:
 
-- ✅ Security verification: 13/13 passing
-- ✅ API tests: 15/15 passing (after missing endpoints added)
+- ✅ Security verification: passing
+- ✅ API tests: 15/15 passing
 - ✅ Stripe webhooks delivering successfully
 - ✅ Email sending working
 - ✅ Authentication flow tested end-to-end
@@ -309,7 +305,7 @@ pm2 reload ecosystem.config.cjs
 3. Check email deliverability metrics
 4. Monitor server resources (CPU/memory via PM2)
 5. Review Cloudflare analytics daily
-6. Complete missing endpoint implementation
+6. Continue endpoint regression monitoring after releases
 7. Gather user feedback on payment flow
 8. Set up automated daily health checks
 
