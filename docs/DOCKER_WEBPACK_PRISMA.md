@@ -6,10 +6,10 @@ Quick reference for Docker Desktop, containers, bundling (webpack vs Vite/esbuil
 
 ## 1. Docker & Docker Desktop
 
-**Dockerfile:** `config/Dockerfile` (multi-stage, Node 20 Alpine)
+**Dockerfile:** `config/Dockerfile` (multi-stage, Node 22 Alpine)
 
 - **Builder:** `npm ci --ignore-scripts`, `npm run build` (esbuild) → `dist/server.js`
-- **Deps:** production-only `npm ci --omit=dev`
+- **Deps:** production-only `npm ci --omit=dev --ignore-scripts`
 - **Production:** non-root user, healthcheck on `/health`, `CMD ["node", "dist/server.js"]`
 
 **Build from repo root:**
@@ -39,7 +39,7 @@ docker compose -f config/docker-compose.yml up --build
 docker compose -f config/docker-compose.yml --profile dev up --build
 ```
 
-**CI/CD:** GitHub Actions (ci.yml, docker-publish.yml) use `context: .` and `file: config/Dockerfile` so the image builds from the repo root with the Dockerfile in `config/`.
+**CI/CD:** GitHub Actions (`ci.yml`, `ci-cd.yml`, `docker-publish.yml`) use `context: .` and `file: config/Dockerfile` so the image builds from the repo root with the Dockerfile in `config/`.
 
 ---
 
@@ -59,7 +59,7 @@ No Redis/Postgres in compose — the app uses **Supabase** (and optional Upstash
 
 **This project does not use Webpack.**
 
-- **Backend:** **esbuild** (`config/esbuild.config.js`) — single bundle `dist/server.js`, ESM, Node 20.
+- **Backend:** **esbuild** (`config/esbuild.config.js`) — single bundle `dist/server.js`, ESM, Node 22.
 - **Frontend:** **Vite** (`frontend/vite.config.ts`) — dev server, production Rollup build, code-split with `manualChunks` (vendor-react, vendor-charts, vendor-stripe, vendor-sentry).
 
 The only “webpack” reference is in **docs/PERFORMANCE_TUNING.md**: an example comment `/* webpackChunkName: "dashboard" */` for lazy-loaded routes. That’s a documentation example; Vite/Rollup ignore it. Chunk naming is done via `manualChunks` in `vite.config.ts`.
@@ -79,7 +79,7 @@ The only “webpack” reference is in **docs/PERFORMANCE_TUNING.md**: an exampl
 **This project does not use Prisma.**
 
 - **Database access:** **Supabase** (REST/client) and direct **Postgres** (`pg`) where needed. Migrations and schema are Supabase/SQL (see `docs/MIGRATIONS_README.md`, Supabase dashboard).
-- **Prisma in repo:** No `schema.prisma`, no `@prisma/client` in package.json. The only mention is in **.vscode/settings.json** (`prisma.pinToPrisma6: true`) — a leftover editor setting; safe to remove if you don’t use Prisma elsewhere.
+- **Prisma in repo:** No `schema.prisma`, no `@prisma/client` in package.json. Prisma appears in editor/docs metadata (for example **.vscode/settings.json** with `prisma.pinToPrisma6: true`) and can appear transitively in lockfile metadata (for example `@prisma/instrumentation`), but it is not used as an application ORM in this repo.
 
 If you later add Prisma: add `schema.prisma`, run `prisma generate`, and use Prisma Client instead of (or alongside) Supabase client where desired.
 
