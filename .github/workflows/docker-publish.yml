@@ -73,7 +73,7 @@ jobs:
       # ── Build (PR: no push, just validate) ──
       - name: Build Docker image (PR validation)
         if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: config/Dockerfile
@@ -88,7 +88,7 @@ jobs:
       - name: Build and push Docker image
         if: github.event_name != 'pull_request'
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: config/Dockerfile
