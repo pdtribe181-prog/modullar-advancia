@@ -38,10 +38,10 @@ async function main() {
     if (code !== 0) hasFailure = true;
     console.log('');
   }
-  process.exit(hasFailure ? 1 : 0);
+  process.exitCode = hasFailure ? 1 : 0;
 }
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1);
+  process.exitCode = 1;
 });
