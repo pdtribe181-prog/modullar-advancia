@@ -28,13 +28,15 @@ describe('LandingPage', () => {
       renderComponent();
       // Text is split across <br/> and <span>, so query the h1 element directly
       const h1 = document.querySelector('.lp-hero-title')!;
-      expect(h1.textContent).toMatch(/Complete Platform for/);
-      expect(h1.textContent).toMatch(/Modern Healthcare Finance/);
+      expect(h1.textContent).toMatch(/operating layer for/i);
+      expect(h1.textContent).toMatch(/MedBeds, checkout, and payments/);
     });
 
     it('shows subtitle', () => {
       renderComponent();
-      expect(screen.getByText(/One secure platform for healthcare payments/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/One secure platform for MedBed booking, secure checkout/i)
+      ).toBeInTheDocument();
     });
 
     it('shows CTA buttons', () => {
@@ -51,33 +53,35 @@ describe('LandingPage', () => {
     it('shows hero card decoration', () => {
       renderComponent();
       expect(screen.getByText('+$1,240.00')).toBeInTheDocument();
-      expect(screen.getByText(/MedBed Session/)).toBeInTheDocument();
+      expect(screen.getByText(/MedBed checkout confirmed/)).toBeInTheDocument();
     });
   });
 
   describe('stats section', () => {
-    it('shows patient count', () => {
+    it('shows first stat', () => {
       renderComponent();
-      expect(screen.getByText('12,000+')).toBeInTheDocument();
-      expect(screen.getByText('Patients Served')).toBeInTheDocument();
+      expect(screen.getByText('MedBed-ready')).toBeInTheDocument();
+      expect(screen.getByText('Booking, billing, and follow-up in one flow')).toBeInTheDocument();
     });
 
-    it('shows provider count', () => {
+    it('shows second stat', () => {
       renderComponent();
-      expect(screen.getByText('650+')).toBeInTheDocument();
-      expect(screen.getByText('Healthcare Providers')).toBeInTheDocument();
+      expect(screen.getByText('Checkout-first')).toBeInTheDocument();
+      expect(screen.getByText('Cards, bank transfers, and wallet flows')).toBeInTheDocument();
     });
 
-    it('shows uptime', () => {
+    it('shows role-based stat', () => {
       renderComponent();
-      expect(screen.getByText('99.9%')).toBeInTheDocument();
-      expect(screen.getByText('Uptime SLA')).toBeInTheDocument();
+      expect(screen.getByText('Role-based')).toBeInTheDocument();
+      expect(screen.getByText('Patient, provider, and admin experiences')).toBeInTheDocument();
     });
 
-    it('shows payment volume', () => {
+    it('shows always-on stat', () => {
       renderComponent();
-      expect(screen.getByText('$2M+')).toBeInTheDocument();
-      expect(screen.getByText('Payments Processed')).toBeInTheDocument();
+      expect(screen.getByText('24/7')).toBeInTheDocument();
+      expect(
+        screen.getByText('Always-on account access, booking, and billing')
+      ).toBeInTheDocument();
     });
   });
 
@@ -91,14 +95,16 @@ describe('LandingPage', () => {
   describe('features section', () => {
     it('shows section heading', () => {
       renderComponent();
-      expect(screen.getByText('Everything your practice needs')).toBeInTheDocument();
+      expect(
+        screen.getByText('Everything your practice needs to book and get paid')
+      ).toBeInTheDocument();
     });
 
     it('shows feature cards', () => {
       renderComponent();
-      expect(screen.getByText('MedBed Access')).toBeInTheDocument();
-      expect(screen.getByText('Multi-Rail Payments')).toBeInTheDocument();
-      expect(screen.getByText('Crypto Wallet')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /MedBed booking/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Multi-Rail Payments/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Customer wallet/i })).toBeInTheDocument();
     });
 
     it('shows View All Features link', () => {
@@ -115,23 +121,23 @@ describe('LandingPage', () => {
 
     it('shows three steps', () => {
       renderComponent();
-      expect(screen.getByText('Create Your Account')).toBeInTheDocument();
-      expect(screen.getByText('Connect & Configure')).toBeInTheDocument();
-      expect(screen.getByText('Start Transacting')).toBeInTheDocument();
+      expect(screen.getByText('Create your workspace')).toBeInTheDocument();
+      expect(screen.getByText('Connect payments and policies')).toBeInTheDocument();
+      expect(screen.getByText('Run bookings and checkout')).toBeInTheDocument();
     });
   });
 
-  describe('testimonials', () => {
+  describe('outcomes', () => {
     it('shows section heading', () => {
       renderComponent();
-      expect(screen.getByText('Loved by patients & providers')).toBeInTheDocument();
+      expect(screen.getByText('What teams actually improve')).toBeInTheDocument();
     });
 
-    it('shows testimonial authors', () => {
+    it('shows outcome cards', () => {
       renderComponent();
-      expect(screen.getByText('Dr. Sarah Chen')).toBeInTheDocument();
-      expect(screen.getByText('Marcus Williams')).toBeInTheDocument();
-      expect(screen.getByText('Priya Nair')).toBeInTheDocument();
+      expect(screen.getByText('Faster collections')).toBeInTheDocument();
+      expect(screen.getByText('Cleaner handoffs')).toBeInTheDocument();
+      expect(screen.getByText('Better visibility')).toBeInTheDocument();
     });
   });
 
@@ -162,7 +168,7 @@ describe('LandingPage', () => {
 
     it('shows compliance badges', () => {
       renderComponent();
-      expect(screen.getByText('HIPAA Compliant')).toBeInTheDocument();
+      expect(screen.getByText('Role-based access')).toBeInTheDocument();
       expect(screen.getByText('PCI DSS Level 1')).toBeInTheDocument();
       expect(screen.getByText('SOC 2 Type II')).toBeInTheDocument();
     });
@@ -176,7 +182,7 @@ describe('LandingPage', () => {
         el.textContent?.includes('Ready to modernise')
       );
       expect(heading).toBeTruthy();
-      expect(heading!.textContent).toMatch(/healthcare payments/);
+      expect(heading!.textContent).toMatch(/MedBed and checkout operations/);
     });
 
     it('shows CTA buttons', () => {
@@ -186,7 +192,7 @@ describe('LandingPage', () => {
 
     it('shows partner names', () => {
       renderComponent();
-      expect(screen.getAllByText(/Quantum Health/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Provider teams/).length).toBeGreaterThanOrEqual(1);
     });
   });
 });
