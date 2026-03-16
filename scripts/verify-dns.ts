@@ -7,6 +7,7 @@
  * Usage:
  *   npx tsx scripts/verify-dns.ts
  *   npx tsx scripts/verify-dns.ts --domain custom-domain.com
+ *   npx tsx scripts/verify-dns.ts --strict
  */
 
 import { resolve as dnsResolve } from 'node:dns';
@@ -48,6 +49,7 @@ function getArg(name: string, fallback: string): string {
 }
 
 const DOMAIN = getArg('domain', 'advanciapayledger.com');
+const STRICT = args.includes('--strict');
 const IS_PAYLEDGER = DOMAIN === 'advanciapayledger.com';
 const IS_HEALTHCARE = DOMAIN === 'advancia-healthcare.com';
 const IS_PAYROLL = DOMAIN === 'advanciapayroll.com';
@@ -342,19 +344,26 @@ async function main() {
   ⚠  Warned:  ${warned}
   ❌ Failed:  ${failed}
   Total:     ${results.length}
+  Mode:      ${STRICT ? 'strict (warnings fail)' : 'standard (warnings allowed)'}
 ╚══════════════════════════════════════════════════╝
   `);
 
-  if (failed > 0) {
+  const hasBlockingWarning = STRICT && warned > 0;
+  if (failed > 0 || hasBlockingWarning) {
     console.log('  Action required:');
     for (const r of results.filter((r) => r.status === 'FAIL')) {
       console.log(`    → ${r.name}: ${r.detail}`);
+    }
+    if (hasBlockingWarning) {
+      for (const r of results.filter((r) => r.status === 'WARN')) {
+        console.log(`    → [WARN] ${r.name}: ${r.detail}`);
+      }
     }
     console.log('');
     console.log('  See scripts/dns-records-to-add.md for instructions.\n');
   }
 
-  process.exitCode = failed > 0 ? 1 : 0;
+  process.exitCode = failed > 0 || hasBlockingWarning ? 1 : 0;
 }
 
 main().catch((err) => {
