@@ -49,6 +49,10 @@ const envSchema = z.object({
   // CORS_ORIGINS=https://advanciapayledger.com,https://www.advanciapayledger.com
   CORS_ORIGINS: z.string().optional(),
 
+  // Local dev helper: allow health endpoint to stay green when DB is unavailable.
+  // Never set this in production.
+  ALLOW_UNHEALTHY_DB: z.string().optional(),
+
   // Metrics scrape IP allowlist (optional, comma-separated)
   METRICS_ALLOWED_IPS: z.string().optional(),
 

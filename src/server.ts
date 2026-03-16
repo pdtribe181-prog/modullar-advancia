@@ -201,14 +201,32 @@ const getDatabaseStatus = async (): Promise<'connected' | 'error'> => {
   }
 };
 
+const verifyStartupDatabaseConnection = async () => {
+  const dbStatus = await getDatabaseStatus();
+  if (dbStatus === 'connected') {
+    logger.info('✅ Supabase startup health check passed');
+    return;
+  }
+
+  const allowUnhealthy = env.NODE_ENV === 'development' && env.ALLOW_UNHEALTHY_DB === 'true';
+  if (allowUnhealthy) {
+    logger.warn('⚠️ ALLOW_UNHEALTHY_DB is true; continuing with degraded database connectivity.');
+    return;
+  }
+
+  logger.error('❌ Supabase startup health check failed; shutting down');
+  process.exit(1);
+};
+
 // Health check
 app.get('/health', async (req, res) => {
   const dbStatus = await getDatabaseStatus();
   const monitoring = getMonitoringHealth();
   const redisHealthy = await redisHelpers.isHealthy();
   const redisKind = getRedisKind();
+  const allowUnhealthyDb = env.NODE_ENV === 'development' && env.ALLOW_UNHEALTHY_DB === 'true';
 
-  const isHealthy = dbStatus === 'connected';
+  const isHealthy = dbStatus === 'connected' || allowUnhealthyDb;
 
   // Server metrics — useful for monitoring dashboards and alerting
   const mem = process.memoryUsage();
@@ -227,14 +245,21 @@ app.get('/health', async (req, res) => {
   // Minimal response for HEAD / shallow probes; full response for GET
   const verbose = req.query.verbose === 'true';
 
+  const healthStatus =
+    dbStatus === 'connected' ? 'healthy' : allowUnhealthyDb ? 'degraded' : 'unhealthy';
+
   const body: Record<string, unknown> = {
-    status: isHealthy ? 'healthy' : 'unhealthy',
+    status: healthStatus,
     timestamp: new Date().toISOString(),
     database: dbStatus,
     redis: { status: redisHealthy ? 'connected' : 'disconnected', kind: redisKind },
     monitoring: monitoring.enabled ? 'enabled' : 'disabled',
     version: process.env.npm_package_version || '1.0.0',
   };
+
+  if (allowUnhealthyDb && dbStatus !== 'connected') {
+    body.note = 'ALLOW_UNHEALTHY_DB is enabled for local development';
+  }
 
   if (verbose) {
     body.circuitBreakers = getAllCircuitBreakerStats();
@@ -259,21 +284,32 @@ app.use(sentryErrorHandler);
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(PORT, async () => {
-  logger.info(`Healthcare API started`, {
-    port: PORT,
-    env: env.NODE_ENV,
-    docsUrl: `http://localhost:${PORT}/docs`,
-  });
+let server: ReturnType<typeof app.listen> | null = null;
 
-  // Initialize in-memory service catalog
-  try {
-    await initializeServiceCatalog();
-    logger.info('✨ Service catalog loaded into memory - zero external lookups during requests');
-  } catch (error) {
-    logger.error('Failed to initialize service catalog', error as Error);
-    // Continue running - services routes will fail but other endpoints work
-  }
+const startServer = async () => {
+  await verifyStartupDatabaseConnection();
+
+  server = app.listen(PORT, async () => {
+    logger.info(`Healthcare API started`, {
+      port: PORT,
+      env: env.NODE_ENV,
+      docsUrl: `http://localhost:${PORT}/docs`,
+    });
+
+    // Initialize in-memory service catalog
+    try {
+      await initializeServiceCatalog();
+      logger.info('✨ Service catalog loaded into memory - zero external lookups during requests');
+    } catch (error) {
+      logger.error('Failed to initialize service catalog', error as Error);
+      // Continue running - services routes will fail but other endpoints work
+    }
+  });
+};
+
+startServer().catch((error) => {
+  logger.error('Startup failure', error as Error);
+  process.exit(1);
 });
 
 // Graceful shutdown handling
@@ -285,6 +321,11 @@ const shutdown = async (signal: string) => {
 
   // Flush Sentry events before shutdown
   await flushEvents(2000);
+
+  if (!server) {
+    logger.warn('Server instance not found during shutdown');
+    process.exit(1);
+  }
 
   server.close((err) => {
     if (err) {
