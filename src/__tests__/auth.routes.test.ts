@@ -219,6 +219,7 @@ describe('auth.routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(res.body.data.email).toBe('test@example.com');
     });
 
     it('returns 500 when auto-created profile insertion fails', async () => {
@@ -300,6 +301,7 @@ describe('auth.routes', () => {
         session: { access_token: 'token123', refresh_token: 'refresh123' },
       };
       mockSignInWithPassword.mockResolvedValue({ data: sessionData, error: null });
+      mockSupabaseChain({ data: { status: 'active', role: 'patient' }, error: null });
       // For the logAndNotify call
       mockLogAndNotify.mockResolvedValue(undefined);
 
@@ -394,6 +396,24 @@ describe('auth.routes', () => {
       expect(res.status).toBe(403);
       expect(res.body.error).toContain('suspended');
     });
+
+    it('denies login when the account profile is missing', async () => {
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: mockUser.id, email: 'test@example.com', user_metadata: {} },
+          session: { access_token: 'tok', refresh_token: 'ref' },
+        },
+        error: null,
+      });
+      mockSupabaseChain({ data: null, error: { code: 'PGRST116', message: 'not found' } });
+
+      const res = await request(app)
+        .post('/auth/login')
+        .send({ email: 'test@example.com', password: 'ValidPass1!' });
+
+      expect(res.status).toBe(403);
+      expect(mockSignOut).toHaveBeenCalled();
+    });
   });
 
   // ────────────── POST /auth/register ──────────────
@@ -416,6 +436,38 @@ describe('auth.routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('Check your email to confirm your address');
+      expect(mockSignUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'new@test.com',
+          options: expect.objectContaining({
+            data: expect.objectContaining({ full_name: 'New User' }),
+            emailRedirectTo: expect.stringMatching(/\/verify-email$/),
+          }),
+        })
+      );
+    });
+
+    it('fails registration if the pending profile cannot be created', async () => {
+      mockSignUp.mockResolvedValue({
+        data: { user: { id: 'new-user-id', email: 'new@test.com' }, session: null },
+        error: null,
+      });
+      mockFrom.mockReturnValue({
+        upsert: jest.fn<any>().mockResolvedValue({
+          data: null,
+          error: { message: 'database unavailable' },
+        }),
+      });
+
+      const res = await request(app).post('/auth/register').send({
+        email: 'new@test.com',
+        password: 'Password1',
+        fullName: 'New User',
+      });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
     });
 
     it('returns 400 for weak password', async () => {
@@ -1023,16 +1075,71 @@ describe('auth.routes', () => {
 
   // ────────────── EMAIL ROUTES ──────────────
 
+  describe('POST /auth/email/verify', () => {
+    it('verifies a signup token without returning an authenticated session', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { user: { id: 'verified-user', email: 'test@example.com' }, session: {} },
+        error: null,
+      });
+
+      const res = await request(app).post('/auth/email/verify').send({
+        token_hash: 'valid-token-hash',
+        type: 'signup',
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('pending admin approval');
+      expect(res.body.data).toBeUndefined();
+      expect(mockVerifyOtp).toHaveBeenCalledWith({
+        token_hash: 'valid-token-hash',
+        type: 'signup',
+      });
+    });
+
+    it('rejects invalid confirmation tokens', async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { user: null, session: null },
+        error: { message: 'Token expired' },
+      });
+
+      const res = await request(app).post('/auth/email/verify').send({
+        token_hash: 'expired-token-hash',
+        type: 'signup',
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects unsupported token types', async () => {
+      const res = await request(app).post('/auth/email/verify').send({
+        token_hash: 'valid-token-hash',
+        type: 'recovery',
+      });
+
+      expect(res.status).toBe(400);
+      expect(mockVerifyOtp).not.toHaveBeenCalled();
+    });
+  });
+
   describe('POST /auth/email/resend-confirmation', () => {
     it('resends confirmation email', async () => {
       mockResend.mockResolvedValue({ data: {}, error: null });
 
       const res = await request(app)
         .post('/auth/email/resend-confirmation')
+        .set('Origin', 'https://advanciapayledger.com')
         .send({ email: 'test@example.com' });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(mockResend).toHaveBeenCalledWith({
+        type: 'signup',
+        email: 'test@example.com',
+        options: {
+          emailRedirectTo: 'https://advanciapayledger.com/verify-email',
+        },
+      });
     });
 
     it('returns 400 on error', async () => {

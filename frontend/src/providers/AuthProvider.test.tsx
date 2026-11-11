@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { AuthProvider, useAuth } from './AuthProvider';
 import * as apiService from '../services/api';
 
@@ -28,6 +29,7 @@ vi.mock('../services/api', () => ({
 // Test component that uses the auth hook
 function AuthTestComponent() {
   const { user, loading, isAuthenticated, login, logout, signup } = useAuth();
+  const [signupMessage, setSignupMessage] = useState('');
 
   if (loading) return <div>Loading...</div>;
 
@@ -41,7 +43,8 @@ function AuthTestComponent() {
 
   const handleSignup = async () => {
     try {
-      await signup('new@example.com', 'password123', 'Test User', 'patient');
+      const result = await signup('new@example.com', 'password123', 'Test User', 'patient');
+      setSignupMessage(result.message || '');
     } catch {
       // Errors are expected in some test cases
     }
@@ -57,6 +60,7 @@ function AuthTestComponent() {
         </div>
       ) : (
         <div>
+          {signupMessage && <p role="status">{signupMessage}</p>}
           <button onClick={handleLogin}>Login</button>
           <button onClick={handleSignup}>Signup</button>
         </div>
@@ -261,6 +265,32 @@ describe('AuthProvider', () => {
   });
 
   describe('Signup', () => {
+    it('returns pending approval as a successful signup result without authenticating', async () => {
+      const user = userEvent.setup();
+      vi.spyOn(apiService.api, 'post').mockResolvedValueOnce({
+        success: true,
+        data: { user: { id: '456', email: 'new@example.com' }, session: null },
+        message:
+          'Registration successful. Check your email to confirm your address. Your account will then be pending admin approval.',
+      });
+
+      render(
+        <AuthProvider>
+          <AuthTestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /signup/i })).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: /signup/i }));
+
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        'Registration successful. Check your email to confirm your address. Your account will then be pending admin approval.'
+      );
+      expect(screen.queryByText(/User: new@example.com/)).not.toBeInTheDocument();
+    });
+
     it('successfully signs up a new user', async () => {
       const user = userEvent.setup();
       const mockToken = 'mock-jwt-token';

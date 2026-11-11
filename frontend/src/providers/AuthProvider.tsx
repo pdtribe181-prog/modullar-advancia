@@ -24,6 +24,11 @@ type AuthApiData = {
   session: SupabaseSession | null;
 };
 
+type SignupResult = {
+  pendingApproval: boolean;
+  message?: string;
+};
+
 type ProfileResponse = ApiEnvelope<User>;
 
 function extractTokenAndExpiry(session: SupabaseSession | null): {
@@ -80,7 +85,7 @@ interface AuthContextType {
   mfaRequired: boolean;
   mfaFactorId: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, fullName?: string, role?: string) => Promise<void>;
+  signup: (email: string, password: string, fullName?: string, role?: string) => Promise<SignupResult>;
   logout: () => void;
   refreshSession: () => Promise<boolean>;
   /** Hydrate auth state from an OAuth access_token (e.g. after Supabase redirect). */
@@ -281,7 +286,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuth(newToken, profileRes.data, expiresAt);
   };
 
-  const signup = async (email: string, password: string, fullName?: string, role = 'patient') => {
+  const signup = async (
+    email: string,
+    password: string,
+    fullName?: string,
+    role = 'patient'
+  ): Promise<SignupResult> => {
     const registerRes = await api.post<ApiEnvelope<AuthApiData>>('/auth/register', {
       email,
       password,
@@ -289,17 +299,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
     });
 
-    // The backend may intentionally return no session until admin approval.
     if (!registerRes.data.session?.access_token) {
-      throw new Error(
-        registerRes.message || 'Registration successful. Your account is pending approval.'
-      );
+      return {
+        pendingApproval: true,
+        message:
+          registerRes.message || 'Registration successful. Your account is pending approval.',
+      };
     }
 
     const { token: newToken, expiresAt } = extractTokenAndExpiry(registerRes.data.session);
     api.setToken(newToken);
     const profileRes = await api.get<ProfileResponse>('/profile');
     setAuth(newToken, profileRes.data, expiresAt);
+    return { pendingApproval: false, message: registerRes.message };
   };
 
   const logout = useCallback(async () => {

@@ -96,7 +96,11 @@ npm run stripe:webhooks -- --trigger --url https://api.advanciapayledger.com/api
 Or manually in Stripe Dashboard → Webhooks → Send test webhook.
 
 ### 9. Smoke Test Critical Flows
+- [ ] Supabase Auth Site URL and redirect allow list include the deployed frontend `/verify-email` URL
+- [ ] Supabase **Confirm signup** email template links to `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup`
 - [ ] User registration → email verification received
+- [ ] Email verification succeeds; account remains pending until admin approval
+- [ ] Pending and suspended users are denied login; an active approved user can sign in
 - [ ] User login → JWT issued
 - [ ] Create payment intent → Stripe returns `client_secret`
 - [ ] Process test payment → `payment_intent.succeeded` webhook received

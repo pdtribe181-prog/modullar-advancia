@@ -43,6 +43,8 @@ export function Login() {
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState('');
+  const [signupMessage, setSignupMessage] = useState('');
+  const [signupNeedsVerification, setSignupNeedsVerification] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<ValidationError[]>([]);
   const [loading, setLoading] = useState(false);
   const {
@@ -66,12 +68,16 @@ export function Login() {
     setFullName('');
     setFieldErrors([]);
     setError('');
+    setSignupMessage('');
+    setSignupNeedsVerification(false);
     setOtpSent(false);
   }, [routeMode]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSignupMessage('');
+    setSignupNeedsVerification(false);
     setFieldErrors([]);
 
     // Client-side validation
@@ -88,12 +94,21 @@ export function Login() {
 
     try {
       if (isSignup) {
-        await signup(email, password, fullName || undefined);
+        const result = await signup(email, password, fullName || undefined);
+        if (result.pendingApproval) {
+          setSignupMessage(
+            result.message || 'Registration successful. Your account is pending approval.'
+          );
+          setSignupNeedsVerification(true);
+          return;
+        }
       } else {
         await login(email, password);
       }
       navigate(redirectTo);
     } catch (err: unknown) {
+      setSignupMessage('');
+      setSignupNeedsVerification(false);
       setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
       setLoading(false);
@@ -259,6 +274,22 @@ export function Login() {
               <div className="error-message" role="alert">
                 {error}
               </div>
+            )}
+
+            {signupMessage && (
+              <>
+                <div className="info-message" role="status">
+                  {signupMessage}
+                </div>
+                {signupNeedsVerification && (
+                  <Link
+                    className="btn-link"
+                    to={`/verify-email?email=${encodeURIComponent(email)}`}
+                  >
+                    Resend confirmation email
+                  </Link>
+                )}
+              </>
             )}
 
             <LoadingButton
