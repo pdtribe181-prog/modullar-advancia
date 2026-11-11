@@ -35,6 +35,11 @@ const refreshTokenSchema = z.object({
   refresh_token: z.string().min(1, 'Refresh token required'),
 });
 
+const emailVerificationSchema = z.object({
+  token_hash: z.string().min(1, 'Verification token required'),
+  type: z.enum(['signup', 'email']),
+});
+
 // ------------------------------------------------------------------
 // GET /auth/csrf-token — obtain a CSRF token for state-changing requests
 // ------------------------------------------------------------------
@@ -177,11 +182,19 @@ router.post(
 
     // Check user status - must be approved to login
     if (data.user) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('status, role')
         .eq('id', data.user.id)
         .single();
+
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+        if (profileError && profileError.code !== 'PGRST116') {
+          throw AppError.internal('Unable to verify account approval status');
+        }
+        throw AppError.forbidden('Your account profile is not available. Please contact support.');
+      }
 
       if (profile?.status === 'pending') {
         // Sign out the user since they're not approved yet
@@ -194,6 +207,11 @@ router.post(
       if (profile?.status === 'suspended') {
         await supabase.auth.signOut();
         throw AppError.forbidden('Your account has been suspended. Please contact support.');
+      }
+
+      if (profile.status !== 'active') {
+        await supabase.auth.signOut();
+        throw AppError.forbidden('Your account is not approved to sign in.');
       }
 
       // Update last_login timestamp
@@ -244,6 +262,7 @@ router.post(
       email,
       password,
       options: {
+        emailRedirectTo: `${resolveFrontendOrigin(req)}/verify-email`,
         data: {
           full_name: fullName,
         },
@@ -256,7 +275,7 @@ router.post(
 
     // Create user profile with 'pending' status
     if (data.user) {
-      await supabase.from('user_profiles').upsert(
+      const { error: profileError } = await supabase.from('user_profiles').upsert(
         {
           id: data.user.id,
           email: data.user.email,
@@ -268,6 +287,9 @@ router.post(
         },
         { onConflict: 'id' }
       );
+      if (profileError) {
+        throw AppError.internal('Failed to create account profile');
+      }
     }
 
     res.json({
@@ -277,7 +299,7 @@ router.post(
         session: null, // Don't return session since user needs approval
       },
       message:
-        'Registration successful. Your account is pending admin approval. You will be notified once approved.',
+        'Registration successful. Check your email to confirm your address. Your account will then be pending admin approval.',
     });
   })
 );
@@ -797,6 +819,31 @@ const emailSchema = z.object({
 });
 
 /**
+ * Verify a Supabase signup confirmation token without creating a frontend session.
+ */
+router.post(
+  '/email/verify',
+  authLimiter,
+  validateBody(emailVerificationSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { token_hash, type } = req.body;
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type,
+    });
+
+    if (error || !data.user) {
+      throw AppError.badRequest(error?.message || 'Email verification failed');
+    }
+
+    res.json({
+      success: true,
+      message: 'Email confirmed. Your account is pending admin approval.',
+    });
+  })
+);
+
+/**
  * Resend email confirmation
  */
 router.post(
@@ -809,6 +856,9 @@ router.post(
     const { data, error } = await supabase.auth.resend({
       type: 'signup',
       email,
+      options: {
+        emailRedirectTo: `${resolveFrontendOrigin(req)}/verify-email`,
+      },
     });
 
     if (error) {

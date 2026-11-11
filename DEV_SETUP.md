@@ -53,6 +53,8 @@ Frontend API base (Vite):
 
 Set `FRONTEND_URL=http://localhost:5173` (or `http://127.0.0.1:5173`) in backend `.env` so redirects and CORS match. CORS allows both `localhost:5173` and `127.0.0.1:5173`.
 
+For local email-confirmation testing, start Supabase with `npx supabase start` (Docker required), then open the Inbucket email viewer at `http://127.0.0.1:54324`. The local Supabase config requires email confirmation and routes signup links to `/verify-email`; the same confirmation template and redirect allow list must be configured separately in the hosted Supabase dashboard.
+
 **Wallets:** Wallet linking uses challenge/verify (no server-side address generation). Addresses come from the client (e.g. Phantom). **WebKit:** Only CSS vendor prefixes in the app (e.g. gradient text); no separate WebKit config. **Alchemy:** Optional; add `ALCHEMY_API_KEY` to `.env` if you use Alchemy for RPC; see `.env.example`.
 
 ## Option B: WSL2 Ubuntu (recommended)

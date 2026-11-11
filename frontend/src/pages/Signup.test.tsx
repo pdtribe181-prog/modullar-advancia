@@ -104,7 +104,11 @@ describe('Signup Mode', () => {
 
   describe('form submission', () => {
     it('calls signup with valid data', async () => {
-      mockSignup.mockResolvedValue(undefined);
+      mockSignup.mockResolvedValue({
+        pendingApproval: true,
+        message:
+          'Registration successful. Check your email to confirm your address. Your account will then be pending admin approval.',
+      });
       renderSignup();
 
       fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'Alice Smith' } });
@@ -117,15 +121,28 @@ describe('Signup Mode', () => {
       );
     });
 
-    it('navigates to dashboard on success', async () => {
-      mockSignup.mockResolvedValue(undefined);
+    it('shows pending approval confirmation without navigating to dashboard', async () => {
+      mockSignup.mockResolvedValue({
+        pendingApproval: true,
+        message:
+          'Registration successful. Check your email to confirm your address. Your account will then be pending admin approval.',
+      });
       renderSignup();
 
       fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alice@example.com' } });
       fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password1' } });
       fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboard'));
+      expect(
+        await screen.findByText(
+          'Registration successful. Check your email to confirm your address. Your account will then be pending admin approval.'
+        )
+      ).toHaveAttribute('role', 'status');
+      expect(screen.getByRole('link', { name: 'Resend confirmation email' })).toHaveAttribute(
+        'href',
+        '/verify-email?email=alice%40example.com'
+      );
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
 
     it('shows error on failed signup', async () => {

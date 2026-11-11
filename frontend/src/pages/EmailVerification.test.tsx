@@ -1,10 +1,18 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { EmailVerification } from './EmailVerification';
+import { api } from '../services/api';
 
 vi.mock('../providers/AuthProvider', () => ({
   useAuth: () => ({ user: { email: 'alice@example.com' } }),
+}));
+
+vi.mock('../services/api', () => ({
+  api: {
+    post: vi.fn(),
+  },
 }));
 
 const mockNavigate = vi.fn();
@@ -13,7 +21,6 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-// Mock styles.css import
 vi.mock('../styles.css', () => ({}));
 
 function renderVerification(search = '') {
@@ -27,130 +34,71 @@ function renderVerification(search = '') {
 describe('EmailVerification', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
+  it('resends a confirmation link using the configured auth endpoint', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({
+      success: true,
+      message: 'Confirmation email resent',
+    });
+    renderVerification('?email=alice%40example.com');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send confirmation link' }));
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/auth/email/resend-confirmation', {
+        email: 'alice@example.com',
+      });
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent('Confirmation email resent');
   });
 
-  describe('pending state (no token)', () => {
-    it('shows Verify Your Email heading', () => {
-      renderVerification();
-      expect(screen.getByText('Verify Your Email')).toBeInTheDocument();
-    });
-
-    it('displays user email from auth context', () => {
-      renderVerification();
-      expect(screen.getByText('alice@example.com')).toBeInTheDocument();
-    });
-
-    it('displays email from search params if provided', () => {
-      renderVerification('?email=bob@test.com');
-      expect(screen.getByText('bob@test.com')).toBeInTheDocument();
-    });
-
-    it('renders 6 code inputs', () => {
-      renderVerification();
-      for (let i = 0; i < 6; i++) {
-        expect(document.getElementById(`code-${i}`)).toBeInTheDocument();
-      }
-    });
-
-    it('renders Verify Email button disabled initially', () => {
-      renderVerification();
-      expect(screen.getByRole('button', { name: 'Verify Email' })).toBeDisabled();
-    });
-
-    it('renders Resend Code button', () => {
-      renderVerification();
-      expect(screen.getByRole('button', { name: 'Resend Code' })).toBeInTheDocument();
-    });
-
-    it('has Back to Login link', () => {
-      renderVerification();
-      expect(screen.getByText('← Back to Login')).toBeInTheDocument();
-    });
-
-    it('enables Verify button when 6 digits entered', () => {
-      renderVerification();
-      for (let i = 0; i < 6; i++) {
-        fireEvent.change(document.getElementById(`code-${i}`)!, {
-          target: { value: String(i + 1) },
-        });
-      }
-      expect(screen.getByRole('button', { name: 'Verify Email' })).not.toBeDisabled();
-    });
-
-    it('transitions to success after verification', async () => {
-      renderVerification();
-      for (let i = 0; i < 6; i++) {
-        fireEvent.change(document.getElementById(`code-${i}`)!, {
-          target: { value: String(i + 1) },
-        });
-      }
-      fireEvent.click(screen.getByRole('button', { name: 'Verify Email' }));
-
-      // Advance past the 1500ms simulated delay
-      await act(async () => {
-        vi.advanceTimersByTime(2000);
-      });
-
-      expect(screen.getByText('Email Verified!')).toBeInTheDocument();
-    });
-
-    it('shows resend timer after clicking Resend Code', async () => {
-      renderVerification();
-      fireEvent.click(screen.getByRole('button', { name: 'Resend Code' }));
-
-      // Advance past the 1000ms resend delay
-      await act(async () => {
-        vi.advanceTimersByTime(1100);
-      });
-
-      expect(screen.getByText(/Resend available in/)).toBeInTheDocument();
-    });
+  it('requires an email address before resending', () => {
+    renderVerification('?email=');
+    expect(screen.getByLabelText('Email address')).toHaveAttribute('required');
+    expect(screen.getByLabelText('Email address')).toHaveValue('alice@example.com');
   });
 
-  describe('verifying state (token in URL)', () => {
-    it('shows Verifying text when token provided', () => {
-      renderVerification('?token=test-token-123');
-      expect(screen.getByText('Verifying...')).toBeInTheDocument();
+  it('verifies a Supabase signup token and leaves the account pending approval', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({
+      success: true,
+      message: 'Email confirmed. Your account is pending admin approval.',
     });
+    renderVerification('?token_hash=one-time-hash&type=signup');
 
-    it('transitions to success after delay', async () => {
-      renderVerification('?token=test-token-123');
-      expect(screen.getByText('Verifying...')).toBeInTheDocument();
-
-      await act(async () => {
-        vi.advanceTimersByTime(2100);
-      });
-
-      expect(screen.getByText('Email Verified!')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Email confirmed' })).toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledWith('/auth/email/verify', {
+      token_hash: 'one-time-hash',
+      type: 'signup',
     });
+    expect(screen.getByText('Your account still needs admin approval before you can sign in.'))
+      .toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /dashboard/i })).not.toBeInTheDocument();
   });
 
-  describe('success state', () => {
-    it('shows dashboard button after verification', async () => {
-      renderVerification('?token=test-token-123');
-
-      await act(async () => {
-        vi.advanceTimersByTime(2100);
-      });
-
-      const dashBtn = screen.getByRole('button', { name: /Go to Dashboard/ });
-      fireEvent.click(dashBtn);
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+  it('only submits a confirmation token once under React StrictMode', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({
+      success: true,
+      message: 'Email confirmed. Your account is pending admin approval.',
     });
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={['/verify-email?token_hash=strict-hash&type=signup']}>
+          <EmailVerification />
+        </MemoryRouter>
+      </StrictMode>
+    );
 
-    it('shows Return to Home link', async () => {
-      renderVerification('?token=test-token-123');
+    expect(await screen.findByRole('heading', { name: 'Email confirmed' })).toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledTimes(1);
+  });
 
-      await act(async () => {
-        vi.advanceTimersByTime(2100);
-      });
+  it('shows API errors instead of claiming verification succeeded', async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error('Confirmation token expired'));
+    renderVerification('?token_hash=expired-hash&type=signup');
 
-      expect(screen.getByText('Return to Home')).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('heading', { name: 'Confirmation link not accepted' }))
+      .toBeInTheDocument();
+    expect(screen.getByText('Confirmation token expired')).toBeInTheDocument();
   });
 });
